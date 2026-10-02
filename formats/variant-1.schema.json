@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "variant/1",
+  "title": "Derived variant",
+  "description": "A modified artifact, rebuilt locally from its base set and a committed recipe; never stored. The build asserts input bytes at each patch site and fails if the output hash differs (docs/phase0/05-artifacts.md §2).",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "variant/1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*-[0-9a-f]{8}-[a-z0-9-]+$"
+    },
+    "base": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*-[0-9a-f]{8}$"
+    },
+    "replaces": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recipe": {
+      "type": "object",
+      "properties": {
+        "script": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,40}$"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "script",
+        "commit",
+        "options"
+      ],
+      "additionalProperties": false
+    },
+    "output_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "interventions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "enum": [
+              "I2",
+              "I3"
+            ]
+          },
+          "what": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "level",
+          "what"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "base",
+    "replaces",
+    "recipe",
+    "output_sha256",
+    "interventions"
+  ],
+  "additionalProperties": false
+}

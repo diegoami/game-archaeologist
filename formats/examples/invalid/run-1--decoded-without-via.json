@@ -1,0 +1,85 @@
+{
+  "schema": "run/1",
+  "run_id": "E001-r0003",
+  "experiment": "E001",
+  "arm": "treatment-B",
+  "rep": 3,
+  "code_commit": "a25f47a",
+  "machine": "desk",
+  "artifact": {
+    "set": "toy-1.0-1ff31629",
+    "variant": "toy-1.0-1ff31629-seed"
+  },
+  "runtime": {
+    "driver": "runtime/toy.py@a25f47a",
+    "platform": "python-3.12/ubuntu-24.04",
+    "fingerprint": {
+      "python": "3.12.3"
+    }
+  },
+  "interventions": [
+    {
+      "level": "I3",
+      "what": "seed 12345 via SEED.TXT",
+      "variant": "toy-1.0-1ff31629-seed"
+    },
+    {
+      "level": "I3",
+      "what": "start state crafted: provinces held set by save edit"
+    }
+  ],
+  "start_state": {
+    "id": "S-crafted-5-provinces",
+    "sha256": "9932e4c2d73600ec2536a2336c0739e506c9573015511e64332fcc356c6231c7",
+    "restore": "fresh process + load save + seed"
+  },
+  "seed": 12345,
+  "actions": {
+    "script": "experiments/E001-reinforcement/run.py",
+    "sha256": "d6af0459a37d985953d7040c14f53feb3b9cc9e58b543aa3c2b80256d276c5e0",
+    "args": [
+      "--arm",
+      "B"
+    ]
+  },
+  "observations": [
+    {
+      "step": 0,
+      "source": "save",
+      "field": "raw:bytes[0x1A0:0x1A4]",
+      "value": "05000000"
+    },
+    {
+      "step": 1,
+      "source": "ui-text",
+      "field": "reinforcement prompt",
+      "value": "You receive 3 armies."
+    },
+    {
+      "step": 1,
+      "source": "screen",
+      "ref": "sha256:e15d4bbc82b54b0d83aab78a7b2ef128bae8d990972924ef8f47c0cb00a4286d"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "after.sav",
+      "sha256": "c5bce929e99e510b9879bda5232f412c6c6fadddcfcf10678b835182000c4b5a",
+      "store": "release:E001"
+    },
+    {
+      "name": "after.png",
+      "sha256": "e15d4bbc82b54b0d83aab78a7b2ef128bae8d990972924ef8f47c0cb00a4286d",
+      "store": "release:E001"
+    }
+  ],
+  "decoded": [
+    {
+      "field": "raw:bytes[0x1A0:0x1A4]",
+      "value": "provinces held = 5"
+    }
+  ],
+  "started": "2026-10-02T09:00:00Z",
+  "ended": "2026-10-02T09:00:04Z",
+  "status": "completed"
+}
