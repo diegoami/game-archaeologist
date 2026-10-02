@@ -1,0 +1,58 @@
+{
+  "schema": "run/1",
+  "run_id": "E001-r0002",
+  "experiment": "E001",
+  "arm": "control",
+  "rep": 2,
+  "code_commit": "0000000",
+  "machine": "calibration",
+  "artifact": {
+    "set": "example-1.0-f8ab7cd7",
+    "variant": null
+  },
+  "runtime": {
+    "driver": "runtime/example.py@0000000",
+    "platform": "fabricated",
+    "fingerprint": {
+      "python": "3.12.3"
+    }
+  },
+  "actions": {
+    "script": "experiments/E001-east-island/run.py",
+    "sha256": "4aae4fb474141d29765a1c7027c77516dfbe8e2c7103831d3852357de9211569",
+    "args": [
+      "--arm",
+      "control"
+    ]
+  },
+  "outputs": [],
+  "started": "2026-10-02T10:00:00Z",
+  "ended": "2026-10-02T10:00:03Z",
+  "status": "completed",
+  "interventions": [
+    {
+      "level": "I0",
+      "what": "none"
+    }
+  ],
+  "start_state": {
+    "id": "S-new-game-3-provinces",
+    "sha256": "4f549b855e61cba5a18d8687b8e32ff45b1b16311f44c5cc1dd509a4cdd0cb03",
+    "restore": "fresh process + new game, default settings"
+  },
+  "seed": 7,
+  "observations": [
+    {
+      "step": 0,
+      "source": "ui-text",
+      "field": "turn-start prompt",
+      "value": "You receive 3 armies."
+    },
+    {
+      "step": 0,
+      "source": "save",
+      "field": "raw:bytes[0x20:0x22]",
+      "value": "0300"
+    }
+  ]
+}

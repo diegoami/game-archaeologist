@@ -1,0 +1,58 @@
+{
+  "schema": "run/1",
+  "run_id": "E001-r0003",
+  "experiment": "E001",
+  "arm": "treatment",
+  "rep": 1,
+  "code_commit": "0000000",
+  "machine": "calibration",
+  "artifact": {
+    "set": "example-1.0-f8ab7cd7",
+    "variant": null
+  },
+  "runtime": {
+    "driver": "runtime/example.py@0000000",
+    "platform": "fabricated",
+    "fingerprint": {
+      "python": "3.12.3"
+    }
+  },
+  "actions": {
+    "script": "experiments/E001-east-island/run.py",
+    "sha256": "4aae4fb474141d29765a1c7027c77516dfbe8e2c7103831d3852357de9211569",
+    "args": [
+      "--arm",
+      "treatment"
+    ]
+  },
+  "outputs": [],
+  "started": "2026-10-02T10:00:00Z",
+  "ended": "2026-10-02T10:00:03Z",
+  "status": "completed",
+  "interventions": [
+    {
+      "level": "I3",
+      "what": "crafted save: player holds every province of the east island"
+    }
+  ],
+  "start_state": {
+    "id": "S-crafted-east-island",
+    "sha256": "f3831459a5d1b066dde02c9a1c0ab4f2c9e0df05255ec78c7472d724d2b4a0ae",
+    "restore": "fresh process + load save S-crafted-east-island.sav (loading does not restore the RNG)"
+  },
+  "seed": null,
+  "observations": [
+    {
+      "step": 0,
+      "source": "ui-text",
+      "field": "turn-start prompt",
+      "value": "You receive 5 armies."
+    },
+    {
+      "step": 0,
+      "source": "save",
+      "field": "raw:bytes[0x20:0x22]",
+      "value": "0500"
+    }
+  ]
+}
