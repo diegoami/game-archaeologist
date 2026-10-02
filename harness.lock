@@ -2,31 +2,34 @@
 # The bump procedure is harness_imperial H6. Until it lands, a bump diffs template/ between the
 # commit below and the new one, applies the result, and rewrites this file.
 # Verify:  grep -E '^[0-9a-f]{64}  ' harness.lock | sha256sum -c --quiet
-commit f4c49d937874ad6802aa11629f344534a15942fc
-copied 2026-10-02
+commit 74e53ae4708d425fcacdae93b5ff5ce39f1486b9
+copied 2026-10-02 (bumped from f4c49d937874ad6802aa11629f344534a15942fc)
 adapted CLAUDE.md  (project line; conditional rules 17-20 deleted, none apply; project section added)
 adapted docs/tasks/README.md  (this repository's task index)
 2f8e9cf140862021220021260d3e96b671ee44b323ba23d9ef89d7f1c023b6b1  .claude/hooks/session-start.sh
 9d2227215dcf47b9dc7c41d5c9b7f8c5b79dd962c3fb8c3f8f625032fa5eefae  .claude/settings.json
-f9f162a844552c5a38b63f96decca102bbe24acceb8a3c8acfef923731d63925  .claude/skills/delegate/SKILL.md
+bda67b96f233bee80031fbc135718145f167e186e77edd295719230ce29afb02  .claude/skills/delegate/SKILL.md
 218462f453d5432db791c7697d7d34970491af106f8e1d1b95b0e0ef6f86747a  .claude/skills/jev/SKILL.md
 c14a14b50a56c20b43ca8080ad03a77da928c6cfef7985d1bd37a6c263dad9a3  .claude/skills/run-task/SKILL.md
+4a6633d4be0797085f55601a6e1fc6ce501adf7dbd6a76efc3f6aa1c7b87d842  .claude/skills/switch-model/SKILL.md
 8a63c4093207e8f96230e8e6c92019c06897434ca8b70f287e76821ff09502d6  .github/pull_request_template.md
 9faf595db5be9bfd55694c74d85400c1462c4adfdb2f2d2974084c4ecb6af52e  .opencode/agents/implementer.md
-1059a17707eee627d3e5561b78a1dadae847c7172039bc535132d755d6d60e47  .opencode/agents/reviewer.md
+7afef68f95df5296065d4fa24b16f22b99510ad2df33844d75da58651ece2474  .opencode/agents/reviewer.md
 25dff04eb609ad93cc385889edb7ab652d0be2de449dc167afcfef478bd18b1e  docs/environment.md
 46c4f6e3ca23871e59c25366e8acf9818e43113546f0cd107571ae110f6c10cb  docs/jev/breaks-play.md
-1c1f60e2461cde816e0f2701414e302b15ddcf6ea3d6efd8bbc7466fdfdd9bb3  docs/lessons.md
+f8a9ee7421d70e642710d100767f35a20d857e31f9048cdb932bd5ccde541c84  docs/lessons.md
 6a748a1d08ef2115f54a453873fe35b5e23485aff0d3dfefb824867e8ea9235a  docs/process.md
 6c0d3caa2c15f86c261718bfafe50bc660baf148d0fa786929a8a91d3b5897d6  docs/tasks/TEMPLATE.md
 334c0bf65bb9d987df30af9faab543b81b09a4173a480b57e7bfed8ae71ae170  harness.json
 c1f344574897071dfffe5a34831730a4576da1f21be90951cfe4fb8c6407a351  tools/harness/implement.mjs
-6733e9f27ad5751363a4b71f05ed605e40e318eaf8de04b86dac90f55a622839  tools/harness/jev.mjs
+9befbffd7ca14116d581da6fefefbe5d43514f8c3d4a7419467f4a7810e8f96b  tools/harness/jev.mjs
 331fa100a1f783c4eb5f5bdc728e4ac0072069f068c8db375c37af3321d75110  tools/harness/lib/chain.mjs
 bb8ff47dd067768c55891ea1c6088dcaebb63aeb4e8870ff6502d493aa3496b2  tools/harness/lib/common.mjs
-543036f22eff1b65822c6b4ff2abded0dade713615738478fe9e025559b8e940  tools/harness/lib/jev.mjs
-6eee209af4e7b4a7ecd6c3507613346d0e673de516ce1f101d4f86815b7b6176  tools/harness/lib/models.mjs
+b65cc055307ca29a94c1f882262395737af1ae776b3561bd32d187740622b9af  tools/harness/lib/jev.mjs
+a6bf727222667a4c1744a8d01206e3fd36208203d80df117ff1216e08339ecf7  tools/harness/lib/models.mjs
 195a5031757e95e4c6bbe6815313d96979de66f77d96907497348f5470f53611  tools/harness/lib/opencode.mjs
 698538a6e0210c6f5d7f811d70fa384ca99e48b8c6c0a43b6adf5fda5bcf5d59  tools/harness/lib/review-selftest.mjs
+13aeeb309f2b754900f96771ae19216ea25f05886ee8474cbd431975b0567d12  tools/harness/lib/switch.mjs
 bf717caa54364e8e56a50bab0f07d0212b8300992bc0ad3629cf097ef58e4845  tools/harness/models.mjs
-c6ab2ef166101006ee536f7c919851dc81ddf82b367203bbb1afa79f376addcf  tools/harness/review.mjs
+018b5001a832da18cdc4f5c47af25e13755a14bdb20a63df1984f571ce79aba5  tools/harness/review.mjs
+8b8ba70c1820463240c3a9866616c05092b33b53de4dcd2ebe7f8c0b089969fe  tools/harness/switch-model.mjs
