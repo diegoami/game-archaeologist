@@ -136,9 +136,17 @@ must not learn the sealed rules except by experiment.
   `toy-archaeology`: a Claude Code cloud session on that repository alone, started by the user with
   the brief pasted. After H2 lands, an OpenCode run with a fine-grained token for that repository alone
   is a second path.
-- **Proof of blindness, first command.** The researcher runs `gh repo view diegoami/toy-target` and
-  `gh api repos/diegoami/game-archaeologist/contents/docs/phase0/06-research.md`, and both must
-  **fail**. Either succeeding stops the task before any run: the session can see too much.
+- **Proof of blindness, first command.** The researcher runs `gh repo view diegoami/toy-target`,
+  and it must **fail**. The private `toy-target` is the only place the concrete rules and their
+  parameters exist (`SEALED.md`, the source, the tests). If it succeeds, the task stops before any
+  run: the session can see too much.
+- **What stays public, by design.** game-archaeologist is public, and its
+  [06 §10](../docs/phase0/06-research.md) describes the seven rule *categories* (e.g. that combat is
+  stochastic with a tie rule). A researcher can read that without any credential. So the blindness
+  this procedure guarantees covers the **concrete rules and parameters**, and A6 scores discovery of
+  those. The researcher still needs this repository's `formats/`, `vocabulary/` and `method/`, and
+  reads nothing else of it (`docs/phase0/` and `docs/adr/` are out of bounds). That limit cannot be
+  enforced, so the research reviewer checks that the finding shows no knowledge beyond its runs.
 - **Network**: N1 (N2 through OpenCode), never N4. No web search.
 - **Method**: behavioural only. Unpacking or reading the `.pyz` is static analysis, which is out of
   scope for Y2. The run records and the Method section show only I0–I3 behavioural methods, and the
