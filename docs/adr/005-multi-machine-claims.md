@@ -28,11 +28,13 @@ re-read after both have written, "second" is undefined. Assignees cannot tell ma
 8. **The primary** is the repository variable `HARNESS_PRIMARY`, moved only by the user. No document
    names a machine.
 9. **Concurrency** follows IC2's rules:
-   - one task per machine;
+   - one task per machine, unless the task has no `exclusive:` token and the machine declares
+     `concurrency>1`;
    - disjoint Owns, implicit ownership included;
    - no "never in flight with" pairing;
    - no seam redefinition;
-   - `exclusive:<resource>` tokens replace `single-instance`.
+   - `exclusive:<resource>` tokens (e.g. `exclusive:wine-display`) replace `single-instance`, and
+     preflight fails if a process holding that resource is running.
 
 ## Consequences
 

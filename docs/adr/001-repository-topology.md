@@ -33,6 +33,6 @@ Dependencies point one way:
 - Each game chooses its own visibility, machines and cadence. Its research stays readable without
   any tooling, because records carry schema ids and findings are Markdown.
 - The IC2 repositories are not migrated.
-- The four new repos are approved, each created when its milestone starts: `toy-archaeology` (M2),
+- The three new repos are approved, each created when its milestone starts: `toy-archaeology` (M2),
   `toy-target` (M2, private), `isle-wars-archaeology` (W0, private). This repo was renamed from
   `games_revival_framework`.
