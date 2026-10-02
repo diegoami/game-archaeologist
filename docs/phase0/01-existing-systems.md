@@ -21,6 +21,19 @@ failure), `/run-task`, `/delegate`, `/jev` skills, and ~1,100 lines of Node tool
 against fake `opencode`/`gh`. Six commits; the README says *"A full run through `implement.mjs` has
 not happened yet"*, and open issue #1 is "Verify the harness on the Windows desktop, with real keys".
 
+> **Update, 2026-10-02 (after this analysis, harness at `f4c49d9`).**
+> - **Verified for real (H1).** Per harness#1, a full `/run-task` loop ran on `diegoami/harness-scratch`
+>   from the desktop (WSL): implementer exit 0 in 81 s, reviewer exit 0 in 75 s, squash-merged.
+>   `npm test` passed 104 of 104, including both real-OpenCode tests. Issue #1 stays open only for
+>   three display fixes. Deficiency 6 below is resolved.
+> - **Models, one per role (#11–#13, L27).** DeepSeek V4.1 Flash on OpenCode Go implements, with
+>   Sonnet as fallback. GPT-6 Luna on the direct OpenAI route reviews, with Opus as fallback. GLM is
+>   gone from the models.
+> - **Other changes.** A review is never thrown away (L28). OpenCode runs use the scripts' own data
+>   directory (L29). `prepareOpenCode()` checks, before anything is billed, which of the chain's
+>   models OpenCode lists there. H3's preflight reuses it for `svc:` tokens.
+> - Lessons L27–L29 are taken, so harness_imperial#14 takes the next free number.
+
 **What it already generalizes [V]:**
 
 | Concern | Where | Status |
@@ -50,7 +63,7 @@ not happened yet"*, and open issue #1 is "Verify the harness on the Windows desk
    IC2 itself diverged (PowerShell scripts, skills hand-reinstalled from fenced blocks in docs).
 5. `implement.mjs` hard-codes `--task` to `^T\d{2,3}$` and branch `task/T<nn>-<slug>` — fine, but
    it means "task" is the only unit; research runs ride the same path.
-6. Not yet proven in a real run (its own README and issue #1).
+6. ~~Not yet proven in a real run.~~ **Resolved 2026-10-02** by H1 (harness#1, see the update above).
 7. **Agent runs receive the whole environment.** `envWith()` copies all of `process.env` into the
    OpenCode run (`lib/common.mjs:52-53`), so every key on the machine is readable by any task.
 

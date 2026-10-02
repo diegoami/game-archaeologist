@@ -5,7 +5,7 @@
 | ADR | Decision | Constrains | Status |
 | --- | --- | --- | --- |
 | 001 | Repository topology: harness (process) · meta repo (method) · repo per game · private stores per game; dependency direction (02 §3) | where every later file goes | **Accepted 2026-10-02** |
-| 002 | Adopt `harness_imperial`; archaeology repos contain no orchestration code; process gaps are fixed upstream with a lesson | prevents a second runner/label system | **Accepted 2026-10-02**; operational readiness provisional until H1 (a first real run) |
+| 002 | Adopt `harness_imperial`; archaeology repos contain no orchestration code; process gaps are fixed upstream with a lesson | prevents a second runner/label system | **Accepted 2026-10-02**; operational readiness **confirmed by H1** (harness#1, a full real `/run-task` loop, 2026-10-02) |
 | 003 | Task contract = harness core + `Runs on` + kind extensions (03 §2) | every task file | **Accepted 2026-10-02** |
 | 004 | Environment model: requirement vs declaration vs verified; preflight before claim; cloud classes C0–C4; network classes N0–N4; env allowlist for agents (04) | every machine-specific task | **Accepted 2026-10-02**; token list provisional |
 | 005 | Claim = atomic `claim/T<nn>` ref + `machine:<id>` label + claim comment with lease (03 §7) | multi-machine operation | **Accepted 2026-10-02**; mechanism provisional until H4's race test |
@@ -104,9 +104,9 @@ Repos: **H** = `harness_imperial` (filed in its issues; its own process applies)
 
 | ID | Kind / agent | Produces | Owns | Depends | Runs on (caps) | Cloud | Services | Network | Artifacts | Durable state for resume | Reviewer falsifies by |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| H1 | env / user + main | harness#1 closed: real implement+review run on desktop | per harness#1 | — | base, `svc:opencode-go` | C3 (desktop keys) | OpenCode Go | N2 | — | harness#1 comments | rerun `npm test` + inspect the real run's PR |
+| H1 | env / user + main — **done 2026-10-02** | a full real `/run-task` loop on `harness-scratch` (implement 81 s, review 75 s, merged); `npm test` 104/104 (harness#1 comments) | per harness#1 | — | base, `svc:opencode-go` | C3 (desktop keys) | OpenCode Go | N2 | — | harness#1 comments | rerun `npm test` + inspect the real run's PR |
 | H2 | infra / impl | `implement.mjs`/`review.mjs` pass only allowlisted env vars | `template/tools/harness/**`, `test/**` | H1 (soft) | base | C0 | provider | N2 | — | branch | test: a var not on the allowlist is absent inside the fake opencode; mutate allowlist → test fails |
-| H3 | env / impl | `preflight.mjs`, `Runs on` parser, generic checks, `capabilities.json` merge | `template/tools/harness/preflight.mjs`, `lib/caps.mjs`, `test/preflight*`, `template/docs/environment.md`, `.github/workflows/ci.yml` | H1 (soft) | base | C0 | — | N1 | — | branch | (Example 3) |
+| H3 | env / impl | `preflight.mjs`, `Runs on` parser, generic checks, `capabilities.json` merge; `svc:` checks reuse the harness's `prepareOpenCode()` and do not duplicate it | `template/tools/harness/preflight.mjs`, `lib/caps.mjs`, `test/preflight*`, `template/docs/environment.md`, `.github/workflows/ci.yml` | H1 (soft) | base | C0 | — | N1 | — | branch | (Example 3) |
 | H4 | infra / impl | `claim.mjs claim/release/status/takeover` | `template/tools/harness/claim.mjs`, `lib/claim.mjs`, `test/claim*`, fake-gh extension | H1 (soft) | base | C0 (+ one real race test on a scratch repo) | — | N1 | — | branch | (Example 2) |
 | H5 | infra / impl | `/run-task` step 0 = preflight + claim; a draft PR opened right after the claim (proves `gh:pr` early, 04 §4); brief identity + preflight blocks; release on stop | `template/.claude/skills/run-task/SKILL.md`, `template/docs/process.md` §3–4, §8 | H3, H4 | base | C0 | — | N1 | — | branch | dry-run `/run-task` on a fake task that fails preflight → no claim ref created |
 | H6 | infra / impl | `harness.lock` + bump procedure in README | `README.md`, `template/harness.lock`, doc section | H1 (soft) | base | C0 | — | N1 | — | branch | follow the procedure on a scratch copy; diff matches |
@@ -187,7 +187,7 @@ yet — W4x may raise one).
 
 | Risk | Likelihood / impact | Mitigation |
 | --- | --- | --- |
-| Harness unproven in a real run (its README; harness#1 open) | high / high | H1 is the first item on the M1 path; Claude implementers as fallback (exit 3) |
+| Harness unproven in a real run | **retired 2026-10-02**: H1 ran a full real loop (harness#1) | — |
 | The user's copies are unavailable (U11), or Isle Wars Pro will not run headless | medium / blocks one lane | W1x and W3x first; the two lanes are independent, so DOS Isle Wars (DOSBox-X) can proceed while Pro is blocked and vice versa |
 | Isle Wars RNG uncontrollable without invasive patching | medium / experiments become population studies | W7x decides early; an I3 seed patch is built locally only (U2), with a neutrality control |
 | Artifact-bound tasks run only on the user's own machines (U2), so throughput is bounded by them | certain / slower W-track | keep artifact-free work (W2, W6, analysis of already-uploaded run records) in C0; size tasks so one machine can finish one per session |

@@ -14,7 +14,7 @@ repositories. The plan label and the repository are in each section heading.
 # T02 Formats and vocabularies v1
 - **Kind**: architecture
 - **Issue**: #2 · **Branch**: `task/T02-formats-v1` · **Merge after**: T01
-- **Implementer**: claude (opus) · **Reviewer**: opencode (glm), then claude (sonnet) `/code-review`
+- **Implementer**: claude (opus) · **Reviewer**: opencode (luna, the harness's reviewer since #11–#13), then claude (sonnet) `/code-review`
 - **Why**: the toy research repo (T05) and every game repo record runs, artifacts and findings in
   these shapes; the walking skeleton tests them.
 - **Evidence** (pasted):

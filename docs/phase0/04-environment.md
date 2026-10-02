@@ -27,7 +27,7 @@ Token grammar: `<category>:<name>[@<constraint>]`. Constraints only where compat
 | `exclusive` | `exclusive:wine-display`, `exclusive:godot` | no conflicting process running |
 | `hw` | none initially; `hw:disk>=<n>G` when a task stores large evidence | `statfs` |
 | `artifact` | `artifact:<set-id>` e.g. `artifact:iwp-1.x-<hash8>`, `artifact:toy-1.0-<hash8>` | locate via `machine.json` path → sha256 every file against the committed set manifest |
-| `svc` | `svc:opencode-go`, `svc:openrouter`, `svc:claude` (the session itself) | `opencode models opencode-go` contains the configured ids; OpenRouter `/models` with key; optional `--deep` one-token prompt (costs tokens) |
+| `svc` | `svc:opencode-go` (implementer), `svc:openai` (the reviewer: OpenCode's OpenAI login), `svc:openrouter`, `svc:claude` (the session itself) | `opencode models opencode-go` contains the configured ids; OpenRouter `/models` with key; optional `--deep` one-token prompt (costs tokens) |
 | `gh` | `gh:read`, `gh:push`, `gh:pr`, `gh:issues`, `gh:labels`, `gh:release-read:<repo>`, `gh:release-write:<repo>`, `gh:fixtures-read:<repo>` | `gh auth status`; `gh api repos/<r>` succeeds (read); the claim ref creation is the first real write and happens before expensive work |
 | `net` | `net:none`, `net:github`, `net:provider`, `net:packages`, `net:web`, `net:allow:<list>` | HEAD request to each host in the class with a 5 s timeout |
 
@@ -133,7 +133,8 @@ otherwise.
 or a logged, tested run. Hosts known now, from `harness_imperial/template/docs/environment.md`
 (tested in its cloud session): `opencode.ai`, `openrouter.ai`, `api.elevenlabs.io`,
 `registry.npmjs.org`, `api.github.com`, `github.com`, the Ubuntu archive, optional `models.dev`.
-GitHub release-asset download hosts, PyPI, WineHQ and emulator download sites are **not yet
+GitHub release-asset download hosts, the OpenAI host(s) the reviewer reaches (not yet in the
+harness's own list), PyPI, WineHQ and emulator download sites are **not yet
 established** for this project: H3's and W3x's first runs log the hosts they reach and record them
 with that evidence. IC2 also observed the cloud proxy refusing release access (`IC2_RELEASE_TOKEN`
 403) — C2 tasks must test release download in their first run.

@@ -160,8 +160,9 @@ Disposition of the second round (GLM R1–R9, DeepSeek N1–N5), each checked ag
 
 ## Stop
 
-This package ends Phase 0: the architecture is accepted. Next: approve backlog items one by one
-(07 §4); the first are H1 (verify the harness for real) and A1 (adopt the harness here and write the
-ADRs as `docs/adr/` files, including the rename to `game-archaeologist`). No implementation,
+This package ends Phase 0: the architecture is accepted. **H1 is done** (2026-10-02: a full real
+`/run-task` loop, harness#1). Next: approve backlog items one by one (07 §4), starting with A1: adopt
+the harness here (at `f4c49d9` or later) and write the ADRs as `docs/adr/` files, including the
+rename to `game-archaeologist`. No implementation,
 repository creation or migration happens before an item is approved; approved repositories are
 created when their milestone starts. U1 is executed only after the IC2 consumers listed above are fixed.
