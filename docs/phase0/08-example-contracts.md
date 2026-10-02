@@ -3,6 +3,9 @@
 Six complete contracts in the proposed format (03 §2), each written as it would be pasted into a
 brief. They exist to test the schema; §7 records what writing them showed.
 
+Each contract carries its **own repository's** T-number (07 §4, "IDs"), so numbers repeat across
+repositories. The plan label and the repository are in each section heading.
+
 ---
 
 ## 1. Architecture task — A2 Formats and vocabularies v1 (meta repo)
@@ -18,8 +21,8 @@ brief. They exist to test the schema; §7 records what writing them showed.
   - docs/phase0/06-research.md §2 (run record fields), §3 (I0–I3 table), §4 (status/basis/scope
     tables), §5 (representation claims), §9 (spec claim table) — pasted in full below this contract.
   - docs/phase0/05-artifacts.md §2 (artifact-set and variant JSON) — pasted.
-  - IC2 failures these formats must prevent (01 §3): results.json kept 1 of 4 seeds; no build hash in
-    results; truncated hashes; interventions unstamped.
+  - IC2 failures these formats must prevent (01 §3, §4): results.json kept 1 of 4 seeds; no build hash
+    in results; the seed build identified only by a truncated hash in prose; interventions unstamped.
 - **Owns**: `formats/**`, `vocabulary/**`, `tests/formats/**`
 - **Scope**: JSON Schemas `run/1`, `artifact-set/1`, `variant/1`, `evidence-manifest/1`; Markdown
   templates `finding.md`, `spec-area.md`, `experiment-README.md`; legends `status.md`, `basis.md`,
@@ -103,8 +106,10 @@ brief. They exist to test the schema; §7 records what writing them showed.
   - docs/phase0/04-environment.md §1–4 (tokens, declaration file, output contract) — pasted.
 - **Owns**: `template/tools/harness/preflight.mjs`, `template/tools/harness/lib/caps.mjs`,
   `test/preflight.test.mjs`, `test/fixtures/preflight/**`, `template/docs/environment.md`
-  ("Preflight" section only), `template/machine.example.json`
-- **Scope**: parse a task file's `Runs on` line (and `base` expansion); load generic checks for
+  ("Preflight" section only), `template/machine.example.json`, `.github/workflows/ci.yml` (only to
+  add the preflight smoke step for Done-when 5)
+- **Scope**: parse a task file's `Runs on` line per the grammar in 03 §2.1 (`base` expansion, a single
+  network class or a `<class> for <purpose>` list, `GitHub:` as `gh:*` tokens); load generic checks for
   `os`, `arch`, `tool` (with optional version constraint), `gh` (auth + repo read), `svc:opencode-go`
   (configured ids in `opencode models opencode-go`), `net:<class>` (HEAD each listed host, 5 s);
   merge `capabilities.json` from the repo root (token → check command, exit 0 = verified); read
@@ -129,7 +134,7 @@ brief. They exist to test the schema; §7 records what writing them showed.
 
 ---
 
-## 4. Game-specific runtime/integration task — W3a Isle Wars Pro runtime feasibility spike
+## 4. Game-specific runtime/integration task — W3a Isle Wars Pro runtime feasibility spike (isle-wars-archaeology)
 
 (Its sibling W3b, for DOS Isle Wars under DOSBox-X, has the same shape and owns `runtime/iw-dos/**`.)
 
@@ -221,14 +226,18 @@ brief. They exist to test the schema; §7 records what writing them showed.
      (`python3 tools/check_citations.py findings/F001-*.md`).
   5. The finding has non-empty "What this does not establish" and "Alternatives considered".
 - **Hazards**: concluding from one run per state; reading the UI text as truth (the UI can be
-  wrong); writing `supported` — the researcher writes `proposed`, only review + promotion change it.
+  wrong); writing `supported` — the researcher writes `proposed`, only review + promotion change it;
+  unpacking or reading the `.pyz` (static analysis is out of scope for this behavioural task); looking
+  for the toy's source or rules anywhere (they are not reachable, and trying is a contract breach).
 - **Runs on**: base, `tool:python@>=3.11`, `artifact:toy-1.0-*` · cloud: C0 · network: N1 (N2 if run
-  via OpenCode) · GitHub: push, PR, release-write on this repo
+  via OpenCode) · GitHub: push, PR, release-write on **this repo only**. Run it in a cloud session
+  scoped to `toy-archaeology`, or via OpenCode with a token for this repo alone; never with the owner's
+  own `gh` login.
 ```
 
 ---
 
-## 6. Independent research-review task — Y3 Review of F001
+## 6. Independent research-review task — Y3 Review of F001 (toy-archaeology)
 
 ```markdown
 # T03 Review F001 (reinforcement)

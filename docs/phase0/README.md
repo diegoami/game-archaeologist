@@ -61,7 +61,7 @@ migrated. Written 2026-10-02 from fresh clones of `imperial-conquest-2-research`
 | D6 | Implementers never weaken a contract; the main session amends it on `main` with the reason | L6, L7 |
 | D7 | A pushed task branch is resumed, never recreated | `implement.mjs`; IC2 App A |
 | D8 | Original binaries never in a repository; CI gets a minimal private subset via a read-only token | harness L17; `ic2-test-fixtures` design |
-| D9 | Findings use Question / Answer / Method / Observations / Inferences / What this does not establish / Reproduction | converged independently in the research repo and `ic2-conquest` |
+| D9 | Findings use Answer / Method / Observations / Inferences / What this does not establish / Reproduction (the converged core), headed by the Question as title or first line | converged independently in the research repo and `ic2-conquest` |
 | D10 | Every run and finding names the exact binary hash, including patched variants | IC2: seed build only in prose; implicit exe identity; unexplained `.cnt`/`WAVS` |
 | D11 | Walking skeleton before fan-out | L1 |
 | D12 | A finding is a claim; it is promoted only after review | `retrieve-findings`; IC2's unledgered intake path |
@@ -104,8 +104,61 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 
 ### Still open
 
-None of the U-decisions. ADR acceptance (001–009) is pending: the user chose neither "accept as
-written" option, and the details are to follow.
+| # | Decision | Options | Recommendation |
+| --- | --- | --- | --- |
+| U12 | A third new repo, **private `toy-target`**, holding the toy game's source and sealed rules. It came out of review finding R1: blindness fails if either is in a repo the researcher can read, and the meta repo is public. | approve · keep the source in the meta repo and accept a weaker skeleton | Approve. |
+
+ADR acceptance (001–009) is the user's decision, on the independent review below.
+
+## Independent review
+
+| Reviewer | Result | Record |
+| --- | --- | --- |
+| DeepSeek V4 Pro (OpenCode Go), read-only, text-only evidence | `approve after named fixes`. 1 blocking and 13 non-blocking findings. ADR-005, 006 and 008 accepted as written; the other six accepted with named changes. | [reviews/2026-10-02-deepseek-v4-pro.md](reviews/2026-10-02-deepseek-v4-pro.md) |
+| GLM-5.3 (OpenCode Go) | 1st run failed: OpenCode resolved `cd a && …; cd ../b` against the workspace root and auto-rejected it (a false positive, filed as harness_imperial#14). 2nd run, after the DeepSeek fixes: `approve after named fixes`, 9 non-blocking findings. ADR-002, 005 and 009 accepted as written; the other six accepted with named changes. | [reviews/2026-10-02-glm-5.3.md](reviews/2026-10-02-glm-5.3.md) |
+| DeepSeek V4 Pro, fix confirmation | `approve`. R1–R14 all confirmed, including the R3 dispute. 5 new non-blocking findings N1–N5. | [reviews/2026-10-02-deepseek-v4-pro-confirmation.md](reviews/2026-10-02-deepseek-v4-pro-confirmation.md) |
+
+Disposition of the DeepSeek findings (each was checked against the evidence before it was applied):
+
+| # | Finding | Disposition |
+| --- | --- | --- |
+| R1 (blocking) | Sealed rules in the public meta repo are readable by the researcher | **Fixed, and made stronger**: the source leaks the rules too, and a Claude agent uses the owner's `gh` login. The toy source and SEALED.md move to a private `toy-target` repo (U12). The researcher runs with GitHub access limited to `toy-archaeology`, and static analysis of the `.pyz` is out of scope for Y2 (06 §10, 07 A4/A5/Y2, 08 §5). |
+| R2 | Three numbers wrong | Fixed: 65 `test()` cases (56 at handover), 42-line helper, three model-routing changes plus one open. |
+| R3 | Tag counts and the `[O]` scheme | **Partly wrong**: `rules-digest.md:6-9` does use `[C]/[D]/[O]/[P]`; `sav-layout-notes.md` uses `[C]/[D]/[?]`. Both are now cited, and the counting method is stated. |
+| R4 | GitHub-derived counts not in the evidence dump | Fixed: 01 now states that these come from live `gh` queries on 2026-10-02. |
+| R5 | Four vs five upstream changes; when research kinds go upstream | Fixed: five (H2–H6) everywhere; research kinds go upstream only after toy and Isle Wars have used them. |
+| R6 | Stale repo-creation wording | Fixed (W0; approved under U10). |
+| R7 | W-track said to need no generic code, yet uses `run/1` and preflight | Fixed: edges A2 → W3x and H3 → W5x, and the text names both. |
+| R8 | Task IDs vs per-repo T-numbers; H3's CI ownership; "truncated hashes" | Fixed: ID convention stated (07 §4); example headings name their repo; H3 owns its CI step; the truncated hash is cited in 01. |
+| R9 | `primary` in `machine.json` vs the repository variable | Fixed: removed from `machine.json`; the variable is the only mechanism. |
+| R10 | W8x reviewers inherited release-write | Fixed: release-read only. |
+| R11 | No confidence field; `inconclusive` not evaluated | Fixed: a required `Confidence:` line in each finding (no numeric probability); `inconclusive` is a finding outcome, not a claim status (06 §4). |
+| R12 | `gh:pr` unverified; declaration-only tokens unlisted | Fixed: closed list (`facility:desktop`, `facility:audio`); `gh:pr` proved early by a draft PR at claim time (H5). |
+| R13 | Generalization trigger stated three ways | Fixed: "moved when a second consumer copies it", everywhere. |
+| R14 | ADR-002 "Decided" while the harness is unproven | Fixed: decided for "no second orchestration layer"; operational readiness provisional until H1. |
+
+Disposition of the second round (GLM R1–R9, DeepSeek N1–N5), each checked against the evidence:
+
+| # | Finding | Disposition |
+| --- | --- | --- |
+| GLM R1 = DS N1 | The topology diagram and the toy profile still distribute the toy through the public meta repo | Fixed: the only path is a release asset on `toy-archaeology`, copied by hash from `toy-target` (02 §3, 04 §5). |
+| GLM R2 | The example confound "UI paint routines write RandSeed" is a refuted draft claim | **Confirmed and fixed.** The research repo's report says these are the peace treaty and the battle-poll form, which reset `RandSeed = winner + loser` (03 §6.2). |
+| GLM R3 | A4's reviewer must read SEALED.md, and could later be dispatched as a toy researcher | Fixed: A4's implementer and reviewer sessions are recorded and barred from toy research and review (06 §10, 07 A4). |
+| GLM R4 | W4x listed as owning `spec/` rows | Fixed: W4x proposes rows in its finding; promotion writes `spec/`. |
+| GLM R5 | No grammar for multi-class `network:` and the `GitHub:` field | Fixed: line grammar in 03 §2.1; H3 parses it (08 §3). |
+| GLM R6 | Claim needs labels and issues tokens; a ref without a claim comment can never go stale | Fixed: `base` includes `gh:issues gh:labels`; a ref with no claim comment after 10 minutes is stale at once (03 §7.4). |
+| GLM R7 | Some claims rest on sources not in the reviewers' dump | Fixed: 01 names them (GitHub API for the private stores, the IC2 wiki, local working copies, checks on the author's machine). |
+| GLM R8 | D9's section list; the release checklist count | **Confirmed and fixed**: Question is a title or first line (only 1 of 3 `ic2-conquest` findings has a Question section); the checklist has 20 items. |
+| GLM R9 | No home for "bonuses" | Fixed: a `bonuses` area (island/continent groups, cards) in the knowledge map. |
+| DS N2 | H2 (env allowlist) matched no numbered deficiency | Fixed: deficiency 7 added to 01 §1. |
+| DS N3 | Stale "(user OK)" on W0 | Fixed. |
+| DS N4 | Y2's network stated as N1 only | Fixed: N1, or N2 through OpenCode, never N4. |
+| DS N5 | `rules-digest.md:6-9` should be 7-10 | **Rejected**: the four tag definitions are on lines 6–9 (line 4 is the heading). GLM confirmed 6–9 independently. |
+
+**ADR outcome across both reviews:** no ADR rejected and none escalated to a user decision.
+- Accepted as written by both reviewers: ADR-005.
+- Accepted as written by one reviewer, and accepted after the now-applied named changes by the other: ADR-002, 006, 008 and 009.
+- Accepted by both only with named changes, all now applied: ADR-001, 003, 004 and 007.
 
 ## Stop
 

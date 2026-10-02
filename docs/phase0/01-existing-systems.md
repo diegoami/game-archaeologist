@@ -1,8 +1,14 @@
 # 01 · Existing-system analysis
 
 Primary evidence: fresh clones of the five repositories (2026-10-02), their process files, git
-history, GitHub labels/issues/releases, and the sibling repos they reference
-(`imp_conquest_original`, `ic2-test-fixtures`). File references are to those clones.
+history, GitHub labels/issues/releases (counts of issues, labels, PRs, forks and release sizes come
+from live `gh` queries on 2026-10-02 and are not reproducible from the clones alone), and the
+sibling repos they reference (`imp_conquest_original`, `ic2-test-fixtures`, read through the GitHub
+API). Also read: the IC2 project wiki ("Process incidents", read-only clone), the local working
+copies of `ic2-conquest` and `malpaco` with their git history, and checks run on the author's machine
+(e.g. capstone absent under the system Python, `patch_exe.py` rebuilt from the committed original).
+These sources are not in the text-only dump the independent reviewers received, so claims resting on
+them could not be re-checked there. File references are to the clones.
 **[V]** = verified in a file, on GitHub, or by re-running something. **[I]** = inference.
 
 ---
@@ -11,7 +17,7 @@ history, GitHub labels/issues/releases, and the sibling repos they reference
 
 **What it is [V].** A copy-in template (`cp -r template/. .`) distilled from IC2: 40-line
 `CLAUDE.md`, 150-line `docs/process.md`, `docs/lessons.md` (L1–L26, every rule tied to a real
-failure), `/run-task`, `/delegate`, `/jev` skills, and ~1,100 lines of Node tooling with 56 tests
+failure), `/run-task`, `/delegate`, `/jev` skills, and ~1,100 lines of Node tooling with 65 `test()` cases (56 at its handover issue #8)
 against fake `opencode`/`gh`. Six commits; the README says *"A full run through `implement.mjs` has
 not happened yet"*, and open issue #1 is "Verify the harness on the Windows desktop, with real keys".
 
@@ -45,10 +51,13 @@ not happened yet"*, and open issue #1 is "Verify the harness on the Windows desk
 5. `implement.mjs` hard-codes `--task` to `^T\d{2,3}$` and branch `task/T<nn>-<slug>` — fine, but
    it means "task" is the only unit; research runs ride the same path.
 6. Not yet proven in a real run (its own README and issue #1).
+7. **Agent runs receive the whole environment.** `envWith()` copies all of `process.env` into the
+   OpenCode run (`lib/common.mjs:52-53`), so every key on the machine is readable by any task.
 
 **Reuse:** all of it, unchanged, as concern A. **Remain specific:** nothing game-specific belongs
 here. **Do not repeat:** do not build a second runner, label protocol, or brief/review system in
-the archaeology project. Extend the harness upstream for deficiencies 1–4, each with its lesson.
+the archaeology project. Extend the harness upstream for deficiencies 1, 2, 4 and 7 now (five changes, H2–H6), each with its
+lesson. Deficiency 3 (research kinds) goes upstream only after the toy and Isle Wars repos have used it.
 
 ---
 
@@ -89,14 +98,14 @@ two rework rounds then escalate; fix lane; status only in labels (incident 10).
 to archaeology), the playability gate, release plan.
 
 **Do not repeat [V]:**
-- **Process churn.** ~125 Plan/Process PRs vs ~139 task PRs; implementer model routing changed four
-  times on 2026-10-01 alone; an orchestrator built and retired within a day (incident 13); worktrees
+- **Process churn.** ~125 Plan/Process PRs vs ~139 task PRs; implementer model routing changed three times on
+  2026-10-01 alone (#552, #556, #574), with a fourth change open; an orchestrator built and retired within a day (incident 13); worktrees
   dropped and reinstated within a day. Lesson: start from the distilled harness; add process only
   per incident.
 - **Owns too tight**: 11 "grant T<nn> …" plan PRs mid-implementation (L5).
 - **Machine-bound paths** (`C:\Users\diego\…` in CLAUDE.md and appendices) and `.claude/` ignored
   with skills reinstalled by hand from docs.
-- **Unused ceremony**: `Plan (routine):` prefix used 0 times; 19-item release checklist run partially;
+- **Unused ceremony**: `Plan (routine):` prefix used 0 times; 20-item (0–19) release checklist run partially;
   frozen waves table; stale "(orchestrator-managed)" label descriptions.
 - **Label race**: the IC2 claim is two non-atomic writes plus a re-read; "second" is undefined when
   both re-read after both writes. Never observed with 17 claims [I], but it is a race.
@@ -106,7 +115,7 @@ to archaeology), the playability gate, release plan.
 ## 3. `ic2-conquest` — operating the original automatically
 
 **How it works [V]:** Ubuntu 24.04 on WSL2; Wine 9.0 (32-bit prefix), Xvfb `:99`, no window manager,
-`xdotool` input, ImageMagick screenshots, Tesseract OCR for message boxes; a 30-line mingw Win32
+`xdotool` input, ImageMagick screenshots, Tesseract OCR for message boxes; a 42-line mingw Win32
 helper (`harness/win_controls.c`) run *inside* Wine to enumerate dialog controls; toolbar positions
 read at runtime from Wine tooltip windows and cached. State: read-only `/proc/<pid>/mem` at known
 Delphi globals; SAV parsed by `state/sav.py` (hand-written offsets from the research repo).
@@ -117,7 +126,7 @@ f(save, seed, orders), executed in a fresh process. Byte-identical repeat shown 
 and new game; branching is serial (restart + load).
 
 **Findings format [V]** (`findings/YYYY-MM-DD-<claim>.md`): title is the claim; `Status: draft
-finding … awaiting promotion`; Answer; Method (build + SHA-256, environment, code addresses);
+finding … awaiting promotion`; Answer (only 1 of 3 also has a Question section); Method (build + SHA-256, environment, code addresses);
 Observations; Inferences; *What this does not establish*; Reproduction. Handed to the research repo
 by a **pasted prompt relayed by the user** ("never write to another repository").
 
@@ -134,7 +143,7 @@ by a **pasted prompt relayed by the user** ("never write to another repository")
 
 **Do not repeat [V]:**
 - **Interventions not stamped on results.** `results.json` carries no build hash; the seed build
-  (`354d8265…`) is identified only in prose and not asserted by `setup.sh`; `no_delay` (instant
+  (`354d8265…`) is identified only in prose, by a truncated hash, and not asserted by `setup.sh`; `no_delay` (instant
   battles) is assumed behaviour-neutral and never tested.
 - **Raw data overwritten / mis-recorded:** `results.json` holds 1 of the 4 seeds the README reports;
   a dict comprehension kept only the last unit per type; the battle-repeatability hash was never
@@ -156,7 +165,8 @@ by a **pasted prompt relayed by the user** ("never write to another repository")
 **How it works [V]:** 75 reports in `docs/reports/`, no template file. Converged dated template:
 Question / Answer / Method (build + SHA-256, environment, runs, code) / Observations / Inferences /
 *What this does not establish* / Where the evidence is / Reproduction / Next checks. Inline claim
-tags: `[confirmed]` (184), `[derived]` (72), `[confirmed: decompile]` (40), `[confirmed: code]`
+tags (backtick-quoted occurrences across `docs/`; plain-text counts in `docs/reports/` are higher,
+e.g. 201 `[confirmed]`): `[confirmed]` (184), `[derived]` (72), `[confirmed: decompile]` (40), `[confirmed: code]`
 (15), `[open]` (7), `[hypothesis]` (4), plus ad-hoc variants. `evidence-index.md` maps bare
 filenames → release/path with "three things that will mislead you". `recording-ledger.md` tracks
 how deeply each recording was mined (scanned/surveyed/read/exhausted). Intake: skill
@@ -178,7 +188,8 @@ daily workflow lists unledgered drafts. Static RE: Ghidra 12.1.3 + JDK 21 off-re
 
 **Do not repeat [V]:**
 - **No legend in the repo**; the definitions live in the build repo's `design-audit.md`; a sibling
-  repo uses a different scheme (`[C]/[D]/[O]/[P]`).
+  repo uses two more schemes of its own: `[C]/[D]/[O]/[P]` in `rules-digest.md:6-9`, and
+  `[C]/[D]/[?]` plus an undefined `[P]` in `sav-layout-notes.md:14,30`.
 - **Five different correction/supersession styles** across 39 files.
 - **Implicit binary identity:** only ~4 reports state the analysed exe hash; the decompilation plan
   points at the *demo* hash file.
@@ -282,8 +293,8 @@ possible *later consumer* of a reviewed Isle Wars specification, not an input to
 ## 7. Cross-cutting conclusions
 
 1. **Concern A is solved** well enough to adopt, and it is young. The archaeology project should
-   contain *zero* generic orchestration code; it should file four bounded upstream changes against
-   `harness_imperial`.
+   contain *zero* generic orchestration code; it should file five bounded upstream changes (H2–H6)
+   against `harness_imperial`.
 2. **The research method converged independently in two repos** (findings template, claim tags,
    "what this does not establish", promotion-as-review). That is a demonstrated repetition — it can
    be formalized as a *format* now.

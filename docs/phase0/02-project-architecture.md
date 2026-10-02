@@ -36,9 +36,9 @@ orchestration gap is filed against `harness_imperial`.
 │ meta repo          │ │ toy-archaeology     │  │ isle-wars-archaeology│  concern C
 │ (game-archaeologist)│ │ (walking skeleton) │  │ DOS IW + IW Pro      │
 │ ADRs, formats,     │ │ driver, experiments,│  │ driver, experiments, │
-│ schemas, toy target│ │ findings, spec      │  │ findings, spec       │
+│ schemas, toy hashes│ │ findings, spec      │  │ findings, spec       │
 └─────────┬──────────┘ └──────────┬──────────┘  └──────────┬───────────┘
-          │ releases: toy artifact │ pins formats@tag       │ pins formats@tag
+          │ formats@tag            │ pins formats@tag       │ pins formats@tag
           └──────────────►─────────┘◄───────────────────────┘
                                                             │ hash-referenced
                                                 ┌───────────▼────────────┐
@@ -52,26 +52,33 @@ orchestration gap is filed against `harness_imperial`.
 ### What each repository holds, and what it must not
 
 **`harness_imperial`** (exists, public)
-- Holds: the process template, runners, lessons; after M1, `claim.mjs`, `preflight.mjs`, the
-  research task-kind brief/review blocks, the generic capability tokens (git, gh, node, provider, os).
+- Holds: the process template, runners and lessons. After M3 it also holds the five upstream changes
+  (H2–H6: env allowlist, `preflight.mjs` with the generic capability tokens, `claim.mjs`, `/run-task`
+  wiring, `harness.lock`). The research task-kind brief/review blocks follow later: they go upstream
+  only after the toy and Isle Wars repos have used them (§5).
 - Never: anything naming a game, emulator, artifact or archaeology concept beyond "a research task
   produces evidence and a finding".
 
 **Meta repo** (exists empty, public: `diegoami/games_revival_framework`, to be renamed `game-archaeologist`)
 - Holds: this package; ADRs; `formats/` (JSON Schemas + Markdown templates for run record, evidence
   manifest, finding, spec claim table); `vocabulary/` (claim status, basis, intervention levels,
-  verification tiers, archaeology capability tokens); `toy-target/` (source + sealed rules + build);
+  verification tiers, archaeology capability tokens); the toy target's *description* and its released
+  artifact hashes, but not its source or sealed rules, which live in the private `toy-target` repo (06 §10);
   a small validator once two games use the formats; a cross-game `lessons.md` starting at L200 for
   archaeology-specific lessons (harness lessons stay in the harness).
 - Never: game-specific code, original artifacts, a scheduler, an emulator adapter, a generic runtime
   interface before two games implement one.
 
-**`toy-archaeology`** (to be created at M2 — user approval needed for repo creation)
+**`toy-archaeology`** (created at M2 by A5; approved, U10)
 - Holds: what a real game repo holds, for the toy target. It exists to rehearse the topology and to
   keep the toy's source out of the researcher's worktree (blindness).
 - Never: the toy target's source or sealed rules.
 
-**Per-game repo, e.g. `isle-wars-archaeology`** (to be created at W-M1)
+**`toy-target`** (private; created at M2 by A4 — needs approval, U12)
+- Holds: the toy game's source, `SEALED.md`, the tests for each hidden rule, and the release build.
+- Never: anything a researcher's credentials can reach.
+
+**Per-game repo, e.g. `isle-wars-archaeology`** (created by W0; private, approved — U5, U10)
 - Holds: `runtime/` (launch, input, observe, reset, state restore), `patches/` (with manifests),
   `parsers/`, `experiments/E<nnn>-*/`, `runs/` (run records), `evidence/` (manifests only),
   `findings/F<nnn>-*.md`, `spec/<area>.md`, `knowledge-map.md`, `artifacts/known.json` (hashes of
@@ -91,7 +98,8 @@ needs one.
 game repo ──pins──► meta repo formats@tag ──► (nothing)
 game repo ──copies─► harness@commit
 meta repo ──copies─► harness@commit
-toy-archaeology ──consumes──► meta repo release (toy artifact, by hash)
+toy-archaeology ──consumes──► its own release asset: the toy .pyz, copied by hash from the
+                               private toy-target repo's release (A5)
 game repo ──references by hash──► private stores
 ```
 
@@ -126,7 +134,7 @@ Every proposed generic element, tested against the threshold. **Default is game-
 | Finding template | IC2 research dated reports; ic2-conquest findings (converged independently) | already two | already repeated | a third scheme | **Generic now (format)** |
 | Claim status / basis / intervention vocabularies | IC2 (two inconsistent schemes) | toy, IWP | cross-game comparability; reviewers need a fixed vocabulary | repeat of IC2's undefined tags | **Generic now (vocabulary)** |
 | Run record + evidence manifest schema | IC2 lacked one (overwritten results, unstamped builds) | toy, IWP | the raw-vs-interpretation invariant needs a shape | the IC2 failures recur | **Generic now (schema); provisional fields** |
-| Artifact manifest + verify (sha256 per file) | `ic2-test-fixtures/manifest.json`, `pins.txt` | IWP, toy | ~40 lines; identical need | none serious | **Format generic now; code copied per repo until a third copy** |
+| Artifact manifest + verify (sha256 per file) | `ic2-test-fixtures/manifest.json`, `pins.txt` | IWP, toy | ~40 lines; identical need | none serious | **Format generic now; code copied into the first consumer, moved to the meta repo when a second consumer copies it** |
 | Validator for records | toy + IWP | after M2 | — | reviewers check by hand meanwhile | **Defer to after W-M2** |
 | Runtime adapter interface (launch/input/observe/reset) | ic2-conquest only | IWP will have one; Nether Earth/Gain Ground would differ radically | — | none; a premature interface would fit only Wine | **Game-specific. Revisit after two real drivers** |
 | Wine/Xvfb toolkit (window discovery, control enumeration, X input) | ic2-conquest | IWP *if* it runs under Wine | — | some copy-paste | **Game-specific; extract when IWP's driver repeats it** |

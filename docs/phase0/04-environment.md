@@ -44,8 +44,7 @@ exit 0 = verified. Example: `"facility:iwp-prefix": { "check": "python3 runtime/
   "id": "desk",
   "declares": ["os:windows", "facility:desktop", "facility:audio", "artifact:iwp-1.x-ab12cd34"],
   "artifacts": { "iwp-1.x-ab12cd34": "D:/games/originals/isle-wars-pro" },
-  "restrictions": { "noCloudSync": ["artifact:*"], "concurrency": 1 },
-  "primary": true
+  "restrictions": { "noCloudSync": ["artifact:*"], "concurrency": 1 }
 }
 ```
 
@@ -67,8 +66,13 @@ node tools/harness/preflight.mjs --machine             # verify everything decla
 
 - Expands `Runs on: base`, merges generic and repo `capabilities.json` checks.
 - Prints one line per token: `verified | declared-unchecked | unavailable: <reason>`; verdict
-  `ready` only if every required token is `verified` (or `declared-unchecked` for declaration-only
-  tokens like `facility:desktop`).
+  `ready` only if every required token is `verified`, or `declared-unchecked` for one of the
+  **declaration-only tokens**, which no script can prove: `facility:desktop` (a human can look) and
+  `facility:audio` (a human can hear). The list is closed; adding to it is a harness change.
+- `gh:pr` has no non-destructive probe: push access does not prove a fine-grained token may open PRs.
+  So it is proved early instead of checked. H5 makes `/run-task` open a **draft PR** right after the
+  claim and the first push, before any expensive work. A missing PR permission then fails in minutes,
+  and the draft PR makes the work visible from the start.
 - **Never prints** environment values, token strings, or local paths; reports `GH_TOKEN: set`, not
   its value (the session-start hook's existing rule).
 - Cheap by default: no model prompts, no game launches, no downloads. `--deep` may spend (one
@@ -88,7 +92,7 @@ is not trusted (IC2 `|| true` lesson).
 | --- | --- | --- | --- |
 | `base` | git, gh (logged in), node ≥20 | harness `docs/environment.md` | now |
 | `agent-opencode` | `tool:opencode@1.18`, `svc:opencode-go` | harness (session-start hook does it in cloud) | now |
-| `toy` | python ≥3.11, `artifact:toy-*` (downloaded from the meta repo release by hash) | meta repo | M2 |
+| `toy` | python ≥3.11, `artifact:toy-*` (downloaded by hash from the `toy-archaeology` release) | `toy-archaeology` | M2 |
 | `iwp-runtime` / `iw-dos-runtime` | decided by W3a (Windows, or Wine+Xvfb) / W3b (DOSBox-X) | game repo `setup/iwp/`, `setup/iw-dos/` | W-M1 |
 | `re-static` | `tool:ghidra@12`, JDK 21, committed scripts | game repo, local only | when the first static task is approved |
 

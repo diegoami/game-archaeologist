@@ -36,11 +36,21 @@ The harness template, unchanged, plus **one** line (`Runs on`) and an optional *
 - **Scope**: what to do. **Not in scope**: what it is easy to confuse with it.
 - **Done when**: numbered; each line one command-checkable assertion with its expected result.
 - **Hazards**: the likeliest mistake and how to avoid it.
-- **Runs on**: <requirement tokens> · cloud: <class> · network: <class> · GitHub: <scopes>
+- **Runs on**: <requirement tokens> · cloud: <class> · network: <class>[ for <purpose>][, <class> for <purpose>]… · GitHub: <gh:* tokens>
 ```
 
 `Runs on: base` is the default and expands to: `tool:git tool:gh tool:node@>=20 gh:push gh:pr
-net:github net:provider` · cloud: `C0` · network: `N2`. **Most tasks write `Runs on: base` and
+gh:issues gh:labels net:github net:provider` · cloud: `C0` · network: `N2`. `gh:issues` and
+`gh:labels` are there because every claim (§7.3) writes a label and a comment.
+
+**Line grammar** (what H3's parser accepts): fields are separated by ` · `.
+- The first field is the requirement tokens, space-separated, or `base`.
+- `cloud:` takes one class, C0–C4.
+- `network:` takes one class, or a comma-separated list of `<class> for <purpose>` when a task's phases
+  differ (e.g. `N0 for the game, N3 for bootstrap, N1 for push`). Preflight checks the union. The
+  purposes are documentation.
+- `GitHub:` lists `gh:*` tokens. They are requirements like any other token; prose such as "push, PR"
+  is shorthand for `gh:push gh:pr`. **Most tasks write `Runs on: base` and
 nothing else.** This keeps normal implementation boring (principle 18).
 
 What was deliberately *not* made mandatory: hardware, external-service lists, artifact sections,
@@ -165,7 +175,11 @@ Same mechanics (detached worktree at the PR head, one comment, label), different
    contain no interpretation; semantic labels on raw values (e.g. "byte 0x8123 = target") cite the
    representation claim they rely on.
 5. **Alternatives.** The reviewer writes ≥2 alternative explanations and states whether the design
-   excludes each (IC2: UI paint paths writing RandSeed is the canonical confound).
+   excludes each. IC2's canonical case: `RandSeed` is reset from game state (`winner + loser`) by the
+   peace treaty and by the battle-poll form's initialisation (research report
+   `2026-09-29-loading-a-save-does-not-reseed.md`, Inferences, which corrects an earlier draft that
+   called these "paint routines"). So an RNG-seeded comparison is confounded unless the arms provably
+   take the same game path.
 6. **Intervention.** The max intervention level used is declared and justified; an I2/I3 result is
    not stated as untouched-original behaviour without the neutrality argument (06 §3).
 7. **Scope.** The claim is no wider than the artifact version, settings, and states tested.
@@ -239,7 +253,9 @@ Labels are not compare-and-set: two machines can both add their label, both re-r
 6. **Merge**: the claiming machine merges (IC2 rule), deletes the claim ref; the label stays as history.
 
 ### 7.4 Abandoned claims
-A claim is *stale* when its lease expired with no push and no comment. Takeover requires the
+A claim is *stale* when its lease expired with no push and no comment. A claim ref with **no claim
+comment** 10 minutes after the ref's creation (the machine died between steps 2 and 3) is stale at
+once: it has no holder and no lease to wait for. Takeover requires the
 primary machine's main session or the user: comment `takeover T<nn> from <old> by <new>`, delete
 the claim ref, then create it (step 2 — if another taker won, stop), swap labels, **resume the pushed
 branch**. Unpushed work on the old machine is, by the durability invariant, non-essential.

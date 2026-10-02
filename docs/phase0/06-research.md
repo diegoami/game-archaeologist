@@ -90,7 +90,18 @@ Evaluated against the proposed labels:
 | `refuted` | a reviewed finding contradicts it | research review |
 | `contested` | reviewed findings disagree, unresolved | promotion when a new finding conflicts |
 
-Plus `superseded-by: <claim id>` as a link. **Basis** tags (any combination), defined once in the
+Plus `superseded-by: <claim id>` as a link.
+
+`inconclusive` (from the mission's list) is kept, but as a **finding outcome**, not a claim status
+(03 §6.2): a sound record that does not decide the question. The claim it tested keeps its previous
+status (`unknown` or `hypothesis`) and links the finding, so "we looked, and could not tell" stays
+visible.
+
+**Confidence** is recorded per finding, not as a number but as a required one-line statement in the
+finding's front matter: `Confidence: <outcome> — <basis>, <n runs / N of N agreement>, <alternatives
+excluded or not>`. For example: `supported — observed I0 + parsed, 30 of 30 exact, UI-path confound
+excluded by arm B`. A numeric probability is not used. Nothing here has a calibrated way to produce
+one, and a number would read as more precise than the evidence. **Basis** tags (any combination), defined once in the
 meta repo with a legend: `doc`, `observed` (I0/I1 behaviour), `parsed` (file format read),
 `static:decompile|listing|bytes`, `intervened` (I2/I3), `quantified: N of N`. **Scope**: artifact set
 (and variant), settings, state preconditions. IC2 mapping for reference: `[confirmed: decompile]` →
@@ -180,16 +191,19 @@ tests cite claim ids — that is the IC2 "corpus with provenance" (L15) at speci
 ## 10. The toy target (walking-skeleton subject)
 
 **Purpose:** prove the loop can *discover* hidden behaviour, in C0/V0, with no copyrighted artifact.
-Lives in the meta repo (`toy-target/`); distributed to the toy research repo only as a built,
-hashed artifact (a Python zipapp `toy-isles-<ver>.pyz` on a meta-repo release).
+Lives in its own **private** repo, `toy-target` (source, sealed rules, tests, build). It reaches the
+toy research repo only as a built, hashed artifact (a Python zipapp `toy-isles-<ver>.pyz`, attached to
+a `toy-archaeology` release by the A5 setup). Neither the source nor the rules may sit in a repo the
+researcher can read: the meta repo is public, and the source states the rules as plainly as
+SEALED.md does (review R1, 2026-10-02).
 
 **Shape (deliberately Isle-Wars-like, ~300–400 lines, stdlib only):** a 2-player territorial
 game on a fixed 8-province, 3-island map, text UI over stdin/stdout, binary save files with an
 undocumented layout, `--seed` flag (an I3 "patch" analogue), `--dump` (raw bytes of internal state:
 the memory-read analogue), `--poke addr=val` (memory write, I3).
 
-**Hidden rules** (in `toy-target/SEALED.md`, committed with its sha256 announced in the M2 tracking
-issue; the toy research repo never contains it):
+**Hidden rules** (in `toy-target`'s `SEALED.md`; its sha256 is posted in the M2 tracking issue, so the
+rules cannot be edited after the fact; the toy research repo never contains it):
 1. Reinforcement is a step function of provinces held with an island-group bonus (discoverable by
    designed experiments).
 2. Combat is stochastic with a tie rule (needs repeated runs and statistics).
@@ -200,10 +214,22 @@ issue; the toy research repo never contains it):
 6. Two artifact versions, 1.0 and 1.1, differ in exactly one rule (scope/version discipline).
 7. A deterministic AI policy (behavioural inference of AI).
 
-**Blindness:** the researcher works only in the toy research repo (worktree confinement + a task
-token scoped to that repo). Blindness is a methodological aid, not a security boundary; the research
-reviewer checks findings against SEALED.md **after** the review verdict is posted, and records the
-score (claims correct / wrong / unclaimed) as the walking-skeleton's outcome measure.
+**Blindness**, enforced where it is cheap and checked where it is not:
+- *Enforced:* the researcher (Y2) never runs with the owner's own `gh` login, which can read every
+  private repo. It runs either in a cloud session whose GitHub access is limited to `toy-archaeology`,
+  or as an OpenCode run with a fine-grained token for that repo alone (needs H2's env allowlist).
+  Network is N1 (N2 when run through OpenCode, for the provider), never N4, so there is no web
+  search.
+- *Checked by review:* the `.pyz` is Python and can be unpacked, which would be static analysis. Y2 is
+  a behavioural task, so static analysis of the artifact is out of scope. The run records and the
+  finding's Method must show only I0–I3 behavioural methods, and the research reviewer checks this.
+- *Withheld until after the verdict:* neither the main session nor the research reviewer (Y3)
+  reads SEALED.md before the review verdict is posted. The two sessions that must read it, A4's
+  implementer and A4's reviewer, are recorded on A4's issue and are never dispatched to toy research or
+  research-review tasks. The main session then scores the finding (claims correct / wrong /
+  unclaimed) in A6, as the walking skeleton's outcome measure.
+
+Blindness remains a methodological aid, not a security boundary.
 
 **Not built:** graphics, a second map, networking, more than one AI policy.
 
