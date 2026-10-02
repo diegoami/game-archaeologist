@@ -1,0 +1,28 @@
+{
+  "sets": [
+    {
+      "manifest": {
+        "schema": "artifact-set/1",
+        "id": "example-1.0-f8ab7cd7",
+        "title": "Example (fictional, fabricated for calibration)",
+        "version": "1.0",
+        "acquired": {
+          "how": "generated",
+          "when": "2026-10-02",
+          "note": "fabricated: no such program exists"
+        },
+        "files": [
+          {
+            "path": "example.bin",
+            "bytes": 4096,
+            "sha256": "aa4bf59a5129a53a7ac69cebd7f9b46ee16dfd74309aa6dc1dc8cb6955e97ad3"
+          }
+        ],
+        "runtime_writes": [
+          "*.sav"
+        ]
+      },
+      "notes": "fabricated artifact for reviewer calibration"
+    }
+  ]
+}
