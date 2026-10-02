@@ -140,13 +140,28 @@ must not learn the sealed rules except by experiment.
   and it must **fail**. The private `toy-target` is the only place the concrete rules and their
   parameters exist (`SEALED.md`, the source, the tests). If it succeeds, the task stops before any
   run: the session can see too much.
-- **What stays public, by design.** game-archaeologist is public, and its
-  [06 §10](../docs/phase0/06-research.md) describes the seven rule *categories* (e.g. that combat is
-  stochastic with a tie rule). A researcher can read that without any credential. So the blindness
-  this procedure guarantees covers the **concrete rules and parameters**, and A6 scores discovery of
-  those. The researcher still needs this repository's `formats/`, `vocabulary/` and `method/`, and
-  reads nothing else of it (`docs/phase0/` and `docs/adr/` are out of bounds). That limit cannot be
-  enforced, so the research reviewer checks that the finding shows no knowledge beyond its runs.
+- **What is public, and so disclosed.** game-archaeologist is public, and its
+  [06 §10](../docs/phase0/06-research.md) describes the seven hidden rules, some almost completely:
+  - rule 3, "an attack never moves the last unit; the UI reports success anyway";
+  - rule 5, "the RNG is **not** restored by loading a save";
+  - rule 6, "1.0 and 1.1 differ in exactly one rule".
+  
+  The other four are described by shape: a step function with an island-group bonus, stochastic
+  combat with a tie rule, a periodic event every k turns affecting the largest stack, and a
+  deterministic AI. Anyone can read this without a credential. **Everything 06 §10 states counts as
+  disclosed.**
+- **What the procedure keeps blind, and A6 scores.** Only what 06 §10 does not state:
+  - the concrete form and parameters of each rule (the steps and bonus, the combat odds and tie
+    rule, k and the event's effect, the AI's policy);
+  - which rule differs between 1.0 and 1.1, and how;
+  - any way a rule departs from its public description.
+  
+  At A6, a finding that only restates 06 §10 scores **disclosed**, not correct. Only what goes beyond
+  it scores correct, wrong or unclaimed.
+- **Reading limits.** The researcher needs this repository's `formats/`, `vocabulary/` and `method/`,
+  and reads nothing else of it (`docs/phase0/` and `docs/adr/` are out of bounds). This cannot be
+  enforced, which is why disclosure is defined above instead of assumed away. The research reviewer
+  also checks that the finding claims nothing its runs do not show.
 - **Network**: N1 (N2 through OpenCode), never N4. No web search.
 - **Method**: behavioural only. Unpacking or reading the `.pyz` is static analysis, which is out of
   scope for Y2. The run records and the Method section show only I0–I3 behavioural methods, and the
@@ -154,8 +169,8 @@ must not learn the sealed rules except by experiment.
 - **Barred sessions**: the sessions recorded on diegoami/toy-target#1 and #3 never run Y2 or Y3.
 - **Scoring**: A6, by the main session, after the review verdict is posted. It reads `SEALED.md` for
   the first time, checks its sha256 against the M2 tracking issue
-  ([#9](https://github.com/diegoami/game-archaeologist/issues/9)), and scores each claim correct, wrong
-  or unclaimed.
+  ([#9](https://github.com/diegoami/game-archaeologist/issues/9)), and scores each claim **disclosed**
+  (only restates 06 §10), **correct**, **wrong** or **unclaimed**.
 
 ## 7. Reviewer calibration
 
