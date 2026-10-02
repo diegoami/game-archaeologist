@@ -8,3 +8,4 @@ Each title ends with the task's plan label (A1, A2, …) from
 | Task | Title | Issue | Merge after |
 | --- | --- | --- | --- |
 | T01 | Adopt the harness, record the ADRs, rename the repository (A1) | #1 | — |
+| T02 | Formats and vocabularies v1 (A2) | #3 | T01 |
