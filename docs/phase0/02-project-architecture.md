@@ -59,7 +59,7 @@ orchestration gap is filed against `harness_imperial`.
 - Never: anything naming a game, emulator, artifact or archaeology concept beyond "a research task
   produces evidence and a finding".
 
-**Meta repo** (exists empty, public: `diegoami/games_revival_framework`, to be renamed `game-archaeologist`)
+**Meta repo** (public: `diegoami/game-archaeologist`, renamed from `games_revival_framework` in T01/A1)
 - Holds: this package; ADRs; `formats/` (JSON Schemas + Markdown templates for run record, evidence
   manifest, finding, spec claim table); `vocabulary/` (claim status, basis, intervention levels,
   verification tiers, archaeology capability tokens); the toy target's *description* and its released
