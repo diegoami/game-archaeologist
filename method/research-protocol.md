@@ -122,7 +122,7 @@ A finding that conflicts with an existing `supported` row makes it `contested`; 
 | The review finds | Class | Route |
 | --- | --- | --- |
 | a record that does not meet a sound contract (e.g. an invalid run record, a missing manifest) | implementation defect | `rework` on the same branch, at most two rounds, then escalate |
-| a contract that is wrong or under-specified (a Done-when the reviewer cannot run, a design that cannot answer the question) | contract defect (C) | the main session amends the task on `main` with the reason, then re-review |
+| a contract that is wrong or under-specified (a Done-when the reviewer cannot run, a design that cannot answer the question) | contract defect (C) | the main session amends the task on `main` with the reason; if the change is to Done-when semantics, the user is told; then re-review |
 | a decision no document makes (a new record field, a new capability class) | architectural uncertainty | verdict `user decision`; an issue in game-archaeologist; the task is blocked |
 | a sound record that does not decide the question | research uncertainty | not a defect: `approve`, claim outcome `inconclusive`, plus a new research-question issue saying what would decide it |
 
