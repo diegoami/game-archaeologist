@@ -9,3 +9,4 @@ Each title ends with the task's plan label (A1, A2, …) from
 | --- | --- | --- | --- |
 | T01 | Adopt the harness, record the ADRs, rename the repository (A1) | #1 | — |
 | T02 | Formats and vocabularies v1 (A2) | #3 | T01 |
+| T03 | Harness bump to 74e53ae (the reviewer without git -C) | #6 | T01 |
