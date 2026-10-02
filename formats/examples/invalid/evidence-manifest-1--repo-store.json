@@ -1,0 +1,26 @@
+{
+  "schema": "evidence-manifest/1",
+  "run_id": "E001-r0003",
+  "experiment": "E001",
+  "store": "repo:evidence/E001",
+  "artifact": {
+    "set": "toy-1.0-1ff31629",
+    "variant": "toy-1.0-1ff31629-seed"
+  },
+  "files": [
+    {
+      "name": "after.sav",
+      "bytes": 131313,
+      "sha256": "c5bce929e99e510b9879bda5232f412c6c6fadddcfcf10678b835182000c4b5a",
+      "asset": "c5bce929e99e510b-after.sav",
+      "class": "save"
+    },
+    {
+      "name": "after.png",
+      "bytes": 20480,
+      "sha256": "e15d4bbc82b54b0d83aab78a7b2ef128bae8d990972924ef8f47c0cb00a4286d",
+      "asset": "e15d4bbc82b54b0d-after.png",
+      "class": "screenshot"
+    }
+  ]
+}

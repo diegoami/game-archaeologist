@@ -1,0 +1,21 @@
+{
+  "schema": "artifact-set/1",
+  "id": "toy-1.0-1ff31629",
+  "title": "Toy Isles",
+  "version": "1.0",
+  "acquired": {
+    "how": "generated",
+    "when": "2026-10-02",
+    "note": "built by toy-target's release workflow"
+  },
+  "files": [
+    {
+      "path": "toy-isles-1.0.pyz",
+      "bytes": 48211,
+      "sha256": "a2df4378801395f9f3f06d570ae7e1cd851d01ea7970a3e16bc361e7582ec23a"
+    }
+  ],
+  "runtime_writes": [
+    "*.sav"
+  ]
+}

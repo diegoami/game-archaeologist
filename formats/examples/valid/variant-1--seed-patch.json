@@ -1,0 +1,20 @@
+{
+  "schema": "variant/1",
+  "id": "toy-1.0-1ff31629-seed",
+  "base": "toy-1.0-1ff31629",
+  "replaces": "toy-isles-1.0.pyz",
+  "recipe": {
+    "script": "patches/seed_from_file.py",
+    "commit": "3f52115",
+    "options": [
+      "seed_from_file"
+    ]
+  },
+  "output_sha256": "7ab1267e91b31ae65d10996087ad9a3dd93e7b373e7687e82d44e16c8f9b7bef",
+  "interventions": [
+    {
+      "level": "I3",
+      "what": "the RNG seed is read from SEED.TXT"
+    }
+  ]
+}

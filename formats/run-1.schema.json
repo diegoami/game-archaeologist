@@ -1,0 +1,327 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run/1",
+  "title": "Run record",
+  "description": "One execution of one experiment arm. Immutable and raw only: no interpretation fields. A decoded value is allowed only in `decoded`, and only with `via` naming the representation claim (R<nnn>) that licenses it (docs/phase0/06-research.md §2, §5).",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "run/1"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^E[0-9]{3,}-r[0-9]{4,}$"
+    },
+    "experiment": {
+      "type": "string",
+      "pattern": "^E[0-9]{3,}$"
+    },
+    "arm": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rep": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "code_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "machine": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "machine id; never a path or a hostname with personal data"
+    },
+    "artifact": {
+      "type": "object",
+      "properties": {
+        "set": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*-[0-9a-f]{8}$",
+          "description": "artifact-set id"
+        },
+        "variant": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "variant id, or null when the unmodified set ran"
+        }
+      },
+      "required": [
+        "set",
+        "variant"
+      ],
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "driver": {
+          "type": "string",
+          "minLength": 1,
+          "description": "<path>@<commit>"
+        },
+        "platform": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fingerprint": {
+          "type": "object",
+          "description": "versions that could change behaviour (emulator, Wine, OS), as strings. A value containing / or \\ (a path) fails validation. Secrets are kept out by the evidence uploader's scan (docs/phase0/04-environment.md §10), not by this schema.",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[^/\\\\]*$"
+          }
+        }
+      },
+      "required": [
+        "driver",
+        "platform",
+        "fingerprint"
+      ],
+      "additionalProperties": false
+    },
+    "interventions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "enum": [
+              "I0",
+              "I1",
+              "I2",
+              "I3"
+            ]
+          },
+          "what": {
+            "type": "string",
+            "minLength": 1
+          },
+          "variant": {
+            "type": "string",
+            "description": "the variant that applies it, when it is a patch"
+          }
+        },
+        "required": [
+          "level",
+          "what"
+        ],
+        "additionalProperties": false
+      },
+      "description": "every intervention, including passive ones; a pure-observation run lists {level: I0, what: none}"
+    },
+    "start_state": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "restore": {
+          "type": "string",
+          "minLength": 1,
+          "description": "how it was restored, naming everything reinstated (e.g. fresh process + load save + seed)"
+        }
+      },
+      "required": [
+        "id",
+        "sha256",
+        "restore"
+      ],
+      "additionalProperties": false
+    },
+    "seed": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "the controlled seed, or null when the seed was not controlled"
+    },
+    "actions": {
+      "type": "object",
+      "properties": {
+        "script": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "script",
+        "sha256",
+        "args"
+      ],
+      "additionalProperties": false
+    },
+    "observations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "source": {
+            "enum": [
+              "screen",
+              "save",
+              "memory",
+              "file",
+              "ui-text",
+              "log",
+              "process",
+              "static"
+            ]
+          },
+          "field": {
+            "type": "string",
+            "minLength": 1,
+            "description": "what was read, raw (e.g. raw:bytes[0x1A0:0x1A4])"
+          },
+          "addr": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]+$"
+          },
+          "value": {
+            "type": "string",
+            "description": "the raw value as read"
+          },
+          "ref": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "description": "a file in the evidence bundle"
+          }
+        },
+        "required": [
+          "step",
+          "source"
+        ],
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "value",
+              "field"
+            ]
+          },
+          {
+            "required": [
+              "value",
+              "addr"
+            ]
+          },
+          {
+            "required": [
+              "ref"
+            ]
+          }
+        ],
+        "description": "one raw reading: a value with where it was read (field or addr), or a ref to a file in the evidence bundle"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "store": {
+            "type": "string",
+            "pattern": "^release:E[0-9]{3,}$",
+            "description": "the experiment's release (05 §4); the run record itself lives in the repo, its outputs never do"
+          }
+        },
+        "required": [
+          "name",
+          "sha256",
+          "store"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "decoded": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string"
+          },
+          "via": {
+            "type": "string",
+            "pattern": "^R[0-9]{3,}$"
+          }
+        },
+        "required": [
+          "field",
+          "value",
+          "via"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "started": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "ended": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "status": {
+      "type": "string",
+      "pattern": "^(completed|aborted: .+)$"
+    }
+  },
+  "required": [
+    "schema",
+    "run_id",
+    "experiment",
+    "arm",
+    "rep",
+    "code_commit",
+    "machine",
+    "artifact",
+    "runtime",
+    "interventions",
+    "start_state",
+    "seed",
+    "actions",
+    "observations",
+    "outputs",
+    "started",
+    "ended",
+    "status"
+  ],
+  "additionalProperties": false
+}
