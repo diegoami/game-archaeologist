@@ -74,7 +74,7 @@ orchestration gap is filed against `harness_imperial`.
   keep the toy's source out of the researcher's worktree (blindness).
 - Never: the toy target's source or sealed rules.
 
-**`toy-target`** (private; created at M2 by A4 — needs approval, U12)
+**`toy-target`** (private; created when M2 starts, by A4; approved, U12)
 - Holds: the toy game's source, `SEALED.md`, the tests for each hidden rule, and the release build.
 - Never: anything a researcher's credentials can reach.
 

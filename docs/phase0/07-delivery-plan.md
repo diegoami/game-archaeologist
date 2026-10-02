@@ -2,17 +2,17 @@
 
 ## 1. ADRs (only decisions that constrain future work)
 
-| ADR | Decision | Constrains | Status at approval |
+| ADR | Decision | Constrains | Status |
 | --- | --- | --- | --- |
-| 001 | Repository topology: harness (process) · meta repo (method) · repo per game · private stores per game; dependency direction (02 §3) | where every later file goes | Recommended |
-| 002 | Adopt `harness_imperial`; archaeology repos contain no orchestration code; process gaps are fixed upstream with a lesson | prevents a second runner/label system | Decided from evidence (no second orchestration layer); **operational readiness provisional until H1** (a first real run) |
-| 003 | Task contract = harness core + `Runs on` + kind extensions (03 §2) | every task file | Recommended |
-| 004 | Environment model: requirement vs declaration vs verified; preflight before claim; cloud classes C0–C4; network classes N0–N4; env allowlist for agents (04) | every machine-specific task | Recommended; token list provisional |
-| 005 | Claim = atomic `claim/T<nn>` ref + `machine:<id>` label + claim comment with lease (03 §7) | multi-machine operation | Provisional until H4's race test |
-| 006 | Artifact identity by set manifest hash; variants by recipe; originals never in any repo; per-game rights decision (05) | storage and reproducibility | Decided (identity) / Recommended (stores) |
-| 007 | Evidence provenance: immutable run records with interventions I0–I3; raw never carries interpretation; representation claims license decoding (06 §2–5) | every experiment | Recommended; fields provisional |
-| 008 | Claim lifecycle and promotion: status/basis/scope; two-axis research verdict; only the main session edits `spec/` after review (03 §6, 06 §4) | the specification | Recommended |
-| 009 | Generalization policy: game-specific by default; generic only with two concrete uses; the register in 02 §5 | every "framework" proposal | Decided from evidence |
+| 001 | Repository topology: harness (process) · meta repo (method) · repo per game · private stores per game; dependency direction (02 §3) | where every later file goes | **Accepted 2026-10-02** |
+| 002 | Adopt `harness_imperial`; archaeology repos contain no orchestration code; process gaps are fixed upstream with a lesson | prevents a second runner/label system | **Accepted 2026-10-02**; operational readiness provisional until H1 (a first real run) |
+| 003 | Task contract = harness core + `Runs on` + kind extensions (03 §2) | every task file | **Accepted 2026-10-02** |
+| 004 | Environment model: requirement vs declaration vs verified; preflight before claim; cloud classes C0–C4; network classes N0–N4; env allowlist for agents (04) | every machine-specific task | **Accepted 2026-10-02**; token list provisional |
+| 005 | Claim = atomic `claim/T<nn>` ref + `machine:<id>` label + claim comment with lease (03 §7) | multi-machine operation | **Accepted 2026-10-02**; mechanism provisional until H4's race test |
+| 006 | Artifact identity by set manifest hash; variants by recipe; originals never in any repo; per-game rights decision (05) | storage and reproducibility | **Accepted 2026-10-02** |
+| 007 | Evidence provenance: immutable run records with interventions I0–I3; raw never carries interpretation; representation claims license decoding (06 §2–5) | every experiment | **Accepted 2026-10-02**; fields provisional |
+| 008 | Claim lifecycle and promotion: status/basis/scope; two-axis research verdict; only the main session edits `spec/` after review (03 §6, 06 §4) | the specification | **Accepted 2026-10-02** |
+| 009 | Generalization policy: game-specific by default; generic only with two concrete uses; the register in 02 §5 | every "framework" proposal | **Accepted 2026-10-02** |
 
 Not ADRs: language choices (noted in 02 §6), the toy target's design (a task), names (a user choice).
 

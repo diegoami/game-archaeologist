@@ -1,7 +1,7 @@
 # Game archaeology — Phase 0 architecture package
 
-Status: **proposal for review**. Nothing here has been implemented; no repository was created or
-migrated. Written 2026-10-02 from fresh clones of `imperial-conquest-2-research`, `ic2-conquest`,
+Status: **accepted 2026-10-02** (ADR-001..009, after two independent reviews). Nothing here has been
+implemented; no repository was created or migrated. Written 2026-10-02 from fresh clones of `imperial-conquest-2-research`, `ic2-conquest`,
 `imp_conquest_fixtures`, `imperial_conquest_2`, `harness_imperial`, plus `imp_conquest_original`,
 `ic2-test-fixtures` (private stores) and `malpaco` (the earlier Isle Wars attempt).
 
@@ -100,15 +100,13 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 | U6 | **Harness changes go upstream** into `harness_imperial`. | H2–H6 are filed as issues there and run under its own lesson-admission rule. Archaeology repos receive them through a harness bump. |
 | U8 | **A Wine-only Isle Wars Pro result needs a Windows confirmation only for timing/UI claims.** | Rule claims count from Wine (V2). Timing, rendering and UI claims reach `corroborated` only after a V3 rerun on Windows. |
 | U10 | **Both new repos approved**, each created when its milestone starts: `toy-archaeology` (M2, A5) and private `isle-wars-archaeology` (W0). | A5 and W0 are no longer blocked on approval. |
+| U12 | **Private `toy-target` repo approved**, created when M2 starts (by A4). It holds the toy game's source and sealed rules, out of the researcher's reach (review finding R1). | A4 creates it at M2; A5 copies the built `.pyz` by hash into `toy-archaeology`'s release. |
+| ADRs | **ADR-001..009 accepted** (2026-10-02), after both independent reviews and their applied fixes. | The provisional parts named in 07 §1 stay provisional until their validating task: ADR-002 until H1, ADR-005 until H4's race test, the ADR-004 token list and the ADR-007 fields until A6. |
 | U11 | **The shareware/unregistered releases are the reference artifacts** for both games. | Every claim is scoped to the unregistered version. What registration unlocks is itself `unknown` (a W4x question). Nag screens and time limits, if any, are runtime facts for W3x. You supply the copies to your own machines; W1a/W1b hash and register them, and record where each came from. |
 
 ### Still open
 
-| # | Decision | Options | Recommendation |
-| --- | --- | --- | --- |
-| U12 | A third new repo, **private `toy-target`**, holding the toy game's source and sealed rules. It came out of review finding R1: blindness fails if either is in a repo the researcher can read, and the meta repo is public. | approve · keep the source in the meta repo and accept a weaker skeleton | Approve. |
-
-ADR acceptance (001–009) is the user's decision, on the independent review below.
+None. All twelve U-decisions are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
@@ -162,6 +160,8 @@ Disposition of the second round (GLM R1–R9, DeepSeek N1–N5), each checked ag
 
 ## Stop
 
-This package ends Phase 0. Next: accept or amend ADR-001..009; then
-approve backlog items one by one (07 §4). No implementation, repository creation or migration happens
-before that. U1 is executed only after the IC2 consumers listed above are fixed.
+This package ends Phase 0: the architecture is accepted. Next: approve backlog items one by one
+(07 §4); the first are H1 (verify the harness for real) and A1 (adopt the harness here and write the
+ADRs as `docs/adr/` files, including the rename to `game-archaeologist`). No implementation,
+repository creation or migration happens before an item is approved; approved repositories are
+created when their milestone starts. U1 is executed only after the IC2 consumers listed above are fixed.
