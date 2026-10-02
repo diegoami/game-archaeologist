@@ -18,7 +18,8 @@
     },
     "store": {
       "type": "string",
-      "pattern": "^(release:E[0-9]{3,}|repo:.+)$"
+      "pattern": "^release:E[0-9]{3,}$",
+      "description": "the experiment's release: bundles are release assets, one release per experiment (05 §4)"
     },
     "artifact": {
       "type": "object",
@@ -72,8 +73,9 @@
               "memory-dump",
               "trace",
               "log",
-              "other"
-            ]
+              "measurement"
+            ],
+            "description": "the artifact class (docs/phase0/05-artifacts.md §1): save = class 3; screenshot, recording = class 4; memory-dump, trace, log, measurement = class 6 (raw measurements, memory dumps, traces, logs)"
           }
         },
         "required": [

@@ -249,7 +249,8 @@
           },
           "store": {
             "type": "string",
-            "pattern": "^(release:E[0-9]{3,}|repo:.+)$"
+            "pattern": "^release:E[0-9]{3,}$",
+            "description": "the experiment's release (05 §4); the run record itself lives in the repo, its outputs never do"
           }
         },
         "required": [

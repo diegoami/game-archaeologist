@@ -30,6 +30,10 @@ The vocabularies these use are in [vocabulary/](../vocabulary/): [status](../voc
   `ref` points at a file in the evidence bundle.
 - **Interventions are never omitted.** `interventions` is required, with at least one entry; a
   pure-observation run lists `{"level": "I0", "what": "none"}`.
+- **Bundles live in the experiment's release.** Every evidence file, and every run output, is in
+  `release:E<nnn>` (05 §4); only the run record and the manifest are in the repository. Each file's
+  `class` is its artifact class from 05 §1: `save` (3); `screenshot`, `recording` (4); `memory-dump`,
+  `trace`, `log`, `measurement` (6).
 - **Hashes are full.** Every `sha256` is 64 hex characters; a truncated hash fails validation (IC2's
   seed build was known only by `354d8265…532f`).
 - **Identity is named everywhere.** Run records and evidence manifests carry `artifact.set` and
