@@ -69,7 +69,11 @@
         },
         "fingerprint": {
           "type": "object",
-          "description": "versions that could change behaviour (emulator, Wine, OS); no paths, no secrets"
+          "description": "versions that could change behaviour (emulator, Wine, OS), as strings. A value containing / or \\ (a path) fails validation. Secrets are kept out by the evidence uploader's scan (docs/phase0/04-environment.md §10), not by this schema.",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[^/\\\\]*$"
+          }
         }
       },
       "required": [

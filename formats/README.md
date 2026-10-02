@@ -38,8 +38,12 @@ The vocabularies these use are in [vocabulary/](../vocabulary/): [status](../voc
   seed build was known only by `354d8265…532f`).
 - **Identity is named everywhere.** Run records and evidence manifests carry `artifact.set` and
   `artifact.variant` (`null` when the unmodified set ran).
-- **No paths, no secrets.** `machine` is an id. `runtime.fingerprint` holds versions that could change
-  behaviour, never paths or credentials.
+- **No paths.** `machine` is an id (lower-case letters, digits, hyphens). `runtime.fingerprint` holds
+  versions that could change behaviour, as strings, and a value containing `/` or `\` fails
+  validation.
+- **No secrets, by a different mechanism.** A schema cannot recognise a credential. Secrets are kept
+  out of records and bundles by the evidence uploader, which scans for the configured secret values
+  before upload ([04 §10](../docs/phase0/04-environment.md)). Review checks it, not this validator.
 
 ## Two rules no schema can express
 

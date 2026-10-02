@@ -13,5 +13,6 @@
   "run-1--value-without-location.json": "$.observations[1]: matches none of anyOf",
   "evidence-manifest-1--repo-store.json": "$.store: does not match pattern",
   "evidence-manifest-1--untraced-class.json": "$.files[0].class: 'other' not in",
-  "run-1--output-in-repo.json": "$.outputs[0].store: does not match pattern"
+  "run-1--output-in-repo.json": "$.outputs[0].store: does not match pattern",
+  "run-1--path-in-fingerprint.json": "$.runtime.fingerprint.config: does not match pattern"
 }
