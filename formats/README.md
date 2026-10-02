@@ -26,6 +26,8 @@ The vocabularies these use are in [vocabulary/](../vocabulary/): [status](../voc
 - **Raw only.** `run/1` allows no field outside its list. An interpretation is not a field: it
   belongs in a finding. A decoded value is allowed only under `decoded`, with `via` naming the
   representation claim (`R<nnn>`) that licenses it.
+- **Every observation is located.** A `value` comes with where it was read (`field` or `addr`); a
+  `ref` points at a file in the evidence bundle.
 - **Interventions are never omitted.** `interventions` is required, with at least one entry; a
   pure-observation run lists `{"level": "I0", "what": "none"}`.
 - **Hashes are full.** Every `sha256` is 64 hex characters; a truncated hash fails validation (IC2's

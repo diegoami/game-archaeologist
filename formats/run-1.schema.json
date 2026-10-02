@@ -215,7 +215,14 @@
         "anyOf": [
           {
             "required": [
-              "value"
+              "value",
+              "field"
+            ]
+          },
+          {
+            "required": [
+              "value",
+              "addr"
             ]
           },
           {
@@ -223,7 +230,8 @@
               "ref"
             ]
           }
-        ]
+        ],
+        "description": "one raw reading: a value with where it was read (field or addr), or a ref to a file in the evidence bundle"
       }
     },
     "outputs": {

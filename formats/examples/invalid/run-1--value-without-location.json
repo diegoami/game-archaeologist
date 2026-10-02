@@ -52,19 +52,12 @@
     {
       "step": 1,
       "source": "ui-text",
-      "field": "reinforcement prompt",
       "value": "You receive 3 armies."
     },
     {
       "step": 1,
       "source": "screen",
       "ref": "sha256:e15d4bbc82b54b0d83aab78a7b2ef128bae8d990972924ef8f47c0cb00a4286d"
-    },
-    {
-      "step": 1,
-      "source": "memory",
-      "addr": "0x8123",
-      "value": "05"
     }
   ],
   "outputs": [

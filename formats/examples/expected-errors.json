@@ -9,5 +9,6 @@
   "run-1--unknown-intervention-level.json": "$.interventions[0].level: 'I4' not in",
   "run-1--truncated-hash.json": "$.start_state.sha256: does not match pattern",
   "evidence-manifest-1--bad-asset-name.json": "$.files[0].asset: must be",
-  "evidence-manifest-1--no-artifact.json": "missing required property 'artifact'"
+  "evidence-manifest-1--no-artifact.json": "missing required property 'artifact'",
+  "run-1--value-without-location.json": "$.observations[1]: matches none of anyOf"
 }
