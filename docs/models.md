@@ -49,7 +49,13 @@ isle-wars-archaeology (CLAUDE.md rule 20):
 | Difficulty | Implementer | If it is unavailable | Reviewer | If it is unavailable |
 | --- | --- | --- | --- | --- |
 | Easy, the default | GLM-5.3 Flash | Sonnet | GPT-6 Luna | Sonnet |
-| Hard | DeepSeek V4.1 Flash | Sonnet | GPT-6.1 Sol | Opus |
+| Hard | DeepSeek V4.1 Flash | Sonnet | **GLM-5.3**; **GPT-6.1 Sol** (at `low`) for a guard task and for a hard task's last rework round | DeepSeek V4 Pro, then Opus |
+
+**Sol is used sparingly** (the owner, 2026-10-04): it reviews only **guard tasks** (blindness, the
+originals guard, sealed rules, record integrity) and the **last rework round of a hard task**, at
+effort `low`. Every other hard review goes to GLM-5.3 (`zai-glm-5.3`), the heavy third-family
+reviewer, or to DeepSeek V4 Pro when GLM implemented. GLM-5.3's first such review (goal2 T04) re-ran
+every Done-when line, regenerated the listing, made five mutations and checked the data bytes.
 
 **When a task is hard.** Any of:
 - a **guard task**: blindness, the originals guard, sealed rules, record integrity (the formats and

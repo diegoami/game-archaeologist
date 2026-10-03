@@ -46,8 +46,8 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
     GOAL2, treated as abandonware: its files and extracts may sit in private `goal2-archaeology` (U17).
 20. The model pair follows the task's difficulty (the owner's decision of 2026-10-03, as in
     isle-wars-archaeology). **Easy**, the default: GLM-5.3 Flash implements and GPT-6 Luna reviews,
-    with Sonnet as both fallbacks. **Hard**: DeepSeek V4.1 Flash implements and GPT-6.1 Sol reviews,
-    with Sonnet and Opus as the fallbacks. A task is hard if it is a **guard task** (its failure
+    with Sonnet as both fallbacks. **Hard**: DeepSeek V4.1 Flash implements and GLM-5.3 reviews; GPT-6.1 Sol
+    (effort `low`, used sparingly) reviews guard tasks and a hard task's last rework round. A task is hard if it is a **guard task** (its failure
     would leak or corrupt evidence: blindness, the originals guard, sealed rules, record integrity),
     if it adds a new mechanism across several files or a new external dependency, if it implements
     game rules, formulas or constants from evidence (the owner's decision of 2026-10-03), or if an earlier
