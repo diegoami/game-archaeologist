@@ -77,6 +77,7 @@ tasks to hard.
 | Work | Implementer | Reviewer | Why |
 | --- | --- | --- | --- |
 | Architecture: ADRs, the method, the retrospective | the main session (Opus) | by difficulty | the decisions are recorded ones; the reviewer checks citations and scope |
+| Research, spikes and static reading (judgment, not code) | Claude, with worktree isolation: **Opus when the task is hard**, Sonnet when it is easy | by difficulty | the owner's preference of 2026-10-03: hard judgment work goes to Opus (goal2 T02 and T04 started on Sonnet before it was stated) |
 | Toy research | a Claude session **as the local user `blind`** (method §6) | `luna`, also as `blind` | the researcher and its reviewer must not reach `toy-target` |
 | A toy research contract, after A6 | a Claude session that never read `toy-target` | — | the main session has read the sealed rules and could lead the researcher (method §6) |
 
