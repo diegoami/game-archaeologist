@@ -18,14 +18,16 @@ roster names: this page's `sol` is their `gpt-6-sol`.
 
 ## The roster
 
-| Name in `harness.json` | Model and route | Family | Where it is entered | Used for |
-| --- | --- | --- | --- | --- |
-| `deepseek-flash` | DeepSeek V4.1 Flash, `opencode-go/deepseek-v4.1-flash` | DeepSeek | all three | the default implementer |
-| `glm-flash-zai` | GLM-5.3 Flash, `zai-coding-plan/glm-5.3-flash` | GLM | toy-archaeology | a trial implementer; viable (two fixes, below) |
-| `luna` | GPT-6 Luna, `openai/gpt-6-luna`, the direct OpenAI route | OpenAI | all three | the default reviewer, and the research reviewer |
-| `sol` | GPT-6 Sol, `openai/gpt-6-sol` | OpenAI | all three | the reviewer of guard tasks (rule 20) |
-| (Claude) Opus | the main session | Claude | — | architecture tasks (A1–A6), the toy target (A4), the score (A6) |
-| (Claude) Opus or Sonnet | a Claude session as the blind user | Claude | — | toy research (Y2); the contract says Sonnet, and Y2 ran on Opus |
+| Name in `harness.json` | Model and route | Family | Used for |
+| --- | --- | --- | --- |
+| `zai-glm-5.3-flash` | GLM-5.3 Flash, `zai-coding-plan/glm-5.3-flash` | GLM | **easy implementer**, the `harness.json` default; probed 2026-10-03, PONG in 5 s |
+| `deepseek-flash` | DeepSeek V4.1 Flash, `opencode-go/deepseek-v4.1-flash` | DeepSeek | **hard implementer** (`--model deepseek-flash`) |
+| `luna` | GPT-6 Luna, `openai/gpt-6-luna`, the direct OpenAI route | OpenAI | **easy reviewer**, the `harness.json` default, and the research reviewer |
+| `gpt-6.1-sol` | GPT-6.1 Sol, `openai/gpt-6.1-sol` | OpenAI | **hard reviewer** (`--reviewer gpt-6.1-sol`); probed 2026-10-03, PONG in 6 s |
+| `sol` | GPT-6 Sol, `openai/gpt-6-sol` | OpenAI | the hard reviewer before 6.1 (T05, T06) |
+| `glm-flash-zai` | GLM-5.3 Flash (toy-archaeology only; the same model as `zai-glm-5.3-flash`) | GLM | the implementer trial (toy-archaeology #8, #9) |
+| (Claude) Sonnet | `claudeFallback` | Claude | both fallback implementers; the easy fallback reviewer; toy research as `blind` |
+| (Claude) Opus | the main session; the hard fallback reviewer | Claude | architecture tasks (A1–A6), the toy target (A4), the score (A6) |
 
 Every model runs at effort `high` (`variant` in `harness.json`), never `max`.
 
@@ -34,24 +36,47 @@ Every model runs at effort `high` (`variant` in `harness.json`), never `max`.
   below gave neither a role.
 - `glm-5.3-highspeed`: refused by the plan.
 
-## Routing: which pair for which work
+## Routing: easy or hard
+
+The owner decided on 2026-10-03 that the pair follows the task's difficulty, as in
+isle-wars-archaeology (CLAUDE.md rule 20):
+
+| Difficulty | Implementer | If it is unavailable | Reviewer | If it is unavailable |
+| --- | --- | --- | --- | --- |
+| Easy, the default | GLM-5.3 Flash | Sonnet | GPT-6 Luna | Sonnet |
+| Hard | DeepSeek V4.1 Flash | Sonnet | GPT-6.1 Sol | Opus |
+
+**When a task is hard.** Any of:
+- a **guard task**: blindness, the originals guard, sealed rules, record integrity (the formats and
+  their checker);
+- a new mechanism across several files, or a new external dependency;
+- an earlier round found blocking bypasses.
+
+Everything else is easy: doc and config fixes, exact-line contracts, single-mechanism code with
+clear tests. The main session decides, until Jev is calibrated for it (below); the task file's
+Implementer and Reviewer lines say `easy` or `hard` with the reason. A hard task passes
+`--model deepseek-flash` and `--reviewer gpt-6.1-sol`, and names Opus as its Claude fallback
+reviewer.
+
+**The exceptions:**
 
 | Work | Implementer | Reviewer | Why |
 | --- | --- | --- | --- |
-| Code, tools, tests, format examples | `deepseek-flash` (OpenCode) | `luna` | cheap; Luna proves findings by mutation |
-| A **guard task**: blindness, the originals guard, sealed rules, record integrity (formats, the checker) | `deepseek-flash`, or the main session | **`sol`** | a miss here leaks or corrupts evidence; in the replay only Sol blocked every head that had a blocker (rule 20) |
-| Architecture: ADRs, the method, the retrospective | the main session (Opus) | `luna`, or `sol` when it is a guard task | the decisions are recorded ones; the reviewer checks citations and scope |
+| Architecture: ADRs, the method, the retrospective | the main session (Opus) | by difficulty | the decisions are recorded ones; the reviewer checks citations and scope |
 | Toy research | a Claude session **as the local user `blind`** (method §6) | `luna`, also as `blind` | the researcher and its reviewer must not reach `toy-target` |
 | A toy research contract, after A6 | a Claude session that never read `toy-target` | — | the main session has read the sealed rules and could lead the researcher (method §6) |
 
-The reviewer is never the implementer's family. `review.mjs --exclude <implementer>` enforces it,
-and `--reviewer sol` picks Sol.
+The reviewer is never the implementer's family. `review.mjs --exclude <implementer>` enforces it.
+
+**Watch:** L27 records GLM-5.3 Flash stalling and ending long implementer runs early in IC2. Its
+two trial runs here were clean. Its first runs as the default are watched, and a stall is
+diagnosed before any fallback.
 
 ## How a run is made
 
 - **Implementer:** `node tools/harness/implement.mjs --task T<nn> --slug <slug> --issue <n> --brief <file> [--model <name>]`,
   with `run_in_background`, never a shell `&`. On rework the same command resumes the branch.
-- **Reviewer:** `node tools/harness/review.mjs --pr <n> --brief <file> --exclude <implementer> --issue <n> --apply-label [--reviewer sol]`.
+- **Reviewer:** `node tools/harness/review.mjs --pr <n> --brief <file> --exclude <implementer> --issue <n> --apply-label [--reviewer gpt-6.1-sol]`. A hard task passes `--model deepseek-flash` to the implementer and `--reviewer gpt-6.1-sol` here.
 - **As `blind`:** `sudo -iu blind bash -lc '. ~/.nvm/nvm.sh && export TMPDIR=~/tmp && cd ~/toy-archaeology && …'`.
   `blind` cannot read the main session's scratchpad: pipe a brief in on stdin
   (`sudo -iu blind bash -lc 'cat > ~/brief.md' < brief.md`).
@@ -59,7 +84,7 @@ and `--reviewer sol` picks Sol.
   on rework the review's URL. The review brief is §5's block (research: method §3's) filled in,
   then the task file. Until harness_imperial#19 and #24 land, a review brief also asks for one
   `DW<k>:` evidence line per Done-when line.
-- **The header** names the reviewer: `T<nn> review (sol)`. With `--reviewer`, a placeholder such as
+- **The header** names the reviewer: `T<nn> review (gpt-6.1-sol)`. With `--reviewer`, a placeholder such as
   `(MODEL)` is printed as written.
 - **Merging:** a squash, except a research PR, which merges with a merge commit (method §4).
 

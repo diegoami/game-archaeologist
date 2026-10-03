@@ -43,9 +43,12 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
     changes only by a harness bump. Rule 11 has no effect: this repository builds no playable game.
 19. Generic only with two concrete uses (ADR-009). Original game files never enter any repository,
     and Isle Wars originals never leave the user's own machines (ADR-006, U2).
-20. Reviewers: `luna` (GPT-6 Luna) by default. A **guard task** is reviewed by `sol` (GPT-6 Sol), and
-    its task file says why. A guard task is one whose failure would leak or corrupt evidence:
-    blindness, the originals guard, sealed rules, record integrity. User decision of 2026-10-03,
-    from the reviewer replay: Sol blocked every head that had a blocker, with no false findings.
-    The roster, the routing and what each model has shown are in `docs/models.md`; the main session
-    keeps it current.
+20. The model pair follows the task's difficulty (the owner's decision of 2026-10-03, as in
+    isle-wars-archaeology). **Easy**, the default: GLM-5.3 Flash implements and GPT-6 Luna reviews,
+    with Sonnet as both fallbacks. **Hard**: DeepSeek V4.1 Flash implements and GPT-6.1 Sol reviews,
+    with Sonnet and Opus as the fallbacks. A task is hard if it is a **guard task** (its failure
+    would leak or corrupt evidence: blindness, the originals guard, sealed rules, record integrity),
+    if it adds a new mechanism across several files or a new external dependency, or if an earlier
+    round found blocking bypasses. The main session decides; the task file's Implementer and
+    Reviewer lines say `easy` or `hard` with the reason. The roster, the routing and what each model
+    has shown are in `docs/models.md`; the main session keeps it current.

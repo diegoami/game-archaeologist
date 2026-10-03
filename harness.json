@@ -15,12 +15,22 @@
       "id": "openai/gpt-6-sol",
       "variant": "high",
       "family": "openai"
+    },
+    "zai-glm-5.3-flash": {
+      "id": "zai-coding-plan/glm-5.3-flash",
+      "variant": "high",
+      "family": "glm"
+    },
+    "gpt-6.1-sol": {
+      "id": "openai/gpt-6.1-sol",
+      "variant": "high",
+      "family": "openai"
     }
   },
   "implementer": {
     "agent": "implementer",
     "chain": [
-      "deepseek-flash"
+      "zai-glm-5.3-flash"
     ],
     "claudeFallback": "sonnet",
     "startupTimeoutSec": 180,
@@ -32,7 +42,7 @@
     "chain": [
       "luna"
     ],
-    "claudeFallback": "opus",
+    "claudeFallback": "sonnet",
     "startupTimeoutSec": 180,
     "idleTimeoutSec": 600,
     "totalTimeoutSec": 3600
