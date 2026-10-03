@@ -42,7 +42,8 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
     `harness_imperial` issue with its lesson. The copied harness is pinned in `harness.lock` and
     changes only by a harness bump. Rule 11 has no effect: this repository builds no playable game.
 19. Generic only with two concrete uses (ADR-009). Original game files never enter any repository,
-    and Isle Wars originals never leave the user's own machines (ADR-006, U2).
+    and Isle Wars originals never leave the user's own machines (ADR-006, U2). The one exception is
+    GOAL2, treated as abandonware: its files and extracts may sit in private `goal2-archaeology` (U17).
 20. The model pair follows the task's difficulty (the owner's decision of 2026-10-03, as in
     isle-wars-archaeology). **Easy**, the default: GLM-5.3 Flash implements and GPT-6 Luna reviews,
     with Sonnet as both fallbacks. **Hard**: DeepSeek V4.1 Flash implements and GPT-6.1 Sol reviews,

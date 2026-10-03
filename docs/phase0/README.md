@@ -104,9 +104,21 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 | ADRs | **ADR-001..009 accepted** (2026-10-02), after both independent reviews and their applied fixes. | The provisional parts named in 07 §1 stay provisional until their validating task: ADR-002 until H1, ADR-005 until H4's race test, the ADR-004 token list and the ADR-007 fields until A6. |
 | U11 | **The shareware/unregistered releases are the reference artifacts** for both games. | Every claim is scoped to the unregistered version. What registration unlocks is itself `unknown` (a W4x question). Nag screens and time limits, if any, are runtime facts for W3x. You supply the copies to your own machines; W1a/W1b hash and register them, and record where each came from. |
 
+### Decided by the user (2026-10-03)
+
+| # | Decision | Consequence |
+| --- | --- | --- |
+| U13 | **The model pair follows the task's difficulty**, as in isle-wars-archaeology. Easy: GLM-5.3 Flash implements, GPT-6 Luna reviews. Hard: DeepSeek V4.1 Flash implements, GPT-6.1 Sol reviews. Game rules, formulas or constants implemented from evidence count as hard. | CLAUDE.md rule 20, `docs/models.md`, `harness.json` in every repository of this session. Jev's `task-hard` decision makes the clear hard calls; easy stays the main session's. |
+| U14 | **A third target: GOAL2**, "goal (version 2)" by New Era Software (1993), a DOS text-mode international football team-management game. The user owns the full version. The end product is a behavioural spec, then a **faithful rebuild**, then a **bot**. | Unlike Isle Wars (U2, U9), reconstruction is a goal here. The spec feeds a rebuild, as IC2's did. |
+| U15 | **The bot maximises the World Cup win rate**, for every country, ranked. | The rebuild must simulate the match engine and the competitions fast enough for search or learning. Each strategy is confirmed on the original. |
+| U16 | **Behavioural and static methods**: running it in DOSBox-X, and unpacking (LZEXE) and decompiling `GOAL.EXE`. | `corroborated` is reachable by behavioural plus static. |
+| U17 | **GOAL2 is treated as abandonware.** Its files may be attached to a release of the private `goal2-archaeology`, and derived extracts (data tables, decompiled listings) may be committed there. | An exception to rule 19 and ADR-006 for GOAL2 only, and only in private repositories. Isle Wars stays under U2. |
+| U18 | **Python** for the rebuild and the bot; **DOSBox-X in WSL** for the original. | GOAL2 runs the DOSBox-X spike first; Isle Wars' DOS lane (W3b) can reuse it (ADR-009: two uses → extraction). |
+| U19 | **Two private repositories**: `goal2-archaeology` now, and `goal2` (rebuild and bot) when the spec covers the match engine. | G0 creates the first, with the harness and `formats-v1`. |
+
 ### Still open
 
-None. All twelve U-decisions are made, and ADR-001..009 were accepted on 2026-10-02.
+None. U1–U19 are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
