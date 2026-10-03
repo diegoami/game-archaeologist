@@ -6,7 +6,7 @@ commit 74e53ae4708d425fcacdae93b5ff5ce39f1486b9
 copied 2026-10-02 (bumped from f4c49d937874ad6802aa11629f344534a15942fc)
 adapted CLAUDE.md  (project line; conditional rules 17-20 deleted, none apply; project section added)
 adapted docs/tasks/README.md  (this repository's task index)
-adapted harness.json  (models: + sol, GPT-6 Sol, the guard-task reviewer; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the hard reviewer; reviewer fallback sonnet; + zai-glm-5.3 and deepseek-pro, the substitutes when GPT-6.1 Sol cannot review; 2026-10-03)
+adapted harness.json  (models: + sol, GPT-6 Sol, the guard-task reviewer; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the hard reviewer; reviewer fallback sonnet; + zai-glm-5.3 and deepseek-pro, the substitutes when GPT-6.1 Sol cannot review; Sol entries at variant low (the owner: Sol sparingly, at most medium); 2026-10-03)
 2f8e9cf140862021220021260d3e96b671ee44b323ba23d9ef89d7f1c023b6b1  .claude/hooks/session-start.sh
 9d2227215dcf47b9dc7c41d5c9b7f8c5b79dd962c3fb8c3f8f625032fa5eefae  .claude/settings.json
 bda67b96f233bee80031fbc135718145f167e186e77edd295719230ce29afb02  .claude/skills/delegate/SKILL.md

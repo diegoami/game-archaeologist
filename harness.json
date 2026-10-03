@@ -13,7 +13,7 @@
     },
     "sol": {
       "id": "openai/gpt-6-sol",
-      "variant": "high",
+      "variant": "low",
       "family": "openai"
     },
     "zai-glm-5.3-flash": {
@@ -23,7 +23,7 @@
     },
     "gpt-6.1-sol": {
       "id": "openai/gpt-6.1-sol",
-      "variant": "high",
+      "variant": "low",
       "family": "openai"
     },
     "zai-glm-5.3": {

@@ -30,7 +30,11 @@ roster names: this page's `sol` is their `gpt-6-sol`.
 | (Claude) Sonnet | `claudeFallback` | Claude | both fallback implementers; the easy fallback reviewer; toy research as `blind` |
 | (Claude) Opus | the main session; the hard fallback reviewer | Claude | architecture tasks (A1–A6), the toy target (A4), the score (A6) |
 
-Every model runs at effort `high` (`variant` in `harness.json`), never `max`.
+Every model runs at effort `high` (`variant` in `harness.json`), never `max`, **except Sol**: the
+owner's decision of 2026-10-03, when OpenAI credit was restored, is that Sol is used sparingly, at
+effort `low`, and at most `medium` (never `high`). Both Sol entries (`gpt-6.1-sol`, `sol`) are at
+`low`; a review that needs more passes `--variant medium` only with the reason in the task file.
+Probes at `low` and `medium`: PONG in 7 s and 4 s.
 
 **Probed, not entered:**
 - GLM-5.3 on the Z.AI Coding Plan, and DeepSeek V4 Pro: they answer, but the reviewer replay
@@ -162,6 +166,29 @@ caught or missed against Sol's earlier rounds.
 **Prevention.** `zai-glm-5.3` and `deepseek-pro` stay probed and entered in every repository's
 `harness.json` (both answered PONG in 6 s on 2026-10-03), so one provider's quota never blocks a hard
 task's last review.
+
+## Faster game cycles
+
+Not about models, but the time a game cycle takes sets how long every research run lasts, and so how
+much implementer and reviewer time a driver costs. isle-wars-archaeology measured Isle Wars Pro under
+Wine (its `docs/models.md`, T08's control runs): a cycle of about 25 s fell to about 10 s. Its
+lessons, as they apply to every driver here:
+
+- **Measure each step once** (environment ready, window or screen up, first stable screen, one
+  action, terminate, processes gone), so the slow step is known before optimising.
+- **Do not patch the game to skip what is slow.** A title or registration screen that is the main
+  menu stays; stripping an unregistered notice would be a crack.
+- **Terminate by killing, not through the game's menus** (Wine: Alt+F4 or `wineserver -k`; DOSBox-X:
+  ending the process). The full quit path is tested once, not in every cycle.
+- **Relaunch less often.** A driver keeps the game running between trials and starts each one from a
+  known state: a new game, a loaded save, or (DOSBox-X) a savestate. The launch is paid once per
+  session.
+- **Run in parallel.** Each run gets its own display (Xvfb) and its own copy of the game's files, so
+  runs side by side cannot interfere.
+
+GOAL2 (DOSBox-X) adds two levers to measure: emulated speed (cycles, turbo) without breaking input
+or screens, and the game's own "quick result option" (`GOAL.HLP` 127), if it uses the same engine as a
+watched match. G1 (goal2 T02) measures them; the numbers go here when it merges.
 
 ## How a run is made
 
