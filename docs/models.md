@@ -125,6 +125,44 @@ rounds, and the task escalated to the owner.
 finding counts before and after, and whether the stronger model converged; "What each model has
 shown" below gains a line. After several escalations, compare them before tuning the trigger.
 
+## When GPT-6.1 Sol cannot review
+
+Adopted on 2026-10-03 from isle-wars-archaeology (the owner passed it on), after Sol's round-2 review
+of goal2 T03 stopped with "The usage limit has been reached". Sol is the hard reviewer; when it cannot
+run, the review goes to a substitute instead of waiting, unless the owner says to wait.
+
+**First, diagnose.** Read the run's error file (`/tmp/harness-opencode/<session>.err.txt`) and probe
+`node tools/harness/switch-model.mjs --role reviewer --model openai/gpt-6.1-sol --name gpt-6.1-sol --probe --dry-run`.
+"The usage limit has been reached" means the whole OpenAI account is out of quota, so Luna is
+blocked too; confirm by probing `openai/gpt-6-luna`. If only Sol fails, Luna is still an option.
+
+**Substitutes, in order** (skip the implementer's family):
+
+| Situation | Hard review | Easy review |
+| --- | --- | --- |
+| Only Sol is unavailable | GLM-5.3 (`zai-glm-5.3`), then DeepSeek V4 Pro (`deepseek-pro`), then Luna, with the reason stated | Luna, as usual |
+| The OpenAI account is out of quota | GLM-5.3, then DeepSeek V4 Pro | GLM-5.3, then DeepSeek V4 Pro |
+| The implementer is GLM | DeepSeek V4 Pro | DeepSeek V4 Pro |
+| The implementer is DeepSeek | GLM-5.3 | GLM-5.3 |
+
+- Luna is a light reviewer: in Sol's place on a hard task only when no heavy third-family reviewer
+  can run, and the review's header says so.
+- Never a Claude reviewer when Claude implemented the task: escalate to the owner instead. (When
+  OpenCode implemented, the harness's Claude fallback remains allowed; goal2 T03's round 2 went to
+  Opus that way before this rule was adopted.)
+
+**How to run the substitute.** Probe it first (`--force` only when the refusal concerns the default
+implementer's family, not this task's). Reuse Sol's brief, with the header naming the substitute, one
+sentence saying it reviews in Sol's place and why, and Sol's earlier reviews linked so it re-takes
+their attacks. Run `review.mjs --reviewer zai-glm-5.3`; on exit 3, the same with `--reviewer
+deepseek-pro`. Record the change on the task file's Reviewer line with the date and reason, on
+`main`, and note in the PR's measurement comment the error, the probes, the substitute, and what it
+caught or missed against Sol's earlier rounds.
+
+**Prevention.** `zai-glm-5.3` and `deepseek-pro` stay probed and entered in every repository's
+`harness.json` (both answered PONG in 6 s on 2026-10-03), so one provider's quota never blocks a hard
+task's last review.
+
 ## How a run is made
 
 - **Implementer:** `node tools/harness/implement.mjs --task T<nn> --slug <slug> --issue <n> --brief <file> [--model <name>]`,

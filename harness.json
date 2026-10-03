@@ -25,6 +25,16 @@
       "id": "openai/gpt-6.1-sol",
       "variant": "high",
       "family": "openai"
+    },
+    "zai-glm-5.3": {
+      "id": "zai-coding-plan/glm-5.3",
+      "variant": "high",
+      "family": "glm"
+    },
+    "deepseek-pro": {
+      "id": "opencode-go/deepseek-v4-pro",
+      "variant": "high",
+      "family": "deepseek"
     }
   },
   "implementer": {
