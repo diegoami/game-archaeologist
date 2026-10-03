@@ -47,3 +47,5 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
     its task file says why. A guard task is one whose failure would leak or corrupt evidence:
     blindness, the originals guard, sealed rules, record integrity. User decision of 2026-10-03,
     from the reviewer replay: Sol blocked every head that had a blocker, with no false findings.
+    The roster, the routing and what each model has shown are in `docs/models.md`; the main session
+    keeps it current.
