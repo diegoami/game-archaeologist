@@ -164,7 +164,7 @@ must not learn the sealed rules except by experiment.
     Its OpenCode data dir and provider login are its own, and so is its temp directory (`TMPDIR`
     inside its home: the harness's transcript folder under `/tmp` is shared between users,
     harness_imperial#30). Commands run as `sudo -iu <user> bash -lc '…'`, which must load its own
-    node. The token is revoked when the research tasks it served are merged.
+    node.
 
   After H2 lands, an OpenCode run with a fine-grained token for that repository alone is a third
   path. The research reviewer runs on the same credentials as the researcher.
