@@ -35,7 +35,7 @@ The vocabularies these use are in [vocabulary/](../vocabulary/): [status](../voc
   `class` is its artifact class from 05 §1: `save` (3); `screenshot`, `recording` (4); `memory-dump`,
   `trace`, `log`, `measurement` (6).
 - **Hashes are full.** Every `sha256` is 64 hex characters; a truncated hash fails validation (IC2's
-  seed build was known only by `354d8265…532f`).
+  seed build was known only by `354d8265…`).
 - **Identity is named everywhere.** Run records and evidence manifests carry `artifact.set` and
   `artifact.variant` (`null` when the unmodified set ran).
 - **No paths.** `machine` is an id (lower-case letters, digits, hyphens; it starts with a letter or

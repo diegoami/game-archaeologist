@@ -1,0 +1,26 @@
+{
+  "schema": "artifact-set/1",
+  "id": "toy-1.1-afbfe3ca",
+  "title": "Toy Isles",
+  "version": "1.1",
+  "acquired": {
+    "how": "generated",
+    "when": "2026-10-03",
+    "note": "built by toy-target's release workflow"
+  },
+  "files": [
+    {
+      "path": "b.bin",
+      "bytes": 2,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "a.bin",
+      "bytes": 1,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "runtime_writes": [
+    "*.sav"
+  ]
+}
