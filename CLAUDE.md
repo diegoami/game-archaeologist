@@ -48,7 +48,8 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
     with Sonnet as both fallbacks. **Hard**: DeepSeek V4.1 Flash implements and GPT-6.1 Sol reviews,
     with Sonnet and Opus as the fallbacks. A task is hard if it is a **guard task** (its failure
     would leak or corrupt evidence: blindness, the originals guard, sealed rules, record integrity),
-    if it adds a new mechanism across several files or a new external dependency, or if an earlier
+    if it adds a new mechanism across several files or a new external dependency, if it implements
+    game rules, formulas or constants from evidence (the owner's decision of 2026-10-03), or if an earlier
     round found blocking bypasses. The main session decides; the task file's Implementer and
     Reviewer lines say `easy` or `hard` with the reason. The roster, the routing and what each model
     has shown are in `docs/models.md`; the main session keeps it current.

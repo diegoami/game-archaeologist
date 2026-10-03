@@ -10,15 +10,20 @@ Answer yes if the task is hard: if any of these holds.
   purpose is to catch a forbidden state; the format of evidence records.
 - It adds a new mechanism across several files or modules, or a new external dependency (a
   library, a service, a runtime, an emulator).
+- It implements game rules, formulas or constants from evidence (a report, a corpus, a decompiled
+  routine, an observed behaviour): rules transcribed from evidence are where wrong values slip in.
 - It is a rework of a task whose review found blocking bypasses or evasions.
 
 Answer no if the task is easy: a documentation or configuration fix, a change whose contract names
 the exact lines, a correction confined to one or two files, a single-mechanism change with clear
-tests, a task file or index update, or data entry from a given source.
+tests, a task file or index update, or data entry from a given source that is not game rules or
+constants (asset keys, an index, a list of files).
 
 Confusing cases:
 - Many files changed mechanically (a rename, a link fix in many documents) is easy: no new mechanism.
 - A small change to a guard or validator is hard: a guard's small changes are where bypasses live.
+- Game-rule code is hard even when it is small and well tested; a pure refactor of rule code that
+  changes no rule, value or formula is easy.
 - A research or investigation task that only writes documents is easy unless its records are the
   evidence format itself or it must keep something hidden.
 - "Correction" in the kind does not make a task easy or hard by itself; judge what it changes.

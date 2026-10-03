@@ -50,6 +50,9 @@ isle-wars-archaeology (CLAUDE.md rule 20):
 - a **guard task**: blindness, the originals guard, sealed rules, record integrity (the formats and
   their checker);
 - a new mechanism across several files, or a new external dependency;
+- game rules, formulas or constants implemented from evidence (the owner's decision of
+  2026-10-03, from the Jev trial: these were most of the "easy" IC2 tasks that took two or more
+  rework rounds);
 - an earlier round found blocking bypasses.
 
 Everything else is easy: doc and config fixes, exact-line contracts, single-mechanism code with
@@ -60,12 +63,13 @@ reviewer.
 
 **Jev decides the clear hard cases** (decision `task-hard`, [docs/jev/task-hard.md](jev/task-hard.md)).
 Route a new task file through `jev.mjs route --decision task-hard` (run with `bash -ic`, where the
-OpenRouter key is set). At p ≥ 0.9 it is hard, and the task file says "hard (Jev, p = …)"; anything
-else the main session decides, since no cutoff for easy passed the trial. Trial of 2026-10-03:
-132 task files labelled blind by three Sonnet agents; held out, 22 of 22 hard calls agreed (100%),
-covering 34% of items. Against IC2's outcomes, the labels' hard tasks averaged 1.77 rework rounds
-and their easy ones 0.92; most easy tasks that still took two or more rounds were game rules
-transcribed from evidence, which the criteria do not count as hard.
+OpenRouter key is set). At p ≥ 0.8 it is hard, and the task file says "hard (Jev, p = …)"; anything
+else the main session decides, since no cutoff for easy passed the trial. Trial of 2026-10-03, on
+132 task files labelled blind by Sonnet agents: held out, 46 of 46 hard calls agreed (100%),
+covering 72% of items. Against IC2's review outcomes, the labels' hard tasks averaged 1.55 rework
+rounds (43 of 84 took two or more) and their easy ones 0.93 (3 of 15). Counting game rules from
+evidence as hard (the owner's decision, after the first trial) moved most of the reworked "easy"
+tasks to hard.
 
 **The exceptions:**
 
