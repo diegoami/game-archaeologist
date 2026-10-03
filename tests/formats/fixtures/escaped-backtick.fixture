@@ -1,0 +1,6 @@
+# Escaped-backtick fixture
+
+A backslash-escaped backtick is literal text: it opens no code span. The link below is therefore a
+real relative link, even though the line ends with a backtick, and `tools/check_links.py` must
+report it missing.
+\`[bad](missing-escaped-backtick.md)`

@@ -14,9 +14,21 @@ REF_DEF = re.compile(r"^[ \t]*\[([^\]]+)\]:[ \t]*(\S+)")
 
 
 def strip_code_spans(line):
-    """Remove CommonMark code spans from a line, so links inside them are not checked. A run of N
+    """Remove CommonMark code spans from one line, so links inside them are not checked. A run of N
     backticks opens a span that closes at the next run of exactly N backticks and may itself contain
-    backticks; a run with no closing run of its own length is literal text."""
+    backticks; a run with no closing run of its own length is literal text. A backtick escaped by a
+    preceding odd number of backslashes is literal text: it opens and closes no span. Spans never
+    cross a line."""
+    chars = list(line)
+    for i, ch in enumerate(chars):
+        if ch != "`":
+            continue
+        backslashes, j = 0, i - 1
+        while j >= 0 and line[j] == "\\":
+            backslashes, j = backslashes + 1, j - 1
+        if backslashes % 2:
+            chars[i] = " "
+    line = "".join(chars)
     out, i, n = [], 0, len(line)
     while i < n:
         if line[i] != "`":

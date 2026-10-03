@@ -10,5 +10,9 @@ contains the single backtick and the link, and both are ignored:
 
 A single-backtick code span is ignored too: `[code](missing-single.md)`
 
+A backslash-escaped backtick opens no span, so the next backtick does; its broken link stays hidden.
+If the escaped backtick wrongly opened a span, it would eat that next backtick and expose the link:
+\` `[code](missing-exposed-if-escaped-opens.md)`
+
 This link sits outside every code span, so it is still checked, and it resolves:
 [checker](../check_examples.py)
