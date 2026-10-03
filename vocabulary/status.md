@@ -34,8 +34,8 @@ archaeology.
 
 ## Finding outcomes
 
-Line 3 of a research review (ADR-008, [research protocol](../method/research-protocol.md) §3); line
-2 is the record verdict. A finding that proposes more than one claim gets one outcome per claim. One
+The outcome is on line 3 of a research review (ADR-008, [research protocol](../method/research-protocol.md)
+§3); line 2 is the record verdict. A finding that proposes more than one claim gets one outcome per claim. One
 of:
 
 | Outcome | Meaning | Effect on the claim at promotion |
