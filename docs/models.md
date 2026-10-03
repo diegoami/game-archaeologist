@@ -3,7 +3,8 @@
 This page is the main session's working strategy for routing work to models. It covers this
 repository and the two toy repositories the same session runs:
 [toy-target](https://github.com/diegoami/toy-target) (private) and
-[toy-archaeology](https://github.com/diegoami/toy-archaeology) (private). isle-wars-archaeology and
+[toy-archaeology](https://github.com/diegoami/toy-archaeology) (private), and
+[goal2-archaeology](https://github.com/diegoami/goal2-archaeology) (private, U14–U20). isle-wars-archaeology and
 malpaco keep their own page, also `docs/models.md`. The two pages share the harness, not their
 roster names: this page's `sol` is their `gpt-6-sol`.
 
