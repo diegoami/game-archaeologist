@@ -10,8 +10,43 @@ import sys
 from pathlib import Path
 
 INLINE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
-CODE_SPAN = re.compile(r"`+[^`]*`+")
 REF_DEF = re.compile(r"^[ \t]*\[([^\]]+)\]:[ \t]*(\S+)")
+
+
+def strip_code_spans(line):
+    """Remove CommonMark code spans from a line, so links inside them are not checked. A run of N
+    backticks opens a span that closes at the next run of exactly N backticks and may itself contain
+    backticks; a run with no closing run of its own length is literal text."""
+    out, i, n = [], 0, len(line)
+    while i < n:
+        if line[i] != "`":
+            out.append(line[i])
+            i += 1
+            continue
+        opener_end = i
+        while opener_end < n and line[opener_end] == "`":
+            opener_end += 1
+        width = opener_end - i
+        close, closing_end = opener_end, None
+        while close < n:
+            if line[close] != "`":
+                close += 1
+                continue
+            run_end = close
+            while run_end < n and line[run_end] == "`":
+                run_end += 1
+            if run_end - close == width:
+                closing_end = run_end
+                break
+            close = run_end
+        if closing_end is None:
+            out.append(line[i:opener_end])
+            i = opener_end
+        else:
+            i = closing_end
+    return "".join(out)
+
+
 root = Path(subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip())
 files = subprocess.check_output(["git", "ls-files", "-co", "--exclude-standard"], cwd=root, text=True).split()
 problems = []
@@ -34,7 +69,7 @@ for name in files:
         if in_fence:
             continue
         # Inline code spans are not links; a reference definition can sit outside one.
-        line = CODE_SPAN.sub("", line)
+        line = strip_code_spans(line)
         targets = INLINE.findall(line)
         definition = REF_DEF.match(line)
         if definition:
