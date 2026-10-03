@@ -24,12 +24,19 @@ Source: [docs/phase0/06-research.md](../docs/phase0/06-research.md) §4; [ADR-00
 | `refuted` | a reviewed finding contradicts it | research review |
 | `contested` | reviewed findings disagree, unresolved | promotion, when a new finding conflicts |
 
+The two methods of `corroborated` come from two reviewed findings. An I0 confirmation inside one
+finding is what lets an `intervened` basis speak for the original ([basis.md](basis.md)); it does not
+corroborate that finding, whose runs share one machine and one driver (F001 in toy-archaeology, I0
+and I3 in one finding, was promoted `supported`).
+
 A finding of the original game is never `designed`. That word belongs to a rebuild, not to
 archaeology.
 
 ## Finding outcomes
 
-The second line of a research review (ADR-008). One of:
+The outcome is on line 3 of a research review (ADR-008, [research protocol](../method/research-protocol.md)
+§3); line 2 is the record verdict. A finding that proposes more than one claim gets one outcome per claim. One
+of:
 
 | Outcome | Meaning | Effect on the claim at promotion |
 | --- | --- | --- |
