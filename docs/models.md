@@ -201,6 +201,9 @@ watched match. G1 (goal2 T02) measures them; the numbers go here when it merges.
 - **Implementer:** `node tools/harness/implement.mjs --task T<nn> --slug <slug> --issue <n> --brief <file> [--model <name>]`,
   with `run_in_background`, never a shell `&`. On rework the same command resumes the branch.
 - **Reviewer:** `node tools/harness/review.mjs --pr <n> --brief <file> --exclude <implementer> --issue <n> --apply-label [--reviewer gpt-6.1-sol]`. A hard task passes `--model deepseek-flash` to the implementer and `--reviewer gpt-6.1-sol` here.
+- **Every implementer that measures** (a research task, a runtime spike, a static reading): its brief
+  says that every measured output goes under a tracked path the task owns, is committed and pushed
+  after each batch and at least every 30 minutes, and is never deleted or overwritten (L207).
 - **As `blind`:** `sudo -iu blind bash -lc '. ~/.nvm/nvm.sh && export TMPDIR=~/tmp && cd ~/toy-archaeology && …'`.
   `blind` cannot read the main session's scratchpad: pipe a brief in on stdin
   (`sudo -iu blind bash -lc 'cat > ~/brief.md' < brief.md`).
