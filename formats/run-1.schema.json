@@ -172,7 +172,6 @@
     },
     "observations": {
       "type": "array",
-      "minItems": 1,
       "items": {
         "type": "object",
         "properties": {
@@ -323,5 +322,24 @@
     "ended",
     "status"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "anyOf": [
+    {
+      "properties": {
+        "status": {
+          "pattern": "^aborted: .+$"
+        }
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "const": "completed"
+        },
+        "observations": {
+          "minItems": 1
+        }
+      }
+    }
+  ]
 }
