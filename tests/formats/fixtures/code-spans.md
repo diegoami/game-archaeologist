@@ -14,5 +14,9 @@ A backslash-escaped backtick opens no span, so the next backtick does; its broke
 If the escaped backtick wrongly opened a span, it would eat that next backtick and expose the link:
 \` `[code](missing-exposed-if-escaped-opens.md)`
 
+A removed span leaves a space, so text on either side of it is not joined into a link that was
+never written. Without the space this line would read as a link to a missing file:
+[label]`code`(missing-glued-by-removal.md)
+
 This link sits outside every code span, so it is still checked, and it resolves:
 [checker](../check_examples.py)

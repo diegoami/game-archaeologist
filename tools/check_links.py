@@ -55,6 +55,8 @@ def strip_code_spans(line):
             out.append(line[i:opener_end])
             i = opener_end
         else:
+            # A space, not nothing: `[a]`x`(b.md)` must not become the link `[a](b.md)`.
+            out.append(" ")
             i = closing_end
     return "".join(out)
 
