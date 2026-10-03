@@ -11,3 +11,5 @@ Each title ends with the task's plan label (A1, A2, …) from
 | T02 | Formats and vocabularies v1 (A2) | #3 | T01 |
 | T03 | Harness bump to 74e53ae (the reviewer without git -C) | #6 | T01 |
 | T04 | The research protocol: researcher brief, research review, promotion (A3) | #11 | T02 |
+| T05 | Formats corrections before formats-v1 (#14 items 1–8) | #15 | T04 |
+| T06 | Walking-skeleton retrospective: the score, the method amendments, formats-v1 (A6) | #16 | T05 |
