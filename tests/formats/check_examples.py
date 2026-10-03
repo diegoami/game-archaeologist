@@ -61,7 +61,7 @@ def validate(value, schema, path="$"):
     if isinstance(value, str):
         if "minLength" in schema and len(value) < schema["minLength"]:
             errors.append(f"{path}: shorter than {schema['minLength']}")
-        if "pattern" in schema and not re.search(schema["pattern"], value):
+        if "pattern" in schema and not re.fullmatch(schema["pattern"], value):  # `$` also matches before a trailing newline
             errors.append(f"{path}: does not match pattern {schema['pattern']}")
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         if "minimum" in schema and value < schema["minimum"]:

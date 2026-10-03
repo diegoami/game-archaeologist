@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """Fail if a relative link in a tracked Markdown file points at a file that does not exist, or a
-tracked JSON file does not parse. Web links and in-page anchors are not checked. Exit 0 clean, 1 broken."""
+tracked JSON file does not parse. Inline links and reference-style links (via their `[ref]: target`
+definitions) are checked; code spans, fenced code blocks, web links and in-page anchors are not.
+Exit 0 clean, 1 broken."""
 import json
 import re
 import subprocess
 import sys
 from pathlib import Path
 
-LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+INLINE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+CODE_SPAN = re.compile(r"`+[^`]*`+")
+REF_DEF = re.compile(r"^[ \t]*\[([^\]]+)\]:[ \t]*(\S+)")
 root = Path(subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip())
 files = subprocess.check_output(["git", "ls-files", "-co", "--exclude-standard"], cwd=root, text=True).split()
 problems = []
@@ -26,9 +30,18 @@ for name in files:
     for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if line.lstrip().startswith("```"):
             in_fence = not in_fence
+            continue
         if in_fence:
             continue
-        for target in LINK.findall(line):
+        # Inline code spans are not links; a reference definition can sit outside one.
+        line = CODE_SPAN.sub("", line)
+        targets = INLINE.findall(line)
+        definition = REF_DEF.match(line)
+        if definition:
+            targets.append(definition.group(2))
+        for target in targets:
+            if target.startswith("<") and target.endswith(">"):
+                target = target[1:-1]
             if re.match(r"^[a-z][a-z0-9+.-]*:", target) or target.startswith("#"):
                 continue
             target = target.split("#", 1)[0]
