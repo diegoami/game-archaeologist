@@ -86,6 +86,44 @@ The reviewer is never the implementer's family. `review.mjs --exclude <implement
 two trial runs here were clean. Its first runs as the default are watched, and a stall is
 diagnosed before any fallback.
 
+## Escalating the implementer after a heavy review
+
+Adopted on 2026-10-03 from isle-wars-archaeology's proposal, which the owner passed on ("adopt if
+appropriate"). When a reviewer shows that the implementer is out of its depth, the next round goes
+to a stronger implementer. A task does not spend its last rework round on the same model. T05 is
+the case that would have triggered it: Sol found a new blocking code-span defect in each of three
+rounds, and the task escalated to the owner.
+
+**Trigger.** Either of these, judged from the review just posted:
+- the review asks for rework with three or more blocking findings;
+- a rework round brings new blocking findings of the same class as the previous round's (for
+  example, the same kind of bypass found again in new code): the fix did not converge.
+
+**Ladder.** The implementer moves up one step for the next round, and never steps down within a task:
+- GLM-5.3 Flash (`zai-glm-5.3-flash`) → DeepSeek V4.1 Flash (`deepseek-flash`) → Claude Opus;
+- Claude Sonnet → Claude Opus.
+
+**Rules that still hold:**
+- The rework-round limit (rule 7) does not reset. After the last round, a remaining blocking finding
+  goes to the owner with options.
+- The reviewer stays from another family than the implementer. If Opus implements and no OpenCode
+  reviewer is available, a Claude fallback reviewer is not allowed: escalate to the owner.
+- The Done-when is never weakened to make the stronger model's round pass.
+
+**Hand-over.** The main session:
+1. stops the current implementer if it is mid-round;
+2. saves its unpushed work as a patch (`git add -N` new files, then `git diff > patch`);
+3. starts the new implementer on the pushed branch with the task file pasted in full, every review so
+   far (the current one in full), the patch path "to weigh, never to apply blindly", and an
+   instruction to fix the class of the findings, not each instance, then to sweep its own code for
+   the same class and list the sweep in the PR body;
+4. records the change on the task file's Implementer line, with the finding counts as the reason, and
+   commits that on `main`.
+
+**Records.** After the round, the PR's measurement comment gives the models, the trigger, the
+finding counts before and after, and whether the stronger model converged; "What each model has
+shown" below gains a line. After several escalations, compare them before tuning the trigger.
+
 ## How a run is made
 
 - **Implementer:** `node tools/harness/implement.mjs --task T<nn> --slug <slug> --issue <n> --brief <file> [--model <name>]`,
