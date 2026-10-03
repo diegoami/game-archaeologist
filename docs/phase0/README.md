@@ -115,10 +115,11 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 | U17 | **GOAL2 is treated as abandonware.** Its files may be attached to a release of the private `goal2-archaeology`, and derived extracts (data tables, decompiled listings) may be committed there. | An exception to rule 19 and ADR-006 for GOAL2 only, and only in private repositories. Isle Wars stays under U2. |
 | U18 | **Python** for the rebuild and the bot; **DOSBox-X in WSL** for the original. | GOAL2 runs the DOSBox-X spike first; Isle Wars' DOS lane (W3b) can reuse it (ADR-009: two uses → extraction). |
 | U19 | **Two private repositories**: `goal2-archaeology` now, and `goal2` (rebuild and bot) when the spec covers the match engine. | G0 creates the first, with the harness and `formats-v1`. |
+| U20 | **Modern GOAL2 databases**: current national teams and players, written into GOAL2's own data format. Facts come from open data only (Wikidata, CC0; openfootball, public domain). Skill ratings are computed by our own documented formula, never copied from a commercial game or database (EA, Football Manager, Transfermarkt). | Private repositories only, never published. It needs the `GOAL.DAT` format specified first (a representation claim set), and lives in `goal2` beside the rebuild. |
 
 ### Still open
 
-None. U1–U19 are made, and ADR-001..009 were accepted on 2026-10-02.
+None. U1–U20 are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
