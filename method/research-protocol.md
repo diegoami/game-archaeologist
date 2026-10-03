@@ -36,6 +36,11 @@ Runtime, Design, Measurements and Outputs bind you.
 - Raw before interpretation. Write one run record per run (`runs/E<nnn>/<run-id>.json`, valid
   `run/1`) and its evidence manifest, upload the bundle to release `E<nnn>`, and commit and push
   them, **before** you write any finding. A run that aborts is recorded as aborted, never dropped.
+- Measurements are kept, committed and pushed as you go. Every output a finding may cite (a run
+  record, a probe's log or table, a timing) is written under a tracked path the task owns, never only
+  under `scratch/`. Commit and push after each batch of runs or probes, and at least every 30
+  minutes, so a stopped session loses nothing. Never delete or overwrite a measured output: a re-run
+  writes new files beside the old ones, and the finding says which it cites.
 - Record every intervention, including passive ones (`{"level": "I0", "what": "none"}` for pure
   observation). The start state's sha256 and how it was restored go in every record.
 - Observations are raw: what was read, where, from which source. A decoded value goes only in
