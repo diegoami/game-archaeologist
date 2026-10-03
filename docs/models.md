@@ -58,6 +58,15 @@ Implementer and Reviewer lines say `easy` or `hard` with the reason. A hard task
 `--model deepseek-flash` and `--reviewer gpt-6.1-sol`, and names Opus as its Claude fallback
 reviewer.
 
+**Jev decides the clear hard cases** (decision `task-hard`, [docs/jev/task-hard.md](jev/task-hard.md)).
+Route a new task file through `jev.mjs route --decision task-hard` (run with `bash -ic`, where the
+OpenRouter key is set). At p ≥ 0.9 it is hard, and the task file says "hard (Jev, p = …)"; anything
+else the main session decides, since no cutoff for easy passed the trial. Trial of 2026-10-03:
+132 task files labelled blind by three Sonnet agents; held out, 22 of 22 hard calls agreed (100%),
+covering 34% of items. Against IC2's outcomes, the labels' hard tasks averaged 1.77 rework rounds
+and their easy ones 0.92; most easy tasks that still took two or more rounds were game rules
+transcribed from evidence, which the criteria do not count as hard.
+
 **The exceptions:**
 
 | Work | Implementer | Reviewer | Why |

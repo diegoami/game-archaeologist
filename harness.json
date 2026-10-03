@@ -57,6 +57,37 @@
       "breaks-play": {
         "type": "noul",
         "instructionsFile": "docs/jev/breaks-play.md"
+      },
+      "task-hard": {
+        "type": "noul",
+        "instructionsFile": "docs/jev/task-hard.md",
+        "autoYesAt": 0.9,
+        "trial": {
+          "date": "2026-10-03",
+          "model": "jev-1.13",
+          "labels": "132 task files (imperial_conquest_2 113, game-archaeologist 6, isle-wars-archaeology 8, malpaco 2, toy-archaeology 3), labelled blind by three Claude Sonnet agents from docs/jev/task-hard.md; Jev is measured against them, not against outcomes",
+          "heldOut": {
+            "n": 64,
+            "yes": {
+              "n": 22,
+              "precision": 1.0
+            },
+            "no": {
+              "n": 0,
+              "precision": null
+            },
+            "coverage": 0.34375
+          },
+          "tuning": {
+            "n": 68,
+            "yes": {
+              "n": 22,
+              "precision": 0.9545
+            },
+            "coverage": 0.3235
+          },
+          "noCutoff": "no end of 'easy' reached the 0.95 target; easy stays the main session's"
+        }
       }
     }
   },
