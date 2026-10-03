@@ -10,6 +10,11 @@
       "id": "openai/gpt-6-luna",
       "variant": "high",
       "family": "openai"
+    },
+    "sol": {
+      "id": "openai/gpt-6-sol",
+      "variant": "high",
+      "family": "openai"
     }
   },
   "implementer": {

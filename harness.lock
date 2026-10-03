@@ -6,6 +6,7 @@ commit 74e53ae4708d425fcacdae93b5ff5ce39f1486b9
 copied 2026-10-02 (bumped from f4c49d937874ad6802aa11629f344534a15942fc)
 adapted CLAUDE.md  (project line; conditional rules 17-20 deleted, none apply; project section added)
 adapted docs/tasks/README.md  (this repository's task index)
+adapted harness.json  (models: + sol, GPT-6 Sol, the guard-task reviewer; defaults unchanged; 2026-10-03)
 2f8e9cf140862021220021260d3e96b671ee44b323ba23d9ef89d7f1c023b6b1  .claude/hooks/session-start.sh
 9d2227215dcf47b9dc7c41d5c9b7f8c5b79dd962c3fb8c3f8f625032fa5eefae  .claude/settings.json
 bda67b96f233bee80031fbc135718145f167e186e77edd295719230ce29afb02  .claude/skills/delegate/SKILL.md
@@ -20,7 +21,6 @@ c14a14b50a56c20b43ca8080ad03a77da928c6cfef7985d1bd37a6c263dad9a3  .claude/skills
 f8a9ee7421d70e642710d100767f35a20d857e31f9048cdb932bd5ccde541c84  docs/lessons.md
 6a748a1d08ef2115f54a453873fe35b5e23485aff0d3dfefb824867e8ea9235a  docs/process.md
 6c0d3caa2c15f86c261718bfafe50bc660baf148d0fa786929a8a91d3b5897d6  docs/tasks/TEMPLATE.md
-334c0bf65bb9d987df30af9faab543b81b09a4173a480b57e7bfed8ae71ae170  harness.json
 c1f344574897071dfffe5a34831730a4576da1f21be90951cfe4fb8c6407a351  tools/harness/implement.mjs
 9befbffd7ca14116d581da6fefefbe5d43514f8c3d4a7419467f4a7810e8f96b  tools/harness/jev.mjs
 331fa100a1f783c4eb5f5bdc728e4ac0072069f068c8db375c37af3321d75110  tools/harness/lib/chain.mjs
