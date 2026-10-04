@@ -106,6 +106,41 @@ to its own path. Never copy or edit it, so every repository stays on the rules o
 pins. `tests/formats/check_examples.py` (run in CI) uses the same module to check the examples
 against `expected-errors.json` and the claim statuses against 06 §4.
 
+### Registering a set
+
+`tools/register_artifact.py` (stdlib only, Python ≥ 3.11) registers an artifact set and checks a
+copy. Fetch it beside `tools/validate_records.py` and `formats/*.schema.json` at the pinned commit,
+keeping that layout; it imports `canonical_set_hash`, `validate_document` and the schema loading
+from the validator, so the identity rule is never re-implemented.
+
+- `python3 tools/register_artifact.py manifest <dir> --label … --title … --version … --how …
+  [--when <date>] [--note …] [--runtime-write GLOB]… [--exclude GLOB]…` prints the
+  `artifact-set/1` manifest, `id` included, that `artifacts/known.json` holds. `--when` defaults to
+  today. A file matching a `runtime_writes` glob or an `--exclude` glob leaves `files`; `--exclude`
+  is not recorded. `--writes` is an alias of `--runtime-write`.
+- `python3 tools/register_artifact.py check (<dir> | --list <file>) <set-id> [--strict]
+  [--known artifacts/known.json]` re-hashes a copy, or reads `<sha256>  <bytes>  <path>` listing
+  lines, and compares them with the `known.json` entry. A listed file whose bytes or sha256 differ,
+  or that is missing, is a failure; a file outside the manifest prints `unlisted: <path>` and fails
+  only with `--strict`.
+- `python3 tools/register_artifact.py validate [--known artifacts/known.json]` checks every entry
+  against the schema and recomputes its id.
+
+`--known` is relative to the working directory, never to the script. Errors are named lines and exit
+1; usage errors exit 2.
+
+Nothing is accepted unvalidated. `check` and `validate` accept a manifest only when it matches the
+schema, its id is the canonical one, and no path is named twice; a `known.json` names each id once.
+Every path, in a manifest or a listing, is relative and POSIX, with no `..`, `.` or empty segment, no
+backslash and no drive letter. A listing line is a 64-hex sha256 (upper case is read as the same
+digest), a byte count of digits only, and such a path. A symbolic link that leaves the checked
+directory, a broken link and a special file are reported and never read, so `check` fails and
+`manifest` refuses the directory.
+
+A successor set is registered with the same `manifest` command: a shipped file the game writes moves
+from `files` to a `runtime_writes` glob, `runtime_writes` is completed as observed, and the new id's
+entry in `known.json` names the predecessor (U21, above).
+
 ## Versioning
 
 A schema id (`run/1`) never changes meaning. A breaking change is a new id (`run/2`) beside the old
