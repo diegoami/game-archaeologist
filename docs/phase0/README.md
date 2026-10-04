@@ -129,9 +129,11 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 
 | U24 | **A game copy holding a special file or an unsafe symlink fails registration and checking**: a socket, a device, a broken link, or a link out of the folder. This holds even when the entry is unlisted, matches `runtime_writes` or `--exclude`, and `--strict` is off (T09, Sol's round-3 R1 on #24). | DOS-era games never create such entries, so one means the copy is not what it seems. `tools/register_artifact.py` names it and never follows or reads it. This is the same fail-closed choice as U23. |
 
+| U25 | **A finding's `## Answer` and `## Inferences` sections hold only list items, `###` sub-headings and tables.** List items use `-`, `*`, `+` or numbered markers, with indented continuation lines. In a table, every data row must cite a run id, as a bullet must; the header and `---` separator rows are exempt. Blank lines are allowed. Anything else there is an error, "unsupported in a protected section": HTML, a blockquote, a code fence, any other heading level, or a repeated Answer or Inferences heading (T10, Sol's round-2 R1 and R2 on #27; tables and `###` added on 2026-10-04 so that the existing findings that use them still pass). | `check_citations.py` fails closed instead of parsing ever more Markdown. Each review round found a new construct that hid an uncited claim, as T05's code spans did. `formats/templates/finding.md` says so. On 2026-10-04 the existing findings in toy-archaeology, goal2-archaeology and isle-wars-archaeology use only these forms, except one lead-in sentence each in goal2's F002 and F004. Those two get a one-line fix when goal2 migrates. |
+
 ### Still open
 
-None. U1–U24 are made, and ADR-001..009 were accepted on 2026-10-02.
+None. U1–U25 are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
