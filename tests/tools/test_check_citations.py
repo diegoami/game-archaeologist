@@ -3,6 +3,10 @@
 A bullet's continuation lines are the indented lines that follow it, not a new bullet; a blank or
 unindented line ends it (toy-archaeology#12). `--runs` defaults to `runs/` under the working
 directory, never under the script's directory.
+
+Round 2 (PR #27 review): every Markdown list marker is a bullet (`-`, `*`, `+`, numbered `1.`/`1)`,
+tab-separated, a lone marker, blockquoted), every occurrence of a protected section is checked, a
+thematic break is not a bullet, and fenced code is neither heading nor bullet.
 """
 from __future__ import annotations
 
@@ -91,6 +95,92 @@ class CheckCitationsTest(unittest.TestCase):
         result = run_check_text(finding_text("* An uncited star bullet"))
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
         self.assertIn("## Answer bullet cites no run id: * An uncited star bullet", result.stdout)
+
+    def test_plus_bullet_is_checked(self):
+        # PR #27 round 2, R1: a `+ ` bullet is as much a claim as a `- ` one.
+        result = run_check_text(finding_text("+ An uncited plus bullet"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: + An uncited plus bullet", result.stdout)
+
+    def test_numbered_dot_bullet_is_checked(self):
+        result = run_check_text(finding_text("1. An uncited numbered bullet"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: 1. An uncited numbered bullet", result.stdout)
+
+    def test_numbered_paren_bullet_is_checked(self):
+        result = run_check_text(finding_text("1) An uncited numbered bullet"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: 1) An uncited numbered bullet", result.stdout)
+
+    def test_tab_after_the_marker_is_still_a_bullet(self):
+        # `-\tclaim` is a list item in Markdown; a marker followed by a tab must not escape.
+        result = run_check_text(finding_text("-\tAn uncited tab-marker bullet"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: -\tAn uncited tab-marker bullet", result.stdout)
+
+    def test_lone_marker_with_text_on_the_next_line_is_checked(self):
+        # A marker alone on its line is a bullet whose text is the indented line that follows.
+        result = run_check_text(finding_text("+\n  An uncited claim on the marker's own continuation"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("cites no run id", result.stdout)
+
+    def test_thematic_break_is_not_a_bullet(self):
+        # `- - -` and `* * *` are horizontal rules, not list items: flagging them would fail a good
+        # finding (a round-1 false positive).
+        result = run_check_text(finding_text("- Cites E900-r0001.\n- - -\n* * *"))
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_blockquoted_bullet_is_checked(self):
+        # `> - claim` renders as a bullet inside a quote; the quote must not hide the claim.
+        result = run_check_text(finding_text("> - An uncited quoted bullet"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: > - An uncited quoted bullet", result.stdout)
+
+    def test_blockquoted_bullet_joins_its_quoted_continuation(self):
+        # The quoted bullet cites on its quoted continuation, so it passes; the numbered bullet next
+        # to it cites nowhere, so it is the finding's only problem (before the fix neither was a
+        # bullet and the finding wrongly passed).
+        result = run_check_text(finding_text(
+            "> - A quoted claim whose citation is on\n>   E900-r0001.\n1. An uncited numbered bullet"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        problems = result.stdout.splitlines()
+        self.assertEqual(1, len(problems), result.stdout)
+        self.assertIn("## Answer bullet cites no run id: 1. An uncited numbered bullet", problems[0])
+
+    def test_second_answer_section_is_checked(self):
+        # PR #27 round 2, R2: repeating the heading must not move a claim out of the guard.
+        text = ("# F990 A fixture finding\n\n## Answer\n\n- Cites E900-r0001.\n\n"
+                "## Inferences\n\n- Cites E900-r0001.\n\n## Answer\n\n- An uncited second answer\n")
+        result = run_check_text(text)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: - An uncited second answer", result.stdout)
+
+    def test_second_inferences_section_is_checked(self):
+        text = ("# F990 A fixture finding\n\n## Answer\n\n- Cites E900-r0001.\n\n"
+                "## Inferences\n\n- Cites E900-r0001.\n\n## Inferences\n\n- An uncited second inference\n")
+        result = run_check_text(text)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Inferences bullet cites no run id: - An uncited second inference", result.stdout)
+
+    def test_fenced_heading_cannot_end_a_section(self):
+        # A `## ` line inside a fenced example must not end the Answer section: the bullet after the
+        # fence still sits under Answer and is checked.
+        text = ("# F990 A fixture finding\n\n## Answer\n\n- Cites E900-r0001.\n\n"
+                "```text\n## Example\n```\n\n- An uncited claim after the fenced example\n\n"
+                "## Inferences\n\n- Cites E900-r0001.\n")
+        result = run_check_text(text)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: - An uncited claim after the fenced example",
+                      result.stdout)
+
+    def test_bullet_inside_a_fence_is_not_a_claim(self):
+        # An example bullet inside a fenced block is code, not a claim: it must not be flagged
+        # (a round-1 false positive).
+        text = ("# F990 A fixture finding\n\n## Answer\n\n- Cites E900-r0001.\n\n"
+                "```text\n- an example inside a fence, not a claim\n```\n\n"
+                "## Inferences\n\n- Cites E900-r0001.\n")
+        result = run_check_text(text)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def test_uncited_inferences_bullet_exits_1(self):
         result = run_check_text(finding_text("- Cites E900-r0001.", "- An uncited inference"))

@@ -161,8 +161,12 @@ they serve the repository they are run in.
   `ok: <n> manifest(s) verified`; any problem is a named line and exit 1.
 - `python3 tools/check_citations.py findings/F<nnn>-*.md` fails (exit 1) when a run id anywhere in
   the finding has no record under `runs/E<nnn>/`, or when a bullet in `## Answer` or `## Inferences`
-  cites no run id on any of its lines. An indented continuation line belongs to its bullet
-  (toy-archaeology#12). `--runs DIR` overrides `runs/` under the working directory.
+  cites no run id on any of its lines. A bullet is any Markdown list item, however it is written:
+  `-`, `*`, `+` or a numbered `1.`/`1)` marker, plain, tab-separated, alone on its line, or inside
+  a blockquote (`> - claim`); an indented continuation line belongs to its bullet
+  (toy-archaeology#12), and a thematic break (`- - -`) is not a bullet. **Every** occurrence of the
+  two sections is checked, so repeating a heading cannot move a claim out of the guard, and fenced
+  code is neither heading nor bullet. `--runs DIR` overrides `runs/` under the working directory.
 
 Neither tool ever copies or edits the validator: they call it. Their tests run in
 `tests/tools/` and in CI (`formats/README.md`).

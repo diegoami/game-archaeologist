@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
 """Check a finding's citations.
 
-`python3 tools/check_citations.py <finding.md>` fails (exit 1) when a run id anywhere in the
-finding has no record under `runs/E<nnn>/`, or when a bullet in `## Answer` or `## Inferences`
-cites no run id. Exit 0 otherwise. `--runs <dir>` checks against another records directory; without
-it the records live in `runs/` under the working directory, never under this script's directory, so
-a game repository that fetches this file into a cache folder still checks its own records (ADR-009).
+`python3 tools/check_citations.py <finding.md>` fails (exit 1) when a run id (`E<nnn>-r<nnnn>`)
+anywhere in the finding has no record under `runs/E<nnn>/`, or when a bullet in `## Answer` or
+`## Inferences` cites no run id. Exit 0 otherwise. `--runs <dir>` checks against another records
+directory; without it the records live in `runs/` under the working directory, never under this
+script's directory, so a game repository that fetches this file into a cache folder still checks
+its own records (ADR-009).
 
+A bullet is any Markdown list item, however it is written (PR #27 round 2): a `-`, `*`, `+` or
+numbered `1.`/`1)` marker, followed by a space, a tab, or the end of its line (a lone marker's
+text is the indented lines that follow), written plainly or inside a blockquote (`> - claim`).
 A bullet's indented continuation lines belong to it, so a run id on a wrapped line counts
-(toy-archaeology#12). Any input that cannot be read is a named error, never a traceback.
+(toy-archaeology#12); a blank or unindented line ends it. A thematic break (`- - -`) is not a
+bullet. However the sections sit, **every** occurrence of `## Answer` and `## Inferences` is
+checked, so repeating a heading cannot move a claim out of the guard, and fenced code is neither
+heading nor bullet: a `## ` line inside a fence cannot end a section, and an example bullet inside
+a fence is not a claim.
+
+Any input that cannot be read is a named error, never a traceback.
 
 Adapted from diegoami/toy-archaeology tools/check_citations.py at a3056ff through
 diegoami/goal2-archaeology's copy.
@@ -22,30 +32,67 @@ from pathlib import Path
 
 RUN_ID = re.compile(r"\bE[0-9]{3,}-r[0-9]{4,}\b")
 SECTIONS = ("## Answer", "## Inferences")
+# Every Markdown list marker: `-`, `*`, `+`, or up to nine digits with `.` or `)`, then a space, a
+# tab, or the end of the line. `1.5 million` is not a marker: what follows the digit run must end
+# the marker, and `-foo`/`*emphasis*` are not either: the marker needs its whitespace.
+MARKER = re.compile(r"(?:[-*+]|\d{1,9}[.)])(?:[ \t]+|$)")
+# A blockquote prefix, possibly repeated (`> > - claim`) or indented, stripped before the test.
+QUOTE = re.compile(r"^\s*(?:>[ \t]*)+")
+# A fenced code block: ``` or ~~~ at the start of a line, after any indentation.
+FENCE = re.compile(r"^\s*(?:```+|~~~+)")
+# A thematic break (`- - -`, `***`, `___`): a marker's shape, but not a bullet.
+BREAK = re.compile(r"^([-_*])(?:[ \t]*\1){2,}[ \t]*$")
 
 
-def section_lines(lines: list[str], heading: str) -> list[str] | None:
-    start = next((i for i, line in enumerate(lines) if line.strip() == heading), None)
-    if start is None:
-        return None
-    body = []
-    for line in lines[start + 1:]:
-        if line.startswith("## "):
-            break
-        body.append(line)
-    return body
+def section_bodies(lines: list[str], heading: str) -> list[list[str]]:
+    """The body lines of every occurrence of `heading`, in order; [] when it never appears.
+
+    A fenced code block is neither heading nor body: a `## ` line inside a fence cannot end the
+    section, so a claim after a fenced example is still under its heading and is checked."""
+    bodies: list[list[str]] = []
+    body: list[str] | None = None
+    fence = False
+    for line in lines:
+        if fence:
+            if FENCE.match(line):
+                fence = False
+            continue
+        if FENCE.match(line):
+            fence = True
+            continue
+        if line.strip() == heading:
+            if body is not None:
+                bodies.append(body)
+            body = []
+        elif body is not None:
+            if line.startswith("## "):
+                bodies.append(body)
+                body = None
+            else:
+                body.append(line)
+    if body is not None:
+        bodies.append(body)
+    return bodies
 
 
 def bullets(lines: list[str]) -> list[str]:
-    """Each bullet together with its indented continuation lines, not a new bullet."""
+    """Each bullet together with its continuation lines, not a new bullet.
+
+    A bullet starts at any list marker, plainly or inside a blockquote; a line continues it when it
+    is indented, or, for a quoted bullet, when it is quoted too. A blank or unindented line ends
+    the bullet. A thematic break is not a bullet."""
     found: list[str] = []
     current: list[str] | None = None
+    quoted = False
     for line in lines:
-        if line.lstrip().startswith(("- ", "* ")):
+        stripped = QUOTE.sub("", line).lstrip()
+        if MARKER.match(stripped) and not BREAK.match(stripped):
             if current is not None:
                 found.append("\n".join(current))
             current = [line]
-        elif current is not None and line.strip() and line[:1] in (" ", "\t"):
+            quoted = line.lstrip().startswith(">")
+        elif current is not None and line.strip() and (
+                line[:1] in (" ", "\t") or (quoted and line.lstrip().startswith(">"))):
             current.append(line)
         else:
             if current is not None:
@@ -69,13 +116,14 @@ def check(finding: Path, runs: Path) -> list[str]:
             problems.append(f"{finding}: cites missing run {run_id} (no {runs / experiment / f'{run_id}.json'})")
 
     for heading in SECTIONS:
-        body = section_lines(lines, heading)
-        if body is None:
+        bodies = section_bodies(lines, heading)
+        if not bodies:
             problems.append(f"{finding}: missing section '{heading}'")
             continue
-        for bullet in bullets(body):
-            if not RUN_ID.search(bullet):
-                problems.append(f"{finding}: {heading} bullet cites no run id: {bullet.strip()}")
+        for body in bodies:
+            for bullet in bullets(body):
+                if not RUN_ID.search(bullet):
+                    problems.append(f"{finding}: {heading} bullet cites no run id: {bullet.strip()}")
     return problems
 
 
