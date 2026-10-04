@@ -129,6 +129,14 @@ from the validator, so the identity rule is never re-implemented.
 `--known` is relative to the working directory, never to the script. Errors are named lines and exit
 1; usage errors exit 2.
 
+Nothing is accepted unvalidated. `check` and `validate` accept a manifest only when it matches the
+schema, its id is the canonical one, and no path is named twice; a `known.json` names each id once.
+Every path, in a manifest or a listing, is relative and POSIX, with no `..`, `.` or empty segment, no
+backslash and no drive letter. A listing line is a 64-hex sha256 (upper case is read as the same
+digest), a byte count of digits only, and such a path. A symbolic link that leaves the checked
+directory, a broken link and a special file are reported and never read, so `check` fails and
+`manifest` refuses the directory.
+
 A successor set is registered with the same `manifest` command: a shipped file the game writes moves
 from `files` to a `runtime_writes` glob, `runtime_writes` is completed as observed, and the new id's
 entry in `known.json` names the predecessor (U21, above).
