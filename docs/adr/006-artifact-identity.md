@@ -1,7 +1,7 @@
 # ADR-006 Artifact identity, derived variants, and per-game rights
 
 - **Status**: Accepted 2026-10-02
-- **Source:** [docs/phase0/05-artifacts.md](../phase0/05-artifacts.md); user decisions U1, U2, U3, U5, U11
+- **Source:** [docs/phase0/05-artifacts.md](../phase0/05-artifacts.md); user decisions U1, U2, U3, U5, U11, U21
 
 ## Context
 
@@ -17,8 +17,11 @@ sold.
 
 ## Decision
 
-- **Artifact set**: a manifest of path, bytes and sha256 for every file. Its id embeds the manifest's
-  hash. `artifacts/known.json` in the game repo commits the hashes, never the bytes.
+- **Artifact set**: a manifest of path, bytes and sha256 for every file. Its id embeds the hash of
+  the *canonical* manifest: without `id` and `acquired`, `files` sorted by path (05 §2; the exact
+  serialisation is in [formats/README.md](../../formats/README.md)). `artifacts/known.json` in the
+  game repo commits the hashes, never the bytes. Runtime writes observed after registration make a
+  successor set (U21).
 - **Derived variants** (patched binaries) carry a recipe: base set, script and commit, options,
   output sha256. The build asserts the input bytes at every patch site and fails on an output-hash
   mismatch.

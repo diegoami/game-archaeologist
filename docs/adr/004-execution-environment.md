@@ -1,7 +1,7 @@
 # ADR-004 Execution environment: requirement, declaration, verification
 
 - **Status**: Accepted 2026-10-02. The capability token list is provisional until A6.
-- **Source:** [docs/phase0/04-environment.md](../phase0/04-environment.md); user decisions U7, U8
+- **Source:** [docs/phase0/04-environment.md](../phase0/04-environment.md); the verification tiers from [03-work-execution.md](../phase0/03-work-execution.md) §6.4; user decisions U7, U8
 
 ## Context
 

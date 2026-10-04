@@ -1,7 +1,7 @@
 # ADR-001 Repository topology and dependency direction
 
 - **Status**: Accepted 2026-10-02
-- **Source:** [docs/phase0/02-project-architecture.md](../phase0/02-project-architecture.md) §1–4; user decisions U4, U5, U10, U12
+- **Source:** [docs/phase0/02-project-architecture.md](../phase0/02-project-architecture.md) §1–4; "the IC2 repositories are not migrated" from [01-existing-systems.md](../phase0/01-existing-systems.md) §5; user decisions U4, U5, U10, U12
 
 ## Context
 
