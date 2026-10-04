@@ -125,9 +125,11 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 
 | U22 | **Isle Wars is explored, never copied** (the owner's decision of 2026-10-02, in isle-wars-archaeology 9566434; #13). The research feeds **malpaco**, an original game inspired by *Isle Wars Pro*. The originals' code, assets, text and name are never reused. Only behaviour and design learned pass to the game; no evidence ever does. | Amends U2(b) and U9. U2(a) and (c) are unchanged: originals stay on the owner's machines, and evidence stays private. The spec stays behavioural; malpaco's design is its own, informed by it. ADR-006, 05 §1 and 07 §6 now say "never copied". The rebuild part of the harness process applies to malpaco, not to the research repository. |
 
+| U23 | **A record file with a duplicate JSON key is invalid**, at any depth and even when the values agree (T07, Sol's round-3 R1 on #20). | JSON readers disagree on which duplicate wins, so one file could mean different records in different repositories. `tools/validate_records.py` rejects it, and so do NaN/Infinity literals and lone surrogates (Sol judged those invalid input already). No example or registered manifest is affected. |
+
 ### Still open
 
-None. U1–U22 are made, and ADR-001..009 were accepted on 2026-10-02.
+None. U1–U23 are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
