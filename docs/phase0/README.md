@@ -131,9 +131,13 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 
 | U25 | **A finding's `## Answer` and `## Inferences` sections hold only list items, `###` sub-headings and tables.** List items use `-`, `*`, `+` or numbered markers, with indented continuation lines. In a table, every data row must cite a run id, as a bullet must; the header and `---` separator rows are exempt. Blank lines are allowed. Anything else there is an error, "unsupported in a protected section": HTML, a blockquote, a code fence, any other heading level, or a repeated Answer or Inferences heading (T10, Sol's round-2 R1 and R2 on #27; tables and `###` added on 2026-10-04 so that the existing findings that use them still pass). | `check_citations.py` fails closed instead of parsing ever more Markdown. Each review round found a new construct that hid an uncited claim, as T05's code spans did. `formats/templates/finding.md` says so. On 2026-10-04 the existing findings in toy-archaeology, goal2-archaeology and isle-wars-archaeology use only these forms, except one lead-in sentence each in goal2's F002 and F004. Those two get a one-line fix when goal2 migrates. |
 
+| U26 | **A static claim cites its evidence with `static:<tracked path>[:line]`**, which counts as a citation wherever a run id does: in a bullet or a table row of a finding's Answer or Inferences (U16: static findings are first-class). `check_citations.py` checks that the path exists in the repository, as it checks run records. Isle Wars' short-form run ids (`r0004`) are rewritten as full ids (`E001-r0004`) when it migrates; the tool gains no short form. U25's strict reading stands: a list item's second paragraph, and `<...>` inside a code span, are unsupported (the owner confirmed). | A follow-up to T10, filed as a task when T10 merges. goal2's F002 and F004 then cite static rows this way; Isle Wars' F002 and F005 join or drop their second paragraphs; goal2's F001 drops the angle brackets from `<NAME>.GL`. |
+
+| U27 | **A heading that reduces to "answer" or "inferences" must be exactly `## Answer` or `## Inferences`.** A heading is any line starting with `#`, a setext heading, or an HTML `<h1>`–`<h6>`. Its text is NFKC-normalised, casefolded and reduced to its letters. If the result is exactly `answer` or `inferences` and the line is not exactly `## Answer` / `## Inferences`, the line is an error (T10, Sol's round-3 R1 on #27: a code span, a link or a non-breaking space in the heading switched checking off). | Finite: it replaces the deny-list of spellings. Other headings stay free. Known limit: a look-alike letter from another script (a Cyrillic А) does not reduce to `answer`. It is out of T10's scope and filed as a follow-up; only a fixed heading list would close it. |
+
 ### Still open
 
-None. U1–U25 are made, and ADR-001..009 were accepted on 2026-10-02.
+None. U1–U27 are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
