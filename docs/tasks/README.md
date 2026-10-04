@@ -14,3 +14,4 @@ Each title ends with the task's plan label (A1, A2, …) from
 | T05 | Formats corrections before formats-v1 (#14 items 1–8) | #15 | T04 |
 | T06 | Walking-skeleton retrospective: the score, the method amendments, formats-v1 (A6) | #16 | T05 |
 | T07 | A record validator game repositories can call (#10, ADR-009) | #10 | T06 |
+| T08 | Harness bump 74e53ae → c6ef85c (L31–L46) | #21 | T03 |
