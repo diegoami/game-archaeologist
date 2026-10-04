@@ -161,15 +161,16 @@ they serve the repository they are run in.
   overrides the working directory's repository (`gh repo view`). Exit 0 prints
   `ok: <n> manifest(s) verified`; any problem is a named line and exit 1.
 - `python3 tools/check_citations.py findings/F<nnn>-*.md` fails (exit 1) when a run id anywhere in
-  the finding has no record under `runs/E<nnn>/`, or when a bullet in `## Answer` or `## Inferences`
-  cites no run id on any of its lines. A bullet is any list item, however it is written: `-`, `*`,
-  `+` or a numbered `1.`/`1)` marker, plain, tab-separated, alone on its line, or inside a
-  blockquote (`> - claim`), or an HTML `<li>`; an indented continuation line belongs to its bullet
-  (toy-archaeology#12), and a thematic break (`- - -`) is not a bullet. **Every** occurrence of the
-  two sections is checked, however the heading is spelt (closing `#`s, a tab, any case, setext), so
-  repeating a heading cannot move a claim out of the guard. What the tool guesses about rendering
-  fails closed: a fenced block or an HTML comment only stops a `## ` line inside it from ending a
-  section, and never hides a bullet. `--runs DIR` overrides `runs/` under the working directory.
+  the finding has no record under `runs/E<nnn>/`, or when a claim in `## Answer` or `## Inferences`
+  cites no run id. Those two sections hold only list items (`-`, `*`, `+`, `1.` or `1)` markers),
+  each citing a run id on one of its lines, its indented continuation lines included
+  (toy-archaeology#12); `###` sub-headings; table rows, each data row citing a run id (the header
+  and the `|---|` separator under it are exempt); and blank lines (U25). Every other line there is
+  the named error `<file>:<line>: unsupported in a protected section: <line>`: HTML, a blockquote, a
+  fence, any other heading, a setext underline, a thematic break, a paragraph. A section's heading is
+  exactly `## Answer` or `## Inferences`; a second one, or any other spelling of either anywhere in
+  the file (case, closing `#`s, a tab, a quote, HTML, setext), is the same error.
+  `--runs DIR` overrides `runs/` under the working directory.
 
 Neither tool ever copies or edits the validator: they call it. Their tests run in
 `tests/tools/` and in CI (`formats/README.md`).

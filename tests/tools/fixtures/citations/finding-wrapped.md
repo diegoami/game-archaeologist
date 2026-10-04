@@ -23,7 +23,7 @@ Raw fixture data only.
 
 ## Inferences
 
-No separate inference bullet; this fixture is about the wrapped Answer citation.
+- The inference rests on the same run, E900-r0001.
 
 ## Alternatives considered
 

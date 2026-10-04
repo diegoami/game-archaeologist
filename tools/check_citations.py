@@ -2,27 +2,31 @@
 """Check a finding's citations.
 
 `python3 tools/check_citations.py <finding.md>` fails (exit 1) when a run id (`E<nnn>-r<nnnn>`)
-anywhere in the finding has no record under `runs/E<nnn>/`, or when a bullet in `## Answer` or
+anywhere in the finding has no record under `runs/E<nnn>/`, or when a claim in `## Answer` or
 `## Inferences` cites no run id. Exit 0 otherwise. `--runs <dir>` checks against another records
 directory; without it the records live in `runs/` under the working directory, never under this
 script's directory, so a game repository that fetches this file into a cache folder still checks
 its own records (ADR-009).
 
-A bullet is any list item, however it is written (PR #27 round 2): a `-`, `*`, `+` or numbered
-`1.`/`1)` marker, followed by a space, a tab, or the end of its line (a lone marker's text is the
-indented lines that follow), written plainly or inside a blockquote (`> - claim`), or an HTML
-`<li>`. A bullet's indented continuation lines belong to it, so a run id on a wrapped line counts
-(toy-archaeology#12); a blank or unindented line ends it, and a quoted bullet's continuation stays
-at its quote depth and is neither blank, a heading, a fence nor a thematic break. A thematic break
-(`- - -`) is not a bullet. **Every** occurrence of `## Answer` and `## Inferences` is checked, so
-repeating a heading cannot move a claim out of the guard, and the heading is recognised however it
-is spelt (closing `#`s, a tab, any case, or a setext `Answer` over `---`).
+The two protected sections hold only these lines (the owner's decision U25, 2026-10-04), so the
+check fails closed instead of parsing ever more Markdown:
 
-Everything this file guesses about how a finding renders fails closed: a guess that is wrong makes
-the check stricter, never lets a claim through. A fenced code block or an HTML comment only stops a
-`## ` line inside it from ending a section; it never hides a bullet, and a heading inside it still
-starts a section. A fence is taken to run until a line that would close it in CommonMark (the same
-character, at least as long, nothing after it), or to the end of the file.
+- list items (`-`, `*`, `+`, `1.` or `1)` markers, followed by a space, a tab or the end of the
+  line) and their indented continuation lines; each item, with its continuation lines, must cite a
+  run id on one of its lines (toy-archaeology#12). A blank or unindented line ends the item;
+- `###` sub-headings;
+- table rows (lines starting with `|`); every data row must cite a run id. The header row and the
+  `|---|` separator under it are exempt, and only when the separator has the header's cell count;
+- blank lines.
+
+Every other line there is the named error `<file>:<line>: unsupported in a protected section:
+<line>`: HTML of any kind (`<` before a letter, `/`, `!` or `?`, anywhere on the line), a
+blockquote, a fence, any heading but `###`, a setext underline, a thematic break, a paragraph line,
+or a list item or continuation line whose text opens one of these. A section's heading is exactly
+`## Answer` or `## Inferences` and runs to the next line starting with `## `; a second one is an
+error, and so is any other spelling of it anywhere in the file: any line that reads `Answer` or
+`Inferences` once HTML tags and the `#`s, `>`s, list markers, emphasis and whitespace around it are
+removed (`##\tAnswer`, `## ANSWER`, `> ## Answer`, `<h2>Answer</h2>`, a setext `Answer`).
 
 Any input that cannot be read is a named error, never a traceback.
 
@@ -40,152 +44,107 @@ from pathlib import Path
 # `\b` pattern missed because `_` is a word character.
 RUN_ID = re.compile(r"(?<![A-Za-z0-9])E[0-9]{3,}-r[0-9]{4,}(?![A-Za-z0-9])")
 SECTIONS = ("## Answer", "## Inferences")
-# Every Markdown list marker: `-`, `*`, `+`, or up to nine digits with `.` or `)`, then a space, a
-# tab, or the end of the line; or an HTML `<li>`. `1.5 million` is not a marker: what follows the
-# digit run must end the marker, and `-foo`/`*emphasis*` are not either: the marker needs its
-# whitespace.
-MARKER = re.compile(r"(?:[-*+]|\d{1,9}[.)])(?:[ \t]+|$)|<li(?:[\s>/]|$)", re.IGNORECASE)
-# A blockquote prefix, one level: up to three spaces, `>` and one optional space or tab.
-QUOTE_LEVEL = re.compile(r"^ {0,3}>[ \t]?")
-# A line that may open a fenced code block: ``` or ~~~ after any indentation. It is a superset of
-# CommonMark's openers (which allow at most three spaces and no backtick in a backtick fence's info
-# string), because a fence here only stops a section from ending.
-FENCE_OPEN = re.compile(r"^\s*(`{3,}|~{3,})")
-# A thematic break (`- - -`, `***`, `___`): a marker's shape, but not a bullet.
-BREAK = re.compile(r"^([-_*])(?:[ \t]*\1){2,}[ \t]*$")
-# An ATX heading (`## Text`, `## Text ##`) or a setext underline of `-`.
-ATX = re.compile(r"^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$")
-SETEXT_2 = re.compile(r"^ {0,3}-+[ \t]*$")
+# A list marker after any indentation: `-`, `*`, `+`, or up to nine digits with `.` or `)`, then a
+# space, a tab or the end of the line. `1.5 million`, `-foo` and `*emphasis*` are not markers.
+MARKER = re.compile(r"[ \t]*(?:[-*+]|\d{1,9}[.)])(?:[ \t]+|$)")
+# A thematic break (`- - -`, `***`, `___`): a marker's shape, but not a list item.
+BREAK = re.compile(r"^[ \t]*([-_*])(?:[ \t]*\1){2,}[ \t]*$")
+SUBHEADING = re.compile(r"^### +\S")
+# What may not open the text of a list item or a continuation line: a blockquote, a heading, a
+# fence or a setext underline (HTML anywhere on the line is refused on its own).
+BLOCK = re.compile(r"^(?:>|#|`{3}|~{3}|=+[ \t]*$|-+[ \t]*$)")
+# HTML of any kind, anywhere on a protected line.
+HTML = re.compile(r"<[A-Za-z/!?]")
+# A table's delimiter row: cells of dashes with optional alignment colons.
+SEPARATOR = re.compile(r"^\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$")
+# A line that only names a protected section once HTML tags and its decoration are removed: `#`s,
+# quote `>`s, list markers, emphasis, underline characters, digits and whitespace.
+TAG = re.compile(r"<[^>]*>")
+DECORATION = " \t#>*+-_=.)0123456789"
+NAMES = {heading[3:].casefold() for heading in SECTIONS}
 
 
-def closes(line: str, fence: str) -> bool:
-    """Whether `line` closes the fence opened by `fence` (its run of ` or ~), as CommonMark says:
-    up to three spaces, the same character at least as many times, then only whitespace."""
-    match = re.match(r"^ {0,3}(" + re.escape(fence[0]) + r"{" + str(len(fence)) + r",})[ \t]*$", line)
-    return match is not None
+def cells(row: str) -> int:
+    """The number of cells in a table row: its unescaped `|`-separated parts, outer pipes dropped."""
+    row = row.strip()
+    if row.startswith("|"):
+        row = row[1:]
+    if row.endswith("|") and not row.endswith("\\|"):
+        row = row[:-1]
+    return len(re.split(r"(?<!\\)\|", row))
 
 
-def heading_text(lines: list[str], i: int) -> str | None:
-    """The text of the level-2 heading at line `i`, case-folded, or None when it is not one: an ATX
-    `## Text` (closing `#`s and tabs allowed) or a setext `Text` over a line of `-`."""
-    match = ATX.match(lines[i])
-    if match:
-        return (match.group(2) or "").strip().casefold() if len(match.group(1)) == 2 else None
-    if lines[i].strip() and i + 1 < len(lines) and SETEXT_2.match(lines[i + 1]) \
-            and not MARKER.match(lines[i].lstrip()) and not ATX.match(lines[i]):
-        return lines[i].strip().casefold()
-    return None
+def item_text(line: str) -> str:
+    """The text of a list item once every leading marker is removed (`- 1. text` is `text`)."""
+    match = MARKER.match(line)
+    while match and match.end() > 0:
+        line = line[match.end():]
+        match = MARKER.match(line)
+    return line.strip()
 
 
-def in_comment_after(line: str, comment: bool) -> bool:
-    """Whether an HTML comment is still open after `line`, given whether one was open before it."""
-    marker = "-->" if comment else "<!--"
-    at = line.find(marker)
-    while at >= 0:
-        line, comment = line[at + len(marker):], not comment
-        marker = "-->" if comment else "<!--"
-        at = line.find(marker)
-    return comment
+def misspelt(line: str) -> bool:
+    """Whether `line` names a protected section without being exactly its heading."""
+    text = TAG.sub("", line).strip(DECORATION).casefold()
+    return text in NAMES and line not in SECTIONS
 
 
-def section_bodies(lines: list[str], heading: str) -> list[list[str]]:
-    """The body lines of every occurrence of `heading`, in order; [] when it never appears.
+def check_body(finding: Path, heading: str, body: list[tuple[int, str]]) -> list[str]:
+    """The problems of one protected section's body, given as (line number, line) pairs."""
+    problems = []
 
-    Every line is part of a body, fenced or commented or not. A heading starts a section wherever it
-    sits; a `## ` line ends one only outside a fence and outside an HTML comment, so a claim after a
-    fenced example or a comment is still under its heading and is checked."""
-    want = heading[3:].casefold()
-    bodies: list[list[str]] = []
-    body: list[str] | None = None
-    fence: str | None = None
-    comment = False
-    skip = 0
-    for i, line in enumerate(lines):
-        hidden = fence is not None or comment
-        if fence is not None:
-            if closes(line, fence):
-                fence = None
-        elif comment:
-            comment = in_comment_after(line, True)
-        else:
-            opened = FENCE_OPEN.match(line)
-            if opened:
-                fence = opened.group(1)
-            else:
-                comment = in_comment_after(line, False)
-        if skip:
-            skip -= 1
+    def unsupported(number: int, line: str) -> None:
+        problems.append(f"{finding}:{number}: unsupported in a protected section: {line}")
+
+    item: list[str] | None = None
+
+    def close_item() -> None:
+        nonlocal item
+        if item is not None and not RUN_ID.search("\n".join(item)):
+            problems.append(f"{finding}: {heading} bullet cites no run id: {chr(10).join(item).strip()}")
+        item = None
+
+    table_row = 0  # the position of this line in its run of table rows, 0 outside a table
+    for i, (number, line) in enumerate(body):
+        if line.startswith("|"):
+            close_item()
+            table_row += 1
+            if HTML.search(line):
+                unsupported(number, line)
+                continue
+            header = table_row == 1 and i + 1 < len(body) and body[i + 1][1].startswith("|") \
+                and bool(SEPARATOR.match(body[i + 1][1])) and cells(line) == cells(body[i + 1][1])
+            separator = table_row == 2 and bool(SEPARATOR.match(line)) and cells(line) == cells(body[i - 1][1])
+            if not (header or separator or RUN_ID.search(line)):
+                problems.append(f"{finding}: {heading} table row cites no run id: {line}")
             continue
-        if heading_text(lines, i) == want:
-            if body is not None:
-                bodies.append(body)
-            body = []
-            if not ATX.match(line):
-                skip = 1  # the setext underline
-        elif body is not None:
-            if line.startswith("## ") and not hidden:
-                bodies.append(body)
-                body = None
+        table_row = 0
+        if not line.strip():
+            close_item()
+            continue
+        if HTML.search(line) or BREAK.match(line):
+            close_item()
+            unsupported(number, line)
+            continue
+        if MARKER.match(line):
+            close_item()
+            if BLOCK.match(item_text(line)):
+                unsupported(number, line)
             else:
-                body.append(line)
-    if body is not None:
-        bodies.append(body)
-    return bodies
-
-
-def dequote(line: str) -> tuple[int, str]:
-    """The quote depth of `line` and its text inside the quotes."""
-    depth = 0
-    while True:
-        match = QUOTE_LEVEL.match(line)
-        if not match:
-            return depth, line
-        depth, line = depth + 1, line[match.end():]
-
-
-def continues(line: str, depth: int) -> bool:
-    """Whether `line` continues a bullet written at quote depth `depth`."""
-    if not line.strip():
-        return False
-    if depth == 0:
-        return line[:1] in (" ", "\t")
-    line_depth, text = dequote(line)
-    if line[:1] in (" ", "\t") and line_depth == 0:
-        return True  # an indented line: the bullet's own continuation, quote markers dropped
-    if line_depth != depth or not text.strip():
-        return False
-    if text[:1] in (" ", "\t"):
-        return True
-    return not (ATX.match(text) or FENCE_OPEN.match(text) or BREAK.match(text) or text.startswith("<"))
-
-
-def bullets(lines: list[str]) -> list[str]:
-    """Each bullet together with its continuation lines, not a new bullet.
-
-    A bullet starts at any list marker, plainly or inside a blockquote; a line continues it when it
-    is indented, or, for a quoted bullet, when it is a non-blank line at the same quote depth that
-    is not a heading, fence, thematic break or HTML block. A blank or unindented line ends the
-    bullet. A thematic break is not a bullet."""
-    found: list[str] = []
-    current: list[str] | None = None
-    depth = 0
-    for line in lines:
-        line_depth, stripped = dequote(line.lstrip(" "))
-        stripped = stripped.lstrip()
-        if MARKER.match(stripped) and not BREAK.match(stripped):
-            if current is not None:
-                found.append("\n".join(current))
-            current = [line]
-            depth = line_depth
-        elif current is not None and continues(line, depth):
-            current.append(line)
-        else:
-            if current is not None:
-                found.append("\n".join(current))
-                current = None
-    if current is not None:
-        found.append("\n".join(current))
-    return found
+                item = [line]
+            continue
+        if item is not None and line[:1] in (" ", "\t"):
+            if BLOCK.match(line.strip()):
+                close_item()
+                unsupported(number, line)
+            else:
+                item.append(line)
+            continue
+        close_item()
+        if not SUBHEADING.match(line):
+            unsupported(number, line)
+    close_item()
+    return problems
 
 
 def check(finding: Path, runs: Path) -> list[str]:
@@ -200,15 +159,26 @@ def check(finding: Path, runs: Path) -> list[str]:
         if not (runs / experiment / f"{run_id}.json").is_file():
             problems.append(f"{finding}: cites missing run {run_id} (no {runs / experiment / f'{run_id}.json'})")
 
+    bodies: dict[str, list[list[tuple[int, str]]]] = {heading: [] for heading in SECTIONS}
+    body: list[tuple[int, str]] | None = None
+    for number, line in enumerate(lines, start=1):
+        if misspelt(line):
+            problems.append(f"{finding}:{number}: unsupported in a protected section: {line}")
+        if line in SECTIONS:
+            if bodies[line]:
+                problems.append(f"{finding}:{number}: unsupported in a protected section: {line}")
+            body = []
+            bodies[line].append(body)
+        elif line.startswith("## "):
+            body = None
+        elif body is not None:
+            body.append((number, line))
+
     for heading in SECTIONS:
-        bodies = section_bodies(lines, heading)
-        if not bodies:
+        if not bodies[heading]:
             problems.append(f"{finding}: missing section '{heading}'")
-            continue
-        for body in bodies:
-            for bullet in bullets(body):
-                if not RUN_ID.search(bullet):
-                    problems.append(f"{finding}: {heading} bullet cites no run id: {bullet.strip()}")
+        for section in bodies[heading]:
+            problems += check_body(finding, heading, section)
     return problems
 
 
