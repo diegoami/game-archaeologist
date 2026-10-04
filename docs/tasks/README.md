@@ -13,3 +13,4 @@ Each title ends with the task's plan label (A1, A2, …) from
 | T04 | The research protocol: researcher brief, research review, promotion (A3) | #11 | T02 |
 | T05 | Formats corrections before formats-v1 (#14 items 1–8) | #15 | T04 |
 | T06 | Walking-skeleton retrospective: the score, the method amendments, formats-v1 (A6) | #16 | T05 |
+| T07 | A record validator game repositories can call (#10, ADR-009) | #10 | T06 |
