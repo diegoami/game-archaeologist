@@ -295,6 +295,12 @@ watched match. G1 (goal2 T02, merged 2026-10-04, goal2 F001) measured them:
   more crash the earlier rounds had missed (100k-deep nesting). Sol's only round-3 finding was a
   scope question (the duplicate-key rule), which the owner settled (U23); Sol then approved the same
   head. It converged.
+- **The third escalation (T09, 2026-10-04)**: DeepSeek V4.1 Flash's two rounds each left two
+  blocking findings. Round 2's "absolute or escaping paths accepted" was the same class as round 1's
+  forged id: input accepted without validation. Opus closed the class in one round, with a single
+  acceptance boundary, 46 sweep probes and 51 mutants, each caught. Sol's last finding was a scope
+  question, which the owner settled (U24). DeepSeek implements hard guard code well against the
+  stated cases, but has twice missed the class a reviewer generalises from.
 - **GPT-6.1 Sol at `low`** (T07, four runs): each review re-ran all eight Done-when lines, the
   mutations and the earlier reproductions, and each blocking finding was proven live. It held scope
   strictly: it called an unasked rule blocking even where the stricter behaviour was safer.
