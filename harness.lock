@@ -1,34 +1,36 @@
-# harness.lock: what this repository copied from diegoami/harness_imperial template/.
-# The bump procedure is harness_imperial H6. Until it lands, a bump diffs template/ between the
-# commit below and the new one, applies the result, and rewrites this file.
+# harness.lock: what this repository copied from diegoami/harness_imperial (profile full).
+# A bump: move this file and every file it lists aside, run adopt.mjs at the new commit,
+# then carry your changes to the adapted files (and any other) over to the new copies.
 # Verify:  grep -E '^[0-9a-f]{64}  ' harness.lock | sha256sum -c --quiet
-commit c6ef85c016a21935b7fdc0763a4c04dde64965ca
-copied 2026-10-04 (bumped from 74e53ae4708d425fcacdae93b5ff5ce39f1486b9, T08)
-adapted CLAUDE.md  (project line; rules 7, 9, 11 from the template; conditional rules 17-20 deleted, none apply; project section added)
-adapted docs/tasks/README.md  (this repository's task index)
-adapted harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the guard and last-round reviewer; + zai-glm-5.3 and deepseek-pro, the hard reviewers and Sol's substitutes; Sol entries at variant low (the owner: Sol sparingly, at most medium); reviewer fallback sonnet; reviewer.hard = zai-glm-5.3, deepseek-pro, luna and reviewer.sol = gpt-6.1-sol, the template's roles under our model names (2026-10-04); the template's watch-only candidates are not copied, our routing is docs/models.md)
+commit 0f39634774ba0afd08ec5a79d2e67ebee02e6610
+profile full
+copied 2026-10-04 (bumped from c6ef85c016a21935b7fdc0763a4c04dde64965ca: L50, L51)
+adapt CLAUDE.md  (project line; rules 7, 9, 11 from the template; conditional rules 17-20 deleted, none apply; project section added; rule 20 points to the quota check, L50)
+adapt docs/tasks/README.md  (this repository's task index)
+adapt harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the guard and last-round reviewer; + zai-glm-5.3 and deepseek-pro, the hard reviewers and Sol's substitutes; Sol entries at variant low; reviewer fallback sonnet; reviewer.hard = zai-glm-5.3, luna (DeepSeek suspended, 2026-10-04) and reviewer.sol = gpt-6.1-sol; luna = GPT-5.6 Luna and luna-6 = GPT-6 Luna outside the chains (L51); the template's watch-only candidates are not copied, our routing is docs/models.md)
 15f1fcb3af4cd07482f39328e2255a71075f4889946901960116f9a3a5b4c16f  .claude/agents/implementer.md
-3bbb49083ba3440af0c8a777a5c67c8a17c8b7f98da56dd277094f45b8ef5900  .claude/agents/reviewer.md
-f5365f4d1887fae225bd3b245eeb8c6f3c15a4adf922efe98656d8714f53d498  .claude/hooks/session-start.sh
+27d64f4a20a14dd8d0ea0d11376e231511250d2a65662b6f0665086293a92102  .claude/agents/reviewer.md
+6661ffc3140de393a054db11750b1c12245ac229bbc742d92d71624bbaea4ce3  .claude/hooks/session-start.sh
 9d2227215dcf47b9dc7c41d5c9b7f8c5b79dd962c3fb8c3f8f625032fa5eefae  .claude/settings.json
-9f83050400c1d39739d1a3e36875150e1467cfa87ff393a607bbcc5e1cbac640  .claude/skills/delegate/SKILL.md
+0498be803c70005db21b32e0efd572e1a381ebff9cf9dc883ee62108c28a119d  .claude/skills/delegate/SKILL.md
 218462f453d5432db791c7697d7d34970491af106f8e1d1b95b0e0ef6f86747a  .claude/skills/jev/SKILL.md
-08126a17f1a026440f5bb1215c4321f3ceb63d884ee07f4dae9b75ec193bc153  .claude/skills/run-task/SKILL.md
-4e53989f5406ca21aab82bed51ec3a4e7e669415c8bc07e522a4eab18c1af562  .claude/skills/switch-model/SKILL.md
+c1b404041f6517599ba239d5620cba888656f9b8bf3bc0ba75738533c9b0b338  .claude/skills/run-task/SKILL.md
+61f8f7b5980bb26962edb7f4adf3bd6778bb4a6eed3e951c3220d043177f7223  .claude/skills/switch-model/SKILL.md
 8a63c4093207e8f96230e8e6c92019c06897434ca8b70f287e76821ff09502d6  .github/pull_request_template.md
 a58a4c3ec2c56170921e5934e880135d98899d41868b591bafb586887b853ebe  .opencode/agents/implementer.md
-0325746f30b6454386fecade0eb592442e28e6c44a8945d8fa1cf6ce364e1645  .opencode/agents/reviewer.md
-a4be54a0f9a81bde6e07cb582d6b33df07bf71ff44e1755bd72b61779c4c233a  docs/environment.md
+9d0ed40ffb127d21ac782de4f854b89a2ec08782a1517539b67c70f16163c5d0  .opencode/agents/reviewer.md
+7b16727480f8613de7233247ee7f7eb038cf9ecdf67ae3b2bf9cf1668d69d63b  docs/environment.md
 46c4f6e3ca23871e59c25366e8acf9818e43113546f0cd107571ae110f6c10cb  docs/jev/breaks-play.md
-2a2a86de2255115db905064589f0738cd97cfb64e4345d8c9cab8367853b51a1  docs/lessons.md
-5876f5d0df1cecb65c8816c53e044e8e692dc6c614e17fa76cb99362103f3c14  docs/process.md
-4296b906e22a6419b916df0ba5b6369614193d49eab3f5468030896d20dd508a  docs/tasks/TEMPLATE.md
-016f3417333df7eb637c11c58340ae12c9a6c33db90afcd69468f1d81fc3ef6e  tools/harness/guard.mjs
+b28589fa6c58ee235d921ce90107d89eb32282bf007240c9c4710f332ae9f017  docs/lessons.md
+920e39543fcefd771fdcf1e0a73f686f58ea6a335e91b39cb577d337887cc02f  docs/process.md
+e881eb259463e8d4747bfec42256128c18338f55a721b4b4d1c0b97ceadb05c4  docs/review-brief.md
+a4c8f4c0ea271f3b5658429a41ddca2ae3d82453590bf9a97704abe377fe20f2  docs/tasks/TEMPLATE.md
+2f8399f3156ca0f97731589382cfaf0b2d1b8ccaba63ffeed4a7b1dc14ff1234  tools/harness/guard.mjs
 94816f44e99393dd7aca66b4b4e437b7fc95bac579b67f0ea55d98c24d8f869f  tools/harness/implement.mjs
 9befbffd7ca14116d581da6fefefbe5d43514f8c3d4a7419467f4a7810e8f96b  tools/harness/jev.mjs
 41ade10704eb959a79815b38dd4764a95337850058f2f8c81dc3e074dc3e0798  tools/harness/lib/chain.mjs
 63575d2c773898083ae479342c19422603304d54d45211e67779030448b0e664  tools/harness/lib/common.mjs
-92b856c7d9899a1f64c05ab7395b6762882bdedd65dbb85cbb74b5d719d0d71b  tools/harness/lib/guard.mjs
+b11ae066b149e74c161762b20233b555b5758ebc7b5cb8edf2c2dd2b4b50ea49  tools/harness/lib/guard.mjs
 b65cc055307ca29a94c1f882262395737af1ae776b3561bd32d187740622b9af  tools/harness/lib/jev.mjs
 a6bf727222667a4c1744a8d01206e3fd36208203d80df117ff1216e08339ecf7  tools/harness/lib/models.mjs
 b805800c2e945a2b924ce4e13bfba684f624acf045193f63003ae0276be853ac  tools/harness/lib/opencode.mjs
@@ -37,5 +39,5 @@ b805800c2e945a2b924ce4e13bfba684f624acf045193f63003ae0276be853ac  tools/harness/
 07d110855c842088500aa775e506197b287cfbc725709b09242171bdfe1372a2  tools/harness/lib/switch.mjs
 bf717caa54364e8e56a50bab0f07d0212b8300992bc0ad3629cf097ef58e4845  tools/harness/models.mjs
 4406fa454bd0d403e85230c2d3f08e3bfddd0c53f44731b23dbdf5c50bc9a92f  tools/harness/post-review.mjs
-f9d9929a2d1acc84dc7f7848197531141b7a5538a18e9db17aca7bcc5adf15af  tools/harness/review.mjs
+9266a2c2068b88c392fa92623563fc2317a6ee687a3f7ad5db4ee2625db105f1  tools/harness/review.mjs
 8b8ba70c1820463240c3a9866616c05092b33b53de4dcd2ebe7f8c0b089969fe  tools/harness/switch-model.mjs

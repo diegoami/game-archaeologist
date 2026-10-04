@@ -44,16 +44,18 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
     and Isle Wars originals never leave the user's own machines (ADR-006, U2). The one exception is
     GOAL2, treated as abandonware: its files and extracts may sit in private `goal2-archaeology` (U17).
 20. The model pair follows the task's difficulty (the owner's decision of 2026-10-03, as in
-    isle-wars-archaeology). **Easy**, the default: GLM-5.3 Flash implements and GPT-6 Luna reviews,
+    isle-wars-archaeology). **Easy**, the default: GLM-5.3 Flash implements and GPT-5.6 Luna reviews,
     with Sonnet as both fallbacks. **Hard**: DeepSeek V4.1 Flash implements and GLM-5.3 reviews; GPT-6.1 Sol
     (effort `low`, `medium` if justified, never `high`) reviews guard tasks and a hard task's last rework round,
     and every complex task: guards, harness or driver changes, measurement integrity, research deliverables,
-    plans with many acceptance lines (the owner, 2026-10-04). GPT-6 Luna reviews only small, simple PRs. A task is hard if it is a **guard task** (its failure
+    plans with many acceptance lines (the owner, 2026-10-04). GPT-5.6 Luna (`luna`, its own weekly pool; harness_imperial L51) reviews only small, simple PRs. A task is hard if it is a **guard task** (its failure
     would leak or corrupt evidence: blindness, the originals guard, sealed rules, record integrity),
     if it adds a new mechanism across several files or a new external dependency, if it implements
     game rules, formulas or constants from evidence (the owner's decision of 2026-10-03), or if an earlier
     round found blocking bypasses. The main session decides; the task file's Implementer and
-    Reviewer lines say `easy` or `hard` with the reason. The roster, the routing and what each model
+    Reviewer lines say `easy` or `hard` with the reason. Before choosing or delegating to any model, check its provider's quota
+    with quota-tracker (`docs/environment.md`); an `exhausted` provider is skipped for the chain's next
+    model, passed explicitly and named in the report (harness_imperial L50). The roster, the routing and what each model
     has shown are in `docs/models.md`; the main session keeps it current. After a review with three or more
     blocking findings, or a second round of the same class, the next round goes to a stronger
     implementer (`docs/models.md`, escalating the implementer).

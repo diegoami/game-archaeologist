@@ -23,7 +23,8 @@ roster names: this page's `sol` is their `gpt-6-sol`.
 | --- | --- | --- | --- |
 | `zai-glm-5.3-flash` | GLM-5.3 Flash, `zai-coding-plan/glm-5.3-flash` | GLM | **easy implementer**, the `harness.json` default; probed 2026-10-03, PONG in 5 s |
 | `deepseek-flash` | DeepSeek V4.1 Flash, `opencode-go/deepseek-v4.1-flash` | DeepSeek | **hard implementer** (`--model deepseek-flash`) |
-| `luna` | GPT-6 Luna, `openai/gpt-6-luna`, the direct OpenAI route | OpenAI | **easy reviewer**, the `harness.json` default, and the research reviewer |
+| `luna` | GPT-5.6 Luna, `openai/gpt-5.6-luna` at `high`, the direct OpenAI route, on its own weekly pool (`gpt-5.6-luna:7d`; L51, 2026-10-04) | OpenAI | **easy reviewer**, the `harness.json` default, and the research reviewer |
+| `luna-6` | GPT-6 Luna, `openai/gpt-6-luna`, on OpenAI's main pool with Sol | OpenAI | outside the chains, never the reviewer (L51); `luna` until 2026-10-04 |
 | `gpt-6.1-sol` | GPT-6.1 Sol, `openai/gpt-6.1-sol` | OpenAI | **hard reviewer** (`--reviewer gpt-6.1-sol`); probed 2026-10-03, PONG in 6 s |
 | `sol` | GPT-6 Sol, `openai/gpt-6-sol` | OpenAI | the hard reviewer before 6.1 (T05, T06) |
 | `glm-flash-zai` | GLM-5.3 Flash (toy-archaeology only; the same model as `zai-glm-5.3-flash`) | GLM | the implementer trial (toy-archaeology #8, #9) |
@@ -48,7 +49,7 @@ isle-wars-archaeology (CLAUDE.md rule 20):
 
 | Difficulty | Implementer | If it is unavailable | Reviewer | If it is unavailable |
 | --- | --- | --- | --- | --- |
-| Easy, the default | GLM-5.3 Flash | Sonnet | GPT-6 Luna | Sonnet |
+| Easy, the default | GLM-5.3 Flash | Sonnet | GPT-5.6 Luna | Sonnet |
 | Hard | DeepSeek V4.1 Flash | Sonnet | **GLM-5.3**; **GPT-6.1 Sol** (at `low`) for a guard task and for a hard task's last rework round | DeepSeek V4 Pro, then Opus |
 
 **Sol is used sparingly** (the owner, 2026-10-04): it reviews only **guard tasks** (blindness, the
@@ -143,8 +144,9 @@ run, the review goes to a substitute instead of waiting, unless the owner says t
 
 **First, diagnose.** Read the run's error file (`/tmp/harness-opencode/<session>.err.txt`) and probe
 `node tools/harness/switch-model.mjs --role reviewer --model openai/gpt-6.1-sol --name gpt-6.1-sol --probe --dry-run`.
-"The usage limit has been reached" means the whole OpenAI account is out of quota, so Luna is
-blocked too; confirm by probing `openai/gpt-6-luna`. If only Sol fails, Luna is still an option.
+Check quota-tracker first (L50): `curl -s localhost:8765/quota/openai`. When the main `7d` window is
+exhausted, Sol is blocked, but GPT-5.6 Luna draws on its own `gpt-5.6-luna:7d` window and is still an
+option while that is under 95% (L51).
 
 **Substitutes, in order** (skip the implementer's family):
 
@@ -343,6 +345,12 @@ No DeepSeek model runs: the OpenCode Go credits are gone. This holds until the o
   three rounds, all of the same class (a crash on malformed input). Sol on T09 and T10 named two
   per round, each pair new. Luna on ic2-conquest PR #38 named one per round for eight rounds. From
   2026-10-04, every brief carries "Report every blocking finding in this one review".
+- **Quota before choice (harness_imperial L50, adopted 2026-10-04):** every model choice starts
+  with quota-tracker (`docs/environment.md`); an `exhausted` provider is skipped for the chain's next
+  model, passed explicitly and named in the report. At adoption: zai and opencode_go were exhausted.
+- **`luna` is GPT-5.6 Luna (harness_imperial L51, adopted 2026-10-04):** `openai/gpt-5.6-luna` at
+  `high`, on its own weekly pool. GPT-6 Luna stays registered as `luna-6`, outside the chains; the
+  records above that name GPT-6 Luna describe runs before this date.
 - **A checker of rendered Markdown** (T10, nine rounds, 2026-10-04): every rule that read raw text
   left a markup escape: list markers, repeated sections, HTML headings, tags, links and math
   splitting a word. Sol found a new one each round; Opus closed each one it was given. It converged

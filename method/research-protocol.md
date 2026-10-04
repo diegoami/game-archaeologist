@@ -12,7 +12,7 @@ Isle Wars repositories have used it ([ADR-002](../docs/adr/002-harness-reuse.md)
 | Role | Who | How | Credentials |
 | --- | --- | --- | --- |
 | Researcher | a Claude agent (Sonnet). Research is judgment: choosing what not to conclude. OpenCode only for a mechanical sweep the contract names. | the task file pasted in full, then the researcher block (§2), in its own worktree on `task/T<nn>-<slug>` | **Isle Wars**: a Claude agent with worktree isolation, on a machine holding the artifact (C3). **Toy research**: §6, never the owner's own `gh` login. |
-| Research reviewer | `luna` (GPT-6 Luna on OpenAI) via `tools/harness/review.mjs`: another family than a Claude researcher. Claude Opus only when the researcher was not Claude. | the review block (§3) with the research task file pasted, `review.mjs --pr <n> --brief <file> --exclude claude --issue <n> --apply-label` | read the repository and the evidence release; comment; the two status labels |
+| Research reviewer | `luna` (GPT-5.6 Luna on OpenAI, its own weekly pool) via `tools/harness/review.mjs`: another family than a Claude researcher. Claude Opus only when the researcher was not Claude. | the review block (§3) with the research task file pasted, `review.mjs --pr <n> --brief <file> --exclude claude --issue <n> --apply-label` | read the repository and the evidence release; comment; the two status labels |
 | Promotion | the main session, only | §4, after merge | push to `main` |
 
 `review.mjs` needs no change. It reads line 1 as the header, line 2 as the verdict, and the last

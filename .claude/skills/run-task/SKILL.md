@@ -21,10 +21,21 @@ For `#<issue>` of a bug labelled `fix`, the bug body replaces the task file, the
 1. **Brief.** Write it to a temp file: the task file **pasted in full**, then `docs/process.md` §4's
    block, then (on rework) the review comment's URL. Never a pointer to the task file.
 
+   **Watching background work (L48).** While any job runs in the background (an implement or
+   review run, an agent, a long command), arm a watch: Claude Code's Monitor (30 minutes,
+   re-armed until the work ends), or a background `until` loop where there is none. It reports
+   each job's start and end, and flags a job whose log or output file has not grown for 10
+   minutes as possibly stuck; check it is alive on its exact PID. The runner kills its own run at
+   the idle limit (L10), so for an implement or review run the flag is a warning to read the
+   output, not a reason to kill it; for an agent or a plain command it is the only watchdog.
+   Never wait with `while pgrep -f '<pattern>'`: the waiting shell's command line contains the
+   pattern, so it matches itself and waits forever. Chain jobs in one background command, or
+   wait on the PID with `while kill -0 <pid>`. Tell the user at each start, end and flag.
+
 2. **Implement.** Label `status:in-progress`. Use the task file's Implementer:
    - `opencode` (the default): run
      `node tools/harness/implement.mjs --task T<nn> --slug <slug> --issue <n> --brief <file>`
-     with `run_in_background`, then wait for its completion notice; never poll with sleep.
+     with `run_in_background`, and watch it (below); never poll with sleep.
      - Exit 0: a PR is open. Note the `implemented by:` line.
      - Exit 1: read the log it names. An implementer that stopped and reported goes to step 5,
        or to a task-file amendment on `main` and a re-run.
@@ -38,7 +49,7 @@ For `#<issue>` of a bug labelled `fix`, the bug body replaces the task file, the
 
 3. **Review.** Label `status:in-review`. Use the task file's Reviewer, never the implementer's
    family:
-   - `opencode` (the default, GPT-6 Luna on the direct OpenAI route): `node tools/harness/review.mjs
+   - `opencode` (the default, GPT-5.6 Luna on the direct OpenAI route): `node tools/harness/review.mjs
      --pr <pr> --brief <file> --exclude <implemented by> --issue <n> --apply-label`, in the
      background; a hard task adds `--hard` (GLM-5.3, then another provider when it cannot run,
      L39), and a guard task or the last round (`review-round:2`, `:1` for a fix) also `--sol`
@@ -78,6 +89,11 @@ For `#<issue>` of a bug labelled `fix`, the bug body replaces the task file, the
      1. Check that every finding names a file in `gh pr diff <pr> --name-only`. A review that
         does not reviewed the wrong tree: discard it, say so, and re-review.
      2. At `review-round:2` (at `review-round:1` for a fix), go to step 5.
+        A reviewer that reports one blocking finding per round despite the brief's one-pass
+        section (L49): after the second such round, stop. Request no further review until you
+        have gone through the whole diff yourself for that class and fixed what you found, and
+        recorded the pattern in the model-trials record. The review after that is the task's last
+        before escalation (step 5).
      3. **A heavy review moves the implementer up (L38)**, decided before the next round starts.
         The review just posted is heavy when it asks for rework with three or more blocking
         findings, or when it brings new blocking findings of a class the previous round raised:
