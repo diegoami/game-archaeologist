@@ -21,7 +21,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FORMATS = ROOT / "formats"
 sys.path.insert(0, str(ROOT / "tools"))
-from validate_records import semantic_errors, unknown_keywords, validate  # noqa: E402
+# canonical_set_hash is unused here but re-exported, so a game repository still importing this
+# script at its pinned commit keeps working until it migrates to tools/validate_records.py (ADR-009).
+from validate_records import canonical_set_hash, semantic_errors, unknown_keywords, validate  # noqa: E402,F401
 
 
 def statuses(text, heading):
