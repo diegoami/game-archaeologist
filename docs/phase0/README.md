@@ -127,9 +127,11 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 
 | U23 | **A record file with a duplicate JSON key is invalid**, at any depth and even when the values agree (T07, Sol's round-3 R1 on #20). | JSON readers disagree on which duplicate wins, so one file could mean different records in different repositories. `tools/validate_records.py` rejects it, and so do NaN/Infinity literals and lone surrogates (Sol judged those invalid input already). No example or registered manifest is affected. |
 
+| U24 | **A game copy holding a special file or an unsafe symlink fails registration and checking**: a socket, a device, a broken link, or a link out of the folder. This holds even when the entry is unlisted, matches `runtime_writes` or `--exclude`, and `--strict` is off (T09, Sol's round-3 R1 on #24). | DOS-era games never create such entries, so one means the copy is not what it seems. `tools/register_artifact.py` names it and never follows or reads it. This is the same fail-closed choice as U23. |
+
 ### Still open
 
-None. U1–U23 are made, and ADR-001..009 were accepted on 2026-10-02.
+None. U1–U24 are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
