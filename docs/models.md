@@ -206,18 +206,14 @@ watched match. G1 (goal2 T02, merged 2026-10-04, goal2 F001) measured them:
 - **Fixed cost:** about 14 s from the title to the main screen at every setting, set by the settle
   polls, and about 1 s per savestate restore.
 
-## Today only: OpenCode Go quota low (2026-10-04)
+## DeepSeek suspended (owner, 2026-10-04, until further notice)
 
-The owner, 2026-10-04: the OpenCode Go tokens are running out, so DeepSeek models go to the end for
-the rest of the day. Revert this section and `reviewer.hard` on 2026-10-05.
-- Hard implementer: `--model zai-glm-5.3` (GLM-5.3 on Z.AI) instead of `deepseek-flash`. The ladder
-  for today is GLM-5.3 Flash → GLM-5.3 → Claude Opus, and DeepSeek V4.1 Flash only if all of these
-  fail.
-- `reviewer.hard` is `zai-glm-5.3`, `luna`, `deepseek-pro` (DeepSeek V4 Pro last).
-- A run already in flight on DeepSeek finishes; its next round follows this section.
-- From about 13:20, Z.AI's 5-hour usage limit stops GLM-5.3 and GLM-5.3 Flash until 19:20 today. Until
-  then, easy implementers fall to the Claude fallback (Sonnet), hard implementers go to Claude Opus,
-  and `--hard` reviews reach Luna, after GLM-5.3 fails fast.
+No DeepSeek model runs: the OpenCode Go credits are gone. This holds until the owner lifts it.
+- Hard implementer: `--model zai-glm-5.3` (GLM-5.3 on Z.AI); the ladder is GLM-5.3 Flash → GLM-5.3 →
+  Claude Opus.
+- `reviewer.hard` is `zai-glm-5.3`, `luna`; Sol first for guard and complex tasks (`--hard --sol`).
+- While Z.AI's usage limit holds (until 19:20 on 2026-10-04), easy implementers fall to Sonnet, hard
+  implementers to Opus, and `--hard` reviews reach Luna.
 
 ## How a run is made
 

@@ -58,8 +58,7 @@
     "totalTimeoutSec": 3600,
     "hard": [
       "zai-glm-5.3",
-      "luna",
-      "deepseek-pro"
+      "luna"
     ],
     "sol": "gpt-6.1-sol"
   },
