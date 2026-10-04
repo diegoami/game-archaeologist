@@ -21,12 +21,14 @@ Tag capability jumps, not phases. Release notes come from GitHub when the tag is
 | --- | --- | --- |
 | Main session | Claude, the session the user talks to | Plans, writes task files, runs `/run-task`, triages, merges, reports |
 | Implementer | OpenCode GLM-5.3 Flash, then DeepSeek V4.1 Flash, via `tools/harness/implement.mjs`, then a Claude Sonnet agent (L42); a heavier model only with the reason in the task file (L46) | One task, one branch, one PR, in its own worktree |
-| Reviewer | OpenCode GPT-6 Luna (direct OpenAI) via `tools/harness/review.mjs`, then a Claude Opus agent; never the implementer's family (L27). Exit 3: Opus reviews; exit 4: the main session reads the flagged review and decides (L28) | Re-runs the Done-when, audits scope and evidence, posts one PR comment, applies the label |
+| Reviewer | OpenCode GPT-5.6 Luna (direct OpenAI, L51) via `tools/harness/review.mjs`, then a Claude Opus agent; never the implementer's family (L27). Exit 3: Opus reviews; exit 4: the main session reads the flagged review and decides (L28) | Re-runs the Done-when, audits scope and evidence, posts one PR comment, applies the label |
 | Decider | Jev via `tools/harness/jev.mjs` (the `/jev` skill) | Repeated yes/no decisions over many items, at the confident ends only (§12) |
 | Generator | Models on OpenRouter (images, other families) and ElevenLabs (speech, sound, music) | Assets, each committed with a sidecar naming provider, model, prompt, date and cost |
 
 `/delegate` picks the delegate; model ids come from `models.mjs` or `opencode models`, never memory
-(L25). The main session runs `implement.mjs` itself: a wrapper agent would spend tokens watching it.
+(L25), after a look at the provider's quota: skip an exhausted one for the next with quota, saying so (L50).
+The main session runs `implement.mjs` itself: a wrapper agent would spend tokens watching it.
+It watches each background job (start, end, no output for 10 min), never with `pgrep -f`. (L48), and checks quota with `docs/environment.md`'s quota-tracker.
 
 ## 2. Task files
 
@@ -81,12 +83,12 @@ You implement <T<nn>>. The task file above is the contract.
 You review PR #<n> at <sha>. You did not write it. The task file follows.
 0. Prove the tree: HEAD is <sha> and the diff against origin/main is the PR's; findings name its files.
 1. Re-run every Done-when line yourself, and account for each (L32). The PR's evidence is no proof.
-2. [evidence-driven] Every constant traces to a fixture, report or investigation; a [designed]
-   value says what was searched.
+2. [evidence-driven] Every constant traces to a fixture, report or investigation; a [designed] one says what was searched.
 3. [seeded] No wall clock, unseeded random or order-dependent iteration in rule code.
 4. Every changed file and behaviour is one the task asks for (L44); docs it makes wrong are updated.
 5. Sweep the diff: tests that pass with the behaviour deleted (mutate, rebuild clean, re-take any
    negative result), branches no input reaches, edge comments without a test, <project classes>.
+6. <docs/review-brief.md in full: "Blocking means" for this task, then its one-pass section (L47, L49)>
 Prove each finding (run it, or delete the behaviour and name the test that fails) or label it
 unverified. Your final message is the review: the header; the verdict (approve | approve after
 named fixes | rework | user decision); per Done-when line `DW<k>: ran <command> → <result>` or
@@ -107,8 +109,7 @@ per merge. Triage decides one of:
 - **correction task**: anything that changes an outcome.
 - **fold** into a task not yet ready, or **close**, with the reason.
 
-Once `breaks-play` is trialled (§12), Jev settles the confident ends of the playability gate
-first; the main session triages the middle.
+Once `breaks-play` is trialled (§12), Jev settles the gate's confident ends; the main session the middle.
 
 ## 7. Escalate to the user when
 
@@ -137,8 +138,7 @@ run, or the owner's decision with its basis. Plausible rules without either stay
 - Transcribe every number from the research into one fixtures corpus with provenance, and assert
   against it: each re-read of a report is another chance to misread it. (L15)
 - New evidence runs in two stages: findings to the research repository, then a check of every
-  document claim it touches. Each finding is a doc fix, a bug, a task-file edit, or a question for
-  the user; research never decides design. (L16)
+  document claim it touches. Each finding is a doc fix, a bug, a task-file edit, or a question for the user; research never decides design. (L16)
 - The original files never enter the repository. CI fetches them from a private fixtures
   repository holding the whole corpus; tests find fixtures by name; local tests skip without them. (L17)
 
