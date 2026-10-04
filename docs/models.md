@@ -194,7 +194,17 @@ lessons, as they apply to every driver here:
 
 GOAL2 (DOSBox-X) adds two levers to measure: emulated speed (cycles, turbo) without breaking input
 or screens, and the game's own "quick result option" (`GOAL.HLP` 127), if it uses the same engine as a
-watched match. G1 (goal2 T02) measures them; the numbers go here when it merges.
+watched match. G1 (goal2 T02, merged 2026-10-04, goal2 F001) measured them:
+- **Speed:** a watched match, kick-off to FULL TIME, takes about 184 s at `cycles=auto`, 59 s at
+  10000, 20 s at 30000 and 9.4 s at `max`. At every setting all matches finished, the menus answered
+  and the screens matched the reference. Drive at `max`. Whether a match's outcome depends on
+  `cycles` was not measured.
+- **Quick result:** repeats within a batch, but from one savestate it differed between batches about
+  20 minutes apart. An input outside the savestate, perhaps the host clock, is not yet controlled,
+  so reproducible matches wait on the driver (I3, or record that input). This is a G5 backlog
+  question.
+- **Fixed cost:** about 14 s from the title to the main screen at every setting, set by the settle
+  polls, and about 1 s per savestate restore.
 
 ## How a run is made
 
