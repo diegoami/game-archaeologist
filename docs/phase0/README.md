@@ -139,10 +139,11 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 
 | U29 | **An HTML heading is matched as a block, not parsed.** Any line containing `<h1`–`<h6` (case-insensitive) starts a heading block that runs to the next blank line, or to the end of the file. The whole block's raw text goes through U28: entity-decoded, NFKC, casefolded, letters only. If it contains `answer` or `inferences`, or mixes scripts, the block is an error (T10, Sol's round-5 R1 on #27: a quoted `</h2>` in an attribute, and a second `<h2>` on the same line). | No HTML parsing remains to get wrong. A paragraph of HTML that merely mentions the words next to a heading tag is refused, by design. No existing finding uses HTML headings. |
 | U30 | **HTML headings are banned in findings.** Any line containing `<h1`–`<h6` (case-insensitive), anywhere in a finding, is the error `<file>:<line>: unsupported in a protected section: <line>`. It replaces U29's block rule; U28 still applies to Markdown and setext headings (T10, Sol's round-6 R1 on #27: a blank line inside `<h2>…</h2>`, and tags splitting the word, as in `An<span>s</span>wer`). | Nothing is parsed or matched across lines. A finding writes its headings in Markdown; HTML headings cannot reach a reader as an unchecked Answer. |
+| U31 | **Headings may not contain `<` or `[`.** Any ATX or setext heading, anywhere in a finding, whose text contains `<` or `[` is the error `<file>:<line>: unsupported in a protected section: <line>`. Tags, links, images, autolinks and comments all start with one of them (T10, Sol's round-7 R1 and R2 on #27: `## An<span>s</span>wer` and `## [An](x)s[wer](y)` add letters that split the word, so U28's raw text misses it). | Nothing is rendered or stripped. None of the 123 headings in the three repositories' findings uses either character. |
 
 ### Still open
 
-None. U1–U30 are made, and ADR-001..009 were accepted on 2026-10-02.
+None. U1–U31 are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
