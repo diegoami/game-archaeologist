@@ -59,6 +59,18 @@ same code, copied, until a second consumer moves it here (ADR-009).
 
    Two copies are the same artifact iff their ids match. `acquired` is excluded, so the same bytes
    obtained differently stay one artifact.
+
+   `runtime_writes` is part of the canonical manifest, so a set registered before it ever ran keeps
+   its list as registered (U21). When a run later shows more writes, register a **successor set**:
+   - the same files, except that a shipped file the game writes moves from `files` to a
+     `runtime_writes` glob;
+   - `runtime_writes` complete as observed, so the successor gets a new id;
+   - its `notes` in `known.json` name the predecessor and the run and finding that showed the writes,
+     and the predecessor's notes name the successor.
+
+   The predecessor stays in `known.json`, and the records that name it stay true: the files that ran
+   were the same. New runs name the successor. isle-wars-archaeology's `iwp-2.0-3694a782`, the
+   successor of `iwp-2.0-996e86c5`, is the first case.
 2. **Evidence asset names.** Each bundle file is uploaded as the release asset `<sha256[:16]>-<name>`.
 
 ## The validator

@@ -117,9 +117,15 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 | U19 | **Two private repositories**: `goal2-archaeology` now, and `goal2` (rebuild and bot) when the spec covers the match engine. | G0 creates the first, with the harness and `formats-v1`. |
 | U20 | **Modern GOAL2 databases**: current national teams and players, written into GOAL2's own data format. Facts come from open data only (Wikidata, CC0; openfootball, public domain). Skill ratings are computed by our own documented formula, never copied from a commercial game or database (EA, Football Manager, Transfermarkt). | Private repositories only, never published. It needs the `GOAL.DAT` format specified first (a representation claim set), and lives in `goal2` beside the rebuild. |
 
+### Decided by the user (2026-10-04)
+
+| # | Decision | Consequence |
+| --- | --- | --- |
+| U21 | **Runtime writes observed after registration make a successor set** (#19, option 2). `runtime_writes` stays in the canonical hash, and `formats-v1` is unchanged. | `formats/README.md` describes the procedure, which isle-wars-archaeology already followed (`iwp-2.0-3694a782`). GOAL2 registers a successor of `goal2-a949da2f` declaring the writes F001 observed. Options 1 (a formats-v2 hash without the writes) and 3 (a spike before registering) were rejected. Option 1 would not cover a shipped file the game writes, which must leave `files` anyway. Option 3 conflicts with the runs citing a set id. |
+
 ### Still open
 
-None. U1–U20 are made, and ADR-001..009 were accepted on 2026-10-02.
+None. U1–U21 are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
