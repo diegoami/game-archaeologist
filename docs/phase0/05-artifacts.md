@@ -19,8 +19,8 @@ Pro is, per malpaco's research, sold today by Soleau Software. Each game has a *
 that sets: may the original live in a private GitHub store? may it be sent to cloud machines? may
 saves/screenshots be published?
 
-**Isle Wars (DOS) and Isle Wars Pro — decided 2026-10-02 (U2, U3):** no licence; explored, never
-replicated.
+**Isle Wars (DOS) and Isle Wars Pro — decided 2026-10-02 (U2, U3, U22):** no licence; explored, never
+copied.
 
 | Class | Isle Wars policy |
 | --- | --- |
@@ -28,7 +28,7 @@ replicated.
 | 2 Derived binaries | built locally from the user's copy by committed recipe; never stored or uploaded anywhere |
 | 3 Saves / 4 screenshots, recordings | release assets on the private `isle-wars-archaeology` repo (U5: the whole repo is private) |
 | 5 Reports / 6 run records | game repo |
-| Reimplementation | not a goal; the spec is behavioural only |
+| Reimplementation | an original game inspired by the originals (malpaco), never a copy (U22); the spec stays behavioural |
 | Reference copies | the **shareware/unregistered** releases (U11). Claims are scoped to them; what registration unlocks is `unknown`. |
 
 ## 2. Identity

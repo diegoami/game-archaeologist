@@ -1,7 +1,7 @@
 # ADR-006 Artifact identity, derived variants, and per-game rights
 
 - **Status**: Accepted 2026-10-02
-- **Source:** [docs/phase0/05-artifacts.md](../phase0/05-artifacts.md); user decisions U1, U2, U3, U5, U11, U21
+- **Source:** [docs/phase0/05-artifacts.md](../phase0/05-artifacts.md); user decisions U1, U2, U3, U5, U11, U21, U22
 
 ## Context
 
@@ -32,12 +32,13 @@ sold.
   - where the originals may live;
   - whether they may reach cloud machines;
   - what may be published.
-- **Isle Wars and Isle Wars Pro** (U2, U3, U5, U11):
-  - no licence: they are explored, never replicated;
+- **Isle Wars and Isle Wars Pro** (U2, U3, U5, U11, U22):
+  - no licence: they are explored, never copied;
   - the originals stay on the user's own machines;
   - the reference copies are the shareware/unregistered releases;
   - the research repo is private, and evidence bundles are release assets on it;
-  - no reimplementation is a goal.
+  - an original game inspired by them (malpaco) is a goal. Their code, assets, text and name are
+    never reused. Only behaviour and design learned pass to it, never evidence.
 - **Evidence bundles** are content-addressed and verified on download.
 - **`imp_conquest_fixtures`** becomes private (U1), after its IC2 consumers move to authenticated
   access.

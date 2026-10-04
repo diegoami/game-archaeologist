@@ -149,7 +149,7 @@ W-M2 + M3 for Isle Wars research.
 ## 6. First Isle Wars research milestone (both artifacts — U3)
 
 **Target:** the first reviewed behavioural finding, not a specification. Isle Wars Pro is explored,
-never replicated (U2): the target is a behavioural specification, never a reimplementation.
+never copied (U2, U22): the target is a behavioural specification, never a copy.
 
 **What is known now (all unverified, from malpaco's `DECISIONS.md`/`RULES.md`):** *Isle Wars*
 (Soleau Software, 1994, DOS) runs in DOSBox in browsers; *Isle Wars Pro* is the Win9x sequel; the
