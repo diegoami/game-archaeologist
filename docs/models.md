@@ -221,6 +221,32 @@ watched match. G1 (goal2 T02, merged 2026-10-04, goal2 F001) measured them:
   on rework the review's URL. The review brief is §5's block (research: method §3's) filled in,
   then the task file. Until harness_imperial#19 and #24 land, a review brief also asks for one
   `DW<k>:` evidence line per Done-when line.
+- **"Blocking means"** (the owner, 2026-10-04, ahead of harness_imperial L47; the harness's PR 29
+  replay saw GLM-5.3 prove three guard bypasses live, rate them "not blocking" and approve). Until
+  this repository picks up that harness version, every review brief carries this section in full,
+  filled in for the task, before the pasted task file. It is the section itself, never a pointer:
+
+  ```text
+  Blocking means (any one is enough; a blocking finding means rework, never approve):
+  1. A Done-when line fails, or cannot be run as written.
+  2. What this task protects can be got past: <the guard, check, permission, invariant, rule value
+     or file this task exists to protect; on a guard task, the list of forbidden actions or
+     results it must stop>. A bypass you proved is blocking, even when it looks like an edge case.
+     Do not rate it "follow-up hardening" or "outside the threat model" unless the task says so;
+     if it does, quote the line.
+  3. Behaviour the task forbids, or behaviour nobody asked for, inside a file the task requires
+     (Isle Wars T06: both of Sol's blocking bypasses lived in unasked scope).
+  4. A test or check that passes with the behaviour deleted; a moved function whose behaviour
+     changed; a status written into a document; a constant or rule with no evidence.
+  Not blocking: wording, style, and defects in code the PR did not change. File those as
+  follow-ups. When unsure, rate it blocking and say why. An approve with a proven bypass is the
+  costliest mistake a review can make.
+  ```
+
+  Every task file's Scope says in one line what the task protects (`Protects:`), so item 2 can name
+  it. Before merging an approval whose findings are marked "not blocking", the main session reads
+  them. If one is a proven way past what item 2 names, the review counts as rework: say so on the
+  PR, and record it under "What each model has shown so far".
 - **The header** names the reviewer: `T<nn> review (gpt-6.1-sol)`. With `--reviewer`, a placeholder such as
   `(MODEL)` is printed as written.
 - **Merging:** a squash, except a research PR, which merges with a merge commit (method §4).
