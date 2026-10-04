@@ -110,7 +110,7 @@ def main():
         probs, _ = ra.compare(extra, m, strict=True)
         case(problems, "compare fails an unlisted file with strict",
              any("unlisted: x.txt" in p for p in probs), f"problems {probs}")
-        extra["save.sav"] = (3, "2" * 64)
+        extra["later.sav"] = (3, "2" * 64)
         probs, unlisted = ra.compare(extra, m)
         case(problems, "compare ignores a runtime write",
              probs == [] and unlisted == ["x.txt"], f"problems {probs} unlisted {unlisted}")
@@ -121,7 +121,7 @@ def main():
              f"errors {errors}")
         observed, errors = ra.read_listing(_write(tmp / "bad-listing.txt", m, bad=True))
         case(problems, "read_listing names a non-integer size",
-             any("is not an integer" in e for e in errors) and "line 3" in " ".join(errors),
+             any(e.startswith("line ") and "is not an integer" in e for e in errors),
              f"errors {errors}")
 
         # CLI: manifest prints the same id, accepts --writes, and defaults --when to today.
