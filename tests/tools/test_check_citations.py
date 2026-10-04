@@ -476,5 +476,50 @@ class U30Test(unittest.TestCase):
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
 
+class U31Test(unittest.TestCase):
+    """The owner's decision U31: any ATX or setext heading, anywhere in a finding, whose text
+    contains `<` or `[` is the named error. Tags, links, images, autolinks and comments all start
+    with one of them, so no markup can add letters that split a word past U28."""
+
+    def assert_refused(self, heading: str) -> None:
+        result = run_check_text(spelled(heading))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertTrue(unsupported_at(result, 11, heading.split("\n")[0]), result.stdout)
+
+    def test_sol_round_7_r1_and_r2_are_refused(self):
+        # R1: a tag split the word, so the raw letters were `answpanspanwer`, not `answer`.
+        # R2: links split it the same way, with no HTML at all.
+        for name in ("Answer", "Inferences"):
+            for heading in (f"## {name[:2]}<span>{name[2]}</span>{name[3:]}",
+                            f"## [{name[:2]}](x){name[2]}[{name[3:]}](y)",
+                            f"## [{name[:2]}][x]{name[2:]}\n\n[x]: https://example.org"):
+                with self.subTest(heading=heading):
+                    self.assert_refused(heading)
+
+    def test_a_bracket_or_angle_heading_outside_any_protected_section_is_refused(self):
+        # No section name: the character alone is the error.
+        for heading in ("## Speed [see x](y)", "### a < b", "# [Speed]", "> ## Quoted <b>x</b>",
+                        "- ### Listed [x]"):
+            with self.subTest(heading=heading):
+                self.assert_refused(heading)
+
+    def test_a_setext_heading_with_a_bracket_or_angle_is_refused(self):
+        for heading in ("Speed [x](y)\n---", "Speed <i>x</i>\n===", "First line\n[x](y) second\n==="):
+            with self.subTest(heading=heading):
+                self.assert_refused(heading)
+
+    def test_an_image_and_an_autolink_in_a_heading_are_refused(self):
+        for heading in ("## ![x](y)", "## Speed ![x](y)", "## <https://x>", "## See <https://x>"):
+            with self.subTest(heading=heading):
+                self.assert_refused(heading)
+
+    def test_headings_with_parentheses_backticks_or_stars_pass(self):
+        for heading in ("## Speed (in cycles)", "### The `cycles` arm", "## *Speed* and **time**",
+                        "## (x) `y` *z*", "Speed (x)\n---"):
+            with self.subTest(heading=heading):
+                result = headed(heading)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

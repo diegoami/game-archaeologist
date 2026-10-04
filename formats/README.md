@@ -178,7 +178,10 @@ they serve the repository they are run in.
   two headings (so ``## `Answer` ``, `## [Answer](#answer)` and `### Answers` are refused), and
   when they come from more than one Unicode script, as look-alike letters do (#28). HTML headings
   are banned (U30): any line containing `<h1`–`<h6`, in any case, anywhere in the finding (a fenced
-  code block included), is the same error. Write headings in Markdown.
+  code block included), is the same error. So is any `#` or setext heading, anywhere in the
+  finding, whose text contains `<` or `[` (U31): tags, links, images, autolinks and comments all
+  start with one of them, so no markup can split a section's name (`## An<span>s</span>wer`,
+  `## [An](x)s[wer](y)`). Write headings as plain text; `(`, backticks and `*` are fine.
   `--runs DIR` overrides `runs/` under the working directory.
 
 Only `verify_evidence.py` calls the validator (`validate_records.validate_document`);
