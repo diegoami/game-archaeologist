@@ -22,5 +22,7 @@ jobs:
       - run: python3 tests/formats/check_examples.py
       # The validator game repositories fetch and call (formats/README.md).
       - run: python3 tools/validate_records.py formats/examples/valid/*.json
+      # Malformed documents are errors, not crashes (R1, PR #20).
+      - run: python3 tests/formats/check_validator.py
       # The copied harness tools run here (harness.lock pins them).
       - run: node tools/harness/review.mjs --self-test

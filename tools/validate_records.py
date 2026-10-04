@@ -149,7 +149,14 @@ def validate_document(doc):
     schema = load_schemas().get(schema_id)
     if schema is None:
         return [f"$.schema: unknown schema {schema_id!r}"]
-    return validate(doc, schema) + semantic_errors(schema_id, doc)
+    errors = validate(doc, schema)
+    if errors:
+        # A structural error means the document is already invalid. The semantic rules read fields
+        # the schema guarantees (a file's `path`, `sha256`, `name`), so run them only on a
+        # schema-valid document: otherwise malformed input ({"files": [{}]}) crashes instead of
+        # returning the structural errors (R1).
+        return errors
+    return semantic_errors(schema_id, doc)
 
 
 def validate_file(path):
