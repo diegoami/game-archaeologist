@@ -155,18 +155,21 @@ they serve the repository they are run in.
   `gh release download E<nnn> -D <dir>` call into a fresh directory under `.cache/evidence/`, and
   checks every listed asset there by sha256. An asset the bulk call left out is retried once, by
   name; whatever is still missing is reported by name. A stale cached file never stands in for this
-  run's download. `--local DIR` checks an already-downloaded bundle instead of the release,
+  run's download (a symlink there is removed, not followed). The experiment must be an id, never a
+  path, and every `*.manifest.json` an `evidence-manifest/1` document. `--local DIR` checks an already-downloaded bundle instead of the release,
   `--evidence-dir DIR` overrides `evidence/` under the working directory, and `--repo OWNER/NAME`
   overrides the working directory's repository (`gh repo view`). Exit 0 prints
   `ok: <n> manifest(s) verified`; any problem is a named line and exit 1.
 - `python3 tools/check_citations.py findings/F<nnn>-*.md` fails (exit 1) when a run id anywhere in
   the finding has no record under `runs/E<nnn>/`, or when a bullet in `## Answer` or `## Inferences`
-  cites no run id on any of its lines. A bullet is any Markdown list item, however it is written:
-  `-`, `*`, `+` or a numbered `1.`/`1)` marker, plain, tab-separated, alone on its line, or inside
-  a blockquote (`> - claim`); an indented continuation line belongs to its bullet
+  cites no run id on any of its lines. A bullet is any list item, however it is written: `-`, `*`,
+  `+` or a numbered `1.`/`1)` marker, plain, tab-separated, alone on its line, or inside a
+  blockquote (`> - claim`), or an HTML `<li>`; an indented continuation line belongs to its bullet
   (toy-archaeology#12), and a thematic break (`- - -`) is not a bullet. **Every** occurrence of the
-  two sections is checked, so repeating a heading cannot move a claim out of the guard, and fenced
-  code is neither heading nor bullet. `--runs DIR` overrides `runs/` under the working directory.
+  two sections is checked, however the heading is spelt (closing `#`s, a tab, any case, setext), so
+  repeating a heading cannot move a claim out of the guard. What the tool guesses about rendering
+  fails closed: a fenced block or an HTML comment only stops a `## ` line inside it from ending a
+  section, and never hides a bullet. `--runs DIR` overrides `runs/` under the working directory.
 
 Neither tool ever copies or edits the validator: they call it. Their tests run in
 `tests/tools/` and in CI (`formats/README.md`).

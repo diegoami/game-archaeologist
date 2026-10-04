@@ -366,5 +366,65 @@ class VerifyEvidenceFreshCacheTest(unittest.TestCase):
                 self.assertIn(f"{asset}: missing from release E901", result.stdout)
 
 
+class VerifyEvidenceSweepTest(unittest.TestCase):
+    """Round 2 sweep (Opus): the fresh directory cannot be a stale one in disguise, an experiment
+    argument cannot point the fresh-directory removal elsewhere, and a manifest file that holds
+    another record kind is a named error."""
+
+    def setUp(self):
+        shutil.rmtree(cache_dir("E901"), ignore_errors=True)
+        self.addCleanup(shutil.rmtree, cache_dir("E901"), True)
+
+    def test_stale_cache_behind_a_symlink_does_not_stand_in_for_an_empty_download(self):
+        # `.cache/evidence/E901` is a symlink to a directory already holding every asset: removing
+        # it must not fail silently and leave the stale files in place of this run's download.
+        with tempfile.TemporaryDirectory() as tmp:
+            stale = Path(tmp) / "stale"
+            shutil.copytree(BULK_RELEASE, stale)
+            cache_dir("E901").parent.mkdir(parents=True, exist_ok=True)
+            cache_dir("E901").symlink_to(stale, target_is_directory=True)
+            self.addCleanup(lambda: cache_dir("E901").unlink() if cache_dir("E901").is_symlink() else None)
+            fakebin, log = fake_gh(Path(tmp))
+            result = run_verify_release(fakebin, log, "empty")
+            self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+            self.assertNotIn("ok:", result.stdout)
+            self.assertNotIn("Traceback", result.stdout + result.stderr)
+            self.assertTrue(all((stale / asset).is_file() for asset in BULK_ASSETS),
+                            "the symlink's target must be left alone")
+
+    def test_experiment_that_is_not_an_id_is_a_named_error_and_removes_nothing(self):
+        # `E901/../keep` names a directory of valid manifests, so without the check the tool goes on
+        # to remove `.cache/evidence/E901/../keep`, a directory it does not own.
+        keep = REPO_ROOT / ".cache" / "evidence" / "keep"
+        keep.mkdir(parents=True, exist_ok=True)
+        self.addCleanup(shutil.rmtree, keep, True)
+        (keep / "sentinel").write_text("not the tool's", encoding="utf-8")
+        cache_dir("E901").mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory() as tmp:
+            evidence = Path(tmp) / "evidence"
+            shutil.copytree(BULK / "E901", evidence / "E901")
+            shutil.copytree(BULK / "E901", evidence / "keep")
+            fakebin, log = fake_gh(Path(tmp))
+            result = run_verify_release(fakebin, log, "ok", experiment="E901/../keep", evidence=evidence)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("not an experiment id", result.stdout)
+        self.assertTrue((keep / "sentinel").is_file(), "a directory outside the tool's cache was removed")
+
+    def test_manifest_file_holding_another_record_kind_is_a_named_error(self):
+        valid = sorted((REPO_ROOT / "formats" / "examples" / "valid").glob("*.json"))
+        other = next(path for path in valid
+                     if json.loads(path.read_text(encoding="utf-8")).get("schema") != "evidence-manifest/1")
+        with tempfile.TemporaryDirectory() as tmp:
+            experiment = Path(tmp) / "evidence" / "E777"
+            experiment.mkdir(parents=True)
+            shutil.copy(other, experiment / "E777-r0001.manifest.json")
+            result = subprocess.run(
+                [sys.executable, "tools/verify_evidence.py", "E777", "--local", str(LOCAL),
+                 "--evidence-dir", str(Path(tmp) / "evidence")],
+                cwd=REPO_ROOT, capture_output=True, text=True)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("E777-r0001.manifest.json: not an evidence-manifest/1 document", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

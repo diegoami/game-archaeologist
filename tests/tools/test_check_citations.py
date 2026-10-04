@@ -6,7 +6,12 @@ directory, never under the script's directory.
 
 Round 2 (PR #27 review): every Markdown list marker is a bullet (`-`, `*`, `+`, numbered `1.`/`1)`,
 tab-separated, a lone marker, blockquoted), every occurrence of a protected section is checked, a
-thematic break is not a bullet, and fenced code is neither heading nor bullet.
+thematic break is not a bullet, and a `## ` line inside fenced code cannot end a section.
+
+Round 2 sweep (Opus): a fence or an HTML comment never hides a bullet and only stops a `## ` line
+from ending a section; every spelling of a protected heading (closing hashes, tab, case, setext)
+is an occurrence; a quoted bullet takes no citation from a later quoted block; an HTML `<li>` is a
+bullet; a run id next to `_` must have a record.
 """
 from __future__ import annotations
 
@@ -173,14 +178,96 @@ class CheckCitationsTest(unittest.TestCase):
         self.assertIn("## Answer bullet cites no run id: - An uncited claim after the fenced example",
                       result.stdout)
 
-    def test_bullet_inside_a_fence_is_not_a_claim(self):
-        # An example bullet inside a fenced block is code, not a claim: it must not be flagged
-        # (a round-1 false positive).
+    def test_bullet_inside_a_fence_is_still_checked(self):
+        # Round 2 review (Opus): a fence only stops a `## ` line from ending a section; it never
+        # hides a bullet. Whether a line opens a fence is a guess about the renderer, so a guess
+        # that is wrong must make the check stricter, never let a claim through.
         text = ("# F990 A fixture finding\n\n## Answer\n\n- Cites E900-r0001.\n\n"
-                "```text\n- an example inside a fence, not a claim\n```\n\n"
+                "```text\n- an uncited line inside a fence\n```\n\n"
                 "## Inferences\n\n- Cites E900-r0001.\n")
         result = run_check_text(text)
-        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: - an uncited line inside a fence", result.stdout)
+
+    def test_backtick_line_that_is_no_fence_cannot_hide_the_rest(self):
+        # A backtick info string may not hold a backtick, so this line opens no fence in Markdown:
+        # the bullet after it is a rendered claim under Answer.
+        text = ("## Answer\n\n- Cites E900-r0001.\n``` not `a fence`\n- An uncited claim after it\n\n"
+                "## Inferences\n\n- Cites E900-r0001.\n")
+        result = run_check_text(text)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: - An uncited claim after it", result.stdout)
+
+    def test_fence_closes_only_on_its_own_kind_and_length(self):
+        # `~~~` and a ```python line close no ``` fence, and ``` closes no ```` fence, so the `## `
+        # lines are code and the bullet after the real closing fence is still under Answer.
+        for inner in ("~~~", "```python", "```"):
+            with self.subTest(inner=inner):
+                fence = "````" if inner == "```" else "```"
+                text = (f"## Answer\n\n- Cites E900-r0001.\n\n{fence}\n{inner}\n## Example\n{fence}\n\n"
+                        "- An uncited claim after the fence\n\n## Inferences\n\n- Cites E900-r0001.\n")
+                result = run_check_text(text)
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn("## Answer bullet cites no run id: - An uncited claim after the fence",
+                              result.stdout)
+
+    def test_heading_inside_a_fence_still_starts_a_section(self):
+        # Fail closed: a fenced `## Answer` starts a section like any other, so a claim under it is
+        # checked even if the fence was a misreading of the file.
+        text = ("## Answer\n\n- Cites E900-r0001.\n\n## Inferences\n\n- Cites E900-r0001.\n\n"
+                "## Notes\n\n```\n## Answer\n- An uncited fenced claim\n```\n")
+        result = run_check_text(text)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: - An uncited fenced claim", result.stdout)
+
+    def test_unclosed_fence_runs_to_the_end_of_the_file(self):
+        text = ("## Inferences\n\n- Cites E900-r0001.\n\n## Answer\n\n- Cites E900-r0001.\n\n"
+                "```\n## Example\n\n- An uncited claim in a fence never closed\n")
+        result = run_check_text(text)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: - An uncited claim in a fence never closed",
+                      result.stdout)
+
+    def test_heading_inside_an_html_comment_cannot_end_a_section(self):
+        text = ("## Answer\n\n- Cites E900-r0001.\n\n<!--\n## hidden\n-->\n\n"
+                "- An uncited claim after the comment\n\n## Inferences\n\n- Cites E900-r0001.\n")
+        result = run_check_text(text)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: - An uncited claim after the comment",
+                      result.stdout)
+
+    def test_every_spelling_of_the_heading_is_an_occurrence(self):
+        # The same `## Answer` heading written with closing hashes, a tab, other case, or as a
+        # setext heading is still the Answer section, so a claim under it is checked.
+        for heading in ("## Answer ##", "##\tAnswer", "## ANSWER", "Answer\n------"):
+            with self.subTest(heading=heading):
+                text = ("## Answer\n\n- Cites E900-r0001.\n\n## Inferences\n\n- Cites E900-r0001.\n\n"
+                        f"## Notes\n\nSome notes.\n\n{heading}\n\n- An uncited claim\n")
+                result = run_check_text(text)
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn("## Answer bullet cites no run id: - An uncited claim", result.stdout)
+
+    def test_quoted_bullet_does_not_take_a_citation_from_a_later_quoted_block(self):
+        # `>` alone is a blank line inside the quote, `> # ...` a heading and `> > ...` a nested
+        # quote: none of them continues the bullet, so the citation after them is not the bullet's.
+        for tail in (">\n> E900-r0001", "> # E900-r0001", "> > E900-r0001"):
+            with self.subTest(tail=tail):
+                result = run_check_text(finding_text(f"> - An uncited quoted claim\n{tail}"))
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn("## Answer bullet cites no run id: > - An uncited quoted claim",
+                              result.stdout)
+
+    def test_html_list_item_is_a_bullet(self):
+        result = run_check_text(finding_text("<ul>\n<li>An uncited HTML item</li>\n</ul>"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("## Answer bullet cites no run id: <li>An uncited HTML item</li>", result.stdout)
+
+    def test_run_id_inside_emphasis_must_have_a_record(self):
+        # `_E901-r0001_` renders as an emphasised run id; `_` is a word character, so a `\b` pattern
+        # never saw it and a citation of a run with no record passed.
+        result = run_check_text(finding_text("- Cites E900-r0001.", after="See _E901-r0001_."))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("cites missing run E901-r0001", result.stdout)
 
     def test_uncited_inferences_bullet_exits_1(self):
         result = run_check_text(finding_text("- Cites E900-r0001.", "- An uncited inference"))

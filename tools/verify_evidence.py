@@ -11,7 +11,9 @@ downloaded).
 
 The download directory is made fresh for every run: it is removed and re-created before the bulk
 call, so a file left there by an earlier run is never accepted in place of this run's download
-(toy-archaeology#11). The release is never downloaded one asset at a time: one bulk call covers every
+(toy-archaeology#11). A symlink there is removed, not followed, and a removal that fails is an
+error. The experiment must be an id (`E<nnn>`), never a path, because it names that directory.
+Every `*.manifest.json` must be an `evidence-manifest/1` document. The release is never downloaded one asset at a time: one bulk call covers every
 asset, however many manifests share it.
 
 Exit 0 when every file matches, 1 otherwise. `--evidence-dir` defaults to `evidence/` under the
@@ -27,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 import shutil
 import subprocess
 import sys
@@ -38,6 +41,9 @@ if str(TOOLS) not in sys.path:
 
 import validate_records  # noqa: E402
 from validate_records import validate_document  # noqa: E402
+
+
+EXPERIMENT = re.compile(r"^E[0-9]{3,}$")
 
 
 def sha256_file(path: Path) -> str:
@@ -96,8 +102,14 @@ def check_release(manifests: list[tuple[str, dict]], release: str, repo: str,
               for asset, sha in manifest_files(manifest)]
     # A fresh directory every run: remove whatever an earlier run left, so a stale cached file can
     # never stand in for this run's download (toy-archaeology#11).
-    shutil.rmtree(cache, ignore_errors=True)
-    cache.mkdir(parents=True, exist_ok=True)
+    # A failed removal is an error, never ignored, and a symlink is removed, not followed: either
+    # would leave the earlier files in place. `exist_ok=False` proves the directory is new.
+    if cache.is_symlink() or cache.is_file():
+        cache.unlink()
+    elif cache.exists():
+        shutil.rmtree(cache)
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.mkdir()
     gh("release", "download", release, "--repo", repo, "-D", str(cache))
     missing = sorted({asset for _, asset, _ in wanted if not (cache / asset).is_file()})
     for asset in missing:
@@ -115,6 +127,10 @@ def check_release(manifests: list[tuple[str, dict]], release: str, repo: str,
 
 
 def run(args) -> int:
+    if not EXPERIMENT.match(args.experiment):
+        # The id names a directory this tool removes and re-creates, so it may not be a path.
+        print(f"{args.experiment}: not an experiment id (E<nnn>)")
+        return 1
     evidence_dir = args.evidence_dir if args.evidence_dir is not None else Path.cwd() / "evidence"
     manifests = sorted((evidence_dir / args.experiment).glob("*.manifest.json"))
     if not manifests:
@@ -128,6 +144,9 @@ def run(args) -> int:
             document = validate_records.load_file(path)
         except (OSError, ValueError) as e:
             problems.append(f"{path}: {e}")
+            continue
+        if not isinstance(document, dict) or document.get("schema") != "evidence-manifest/1":
+            problems.append(f"{path.name}: not an evidence-manifest/1 document")
             continue
         errors = validate_document(document)
         if errors:
