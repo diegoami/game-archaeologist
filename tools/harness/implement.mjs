@@ -27,7 +27,7 @@ import path from 'node:path';
 import { runOpenCodeWatched, resolveOpenCode, OpenCodeInfraError } from './lib/opencode.mjs';
 import { runChain } from './lib/chain.mjs';
 import {
-  sh, requireTools, repoPaths, loadConfig, parseArgs, envWith, ensureAgent, ocArgs, prepareOpenCode,
+  sh, requireTools, repoPaths, loadConfig, parseArgs, envWith, ensureAgent, ocArgs, prepareOpenCode, watchLine,
 } from './lib/common.mjs';
 
 const say = (s) => console.log(s);
@@ -97,29 +97,36 @@ const startRemote = originSha();
 const startPr = openPr();
 fs.writeFileSync(logFile, '');
 
+// The implementer runs on the agent copied into its worktree, so it must not inherit the reviewer's
+// settings (review.mjs, L34) from a session that ran a review: OPENCODE_DISABLE_PROJECT_CONFIG would
+// hide that agent, and OPENCODE_CONFIG_DIR would put another in its place.
+const { OPENCODE_CONFIG_DIR: _dir, OPENCODE_DISABLE_PROJECT_CONFIG: _off, ...implementEnv } = pre.env;
+
 const result = await runChain({
   chain: pre.usable,
   log: say,
   attempt: async (m) => {
     const model = config.models[m];
+    const watch = watchLine(m, model);
+    if (watch) say(watch);
     let reason = null;
     let output;
     try {
       const run = await runOpenCodeWatched({
         args: ocArgs(worktree, impl.agent, model), prompt, workDir: worktree, title: `${name}-${m}`,
         startupTimeoutMs: impl.startupTimeoutSec * 1000, idleTimeoutMs: impl.idleTimeoutSec * 1000,
-        totalTimeoutMs: impl.totalTimeoutSec * 1000, opencode, env: pre.env, log: say,
+        totalTimeoutMs: impl.totalTimeoutSec * 1000, opencode, env: implementEnv, log: say,
       });
       output = run.output;
       if (run.exitCode !== 0) reason = `exit ${run.exitCode}`;
       else if (run.agentFallback) reason = 'fell back to the default agent';
-      else if (run.permissionRejected) reason = `permission rejected: ${run.permissionRejected}`;
+      else if (run.permissionRejected) reason = `permission rejected: ${run.permissionRejected}${run.permissionHint ? `; ${run.permissionHint}` : ''}`;
     } catch (e) {
       if (!(e instanceof OpenCodeInfraError)) throw e;
       reason = e.reason;
       output = e.message;
     }
-    fs.appendFileSync(logFile, `=== ${m} (${model.id}): ${reason ? `failed: ${reason}` : 'ran'} ===\n${output}\n`);
+    fs.appendFileSync(logFile, `=== ${m} (${model.id}): ${reason ? `failed: ${reason}` : 'ran'} ===\n${watch ? `${watch}\n` : ''}${output}\n`);
     return reason ? { ok: false, reason } : { ok: true, value: output };
   },
   leftWork: async () => {

@@ -3,6 +3,8 @@ description: Read-only reviewer for one pull request, run by tools/review.mjs on
 mode: all
 permission:
   edit: deny
+  external_directory:
+    "/tmp/opencode/*": deny
   task:
     "*": deny
   bash:
@@ -35,12 +37,21 @@ how the run works.
 - Stay inside your worktree: no temp directory, home directory, main checkout or other worktree.
   OpenCode rejects a path outside it, and the script then discards the whole review. Call tools by
   name from PATH; never inspect where they are installed.
+  Run every shell command from the worktree root with paths relative to it (`grep -n X src/a.cs`,
+  not `cd src && grep -n X a.cs`). Never `cd`, and never write `..` in a command: OpenCode checks
+  paths against the worktree root, not against an earlier `cd` in the same command, so
+  `cd a && …; cd ../b` is rejected as outside the worktree, and the run fails (L31).
+  Give the read tool a path relative to the worktree root too (`docs/models.md`), never an
+  absolute path: OpenCode resolves a relative path there, although the tool's description asks
+  for an absolute one, and a guessed absolute path is rejected and ends the run (L36).
 - Re-run every Done-when line yourself; the PR's evidence is a convenience, never the proof. Prove
   a finding before reporting it (run it, or delete the behaviour and watch which test fails), or
   label it unverified. A claim that nothing failed is re-taken before it is believed.
 - Your **final message is the review** and nothing else: line 1 is exactly the header the brief
   gives; line 2 the verdict alone (`approve`, `approve after named fixes`, `rework`,
-  `user decision`); then any where-I-worked lines (worktree, HEAD, diff, commands run); then the
+  `user decision`); then any where-I-worked lines (worktree, HEAD, diff, commands run); then one
+  line per Done-when line of the task, `DW<k>: ran <command> → <result>` or
+  `DW<k>: not run — <reason>` (an approve that leaves one out is not applied, L32); then the
   findings R1, R2, ... with file and line, blocking or not; then the verdict again as the last line,
   with nothing after it. The script reads exactly this shape. A review without its closing verdict,
   or with a finding after it, is posted flagged and gets no label. Never put

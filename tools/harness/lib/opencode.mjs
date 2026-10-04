@@ -17,9 +17,10 @@
 //      (ic2-conquest's WSL reviewer).
 //   6. Output is read back as UTF-8.
 //   7. A tool call OpenCode auto-rejected (a path outside --dir, in a non-interactive run) ends the
-//      run with exit 0, so it looks like a clean finish. It is read from OpenCode's own warning
-//      line and reported as `permissionRejected` (IC2 #501: three runs in one day, on TEMP and on
-//      tools' install directories).
+//      run with exit 0, so it looks like a clean finish. It is read from the session record, and
+//      reported as `permissionRejected` with what OpenCode's warning line says was rejected (IC2
+//      #501: three runs in one day, on TEMP and on tools' install directories). The line decides
+//      alone only when the record cannot be read: a tool's output can quote it (PR 35).
 //
 // Every failure of OpenCode itself throws an OpenCodeInfraError with a short `reason`; a fallback
 // chain may move past it. Anything else thrown is a defect of the caller.
@@ -66,13 +67,33 @@ export function agentWarning(stderr, agent) {
 
 // OpenCode's own line when a non-interactive run rejects a tool call (OpenCode 1.18):
 //   ESC[93mESC[1m! ESC[0mpermission requested: external_directory (/tmp/*); auto-rejecting
-// Anchored like agentWarning. Returns what was rejected (the last one), or null.
-export function permissionRejection(text) {
+// Anchored like agentWarning. Text alone cannot tell this line from a tool's output quoting it (an
+// issue printed by gh, PR 35), so whether a rejection happened is read from the session record
+// (sessionRecord); the text says what was rejected, and decides only when the record cannot be read.
+// OpenCode colours its own line, so a coloured match is preferred over a plain one.
+function rejectionLines(text) {
   const ansi = '(?:\\x1b\\[[0-9;]*m|[ \\t])*';
-  const re = new RegExp(`^${ansi}!${ansi}permission requested: ([^\\r\\n]*?); auto-rejecting`, 'gm');
-  let what = null;
-  for (const m of String(text).matchAll(re)) what = m[1];
-  return what;
+  const all = [...String(text).matchAll(new RegExp(`^${ansi}!${ansi}permission requested: ([^\\r\\n]*?); auto-rejecting`, 'gm'))];
+  const coloured = all.filter((m) => /\x1b\[/.test(m[0]));
+  return coloured.length ? coloured : all;
+}
+
+// What was rejected (the last rejection), or null.
+export function permissionRejection(text) {
+  return rejectionLines(text).at(-1)?.[1] ?? null;
+}
+
+// Why a rejection happened, when the agent's own command shows it: OpenCode prints the rejected
+// command on a `✗` line after its rejection line. A `cd` or a `..` in it means the agent wrote a path
+// relative to an earlier `cd`, which OpenCode resolves against --dir instead (#14): a false
+// positive the agent files now forbid (L31). Returns the hint, or null.
+export function rejectionHint(text) {
+  const first = rejectionLines(text)[0];
+  if (!first) return null;
+  const plain = String(text).slice(first.index).replace(/\x1b\[[0-9;]*m/g, '');
+  const cmd = plain.split(/\r?\n/).slice(1).find((l) => /^\s*✗/.test(l));
+  if (!cmd || !/(^|[\s;&|(])cd\s|(^|[\s/'"=])\.\.(\/|\s|$)/.test(cmd.replace(/^\s*✗\s*/, ''))) return null;
+  return 'the rejected command used cd or ..: run commands from the worktree root, with paths relative to it (L31)';
 }
 
 // The Windows npm shim as WSL sees it: a shell script that execs opencode.exe. Under WSL it runs
@@ -142,6 +163,22 @@ export function openCodeHome(env = process.env, { log = () => {} } = {}) {
   else auth = 'no auth.json: API-key providers are not logged in';
   log(`opencode: data directory ${dirs.XDG_DATA_HOME} (${auth})`);
   return { env: { ...env, ...dirs }, root, dataHome: dirs.XDG_DATA_HOME };
+}
+
+// The OpenCode version the runner drives ("1.18.34"), or null when `--version` gives none. The
+// harness was checked on the 1.18 line, the public CLI. The desktop app ships a 2.x CLI whose run
+// flags, session fields and agent format differ (#26), so any major but 1 is refused before
+// anything is billed.
+export const SUPPORTED_MAJOR = 1;
+export async function openCodeVersion(cmd, { env, cwd, timeoutMs = 30_000 }) {
+  const r = await execBounded(cmd, ['--version'], { cwd, env, timeoutMs });
+  return r && r.code === 0 ? r.stdout.match(/\b(\d+)\.(\d+)\.(\d+)\b/)?.[0] ?? null : null;
+}
+export function versionProblem(version, exe) {
+  if (version && Number(version.split('.')[0]) === SUPPORTED_MAJOR) return null;
+  return `OpenCode ${version ?? 'gave no version'} at ${exe} is not supported: the harness runs on the public `
+    + `${SUPPORTED_MAJOR}.x CLI (checked on 1.18), and the desktop app's 2.x CLI differs (#26). Point it at a 1.18 CLI: `
+    + '~/.opencode/bin/opencode, npm opencode-ai@1.18, or HARNESS_OPENCODE_EXE';
 }
 
 // The model ids OpenCode lists for these providers in this environment (`opencode models <p>`), so
@@ -232,22 +269,40 @@ function sameDir(a, b) {
 }
 
 // This run's session: its unique title, in its directory, created after it started. `session list`
-// is scoped to the project of its working directory, so it runs in workDir.
-export async function findSession(cmd, { workDir, title, startedMs, timeoutMs, env }) {
+// is scoped to the project of its working directory, so it runs in workDir. A miss says why, the
+// listing or the match, so that "exited without a session" can be diagnosed (#45).
+export async function lookupSession(cmd, { workDir, title, startedMs, timeoutMs, env }) {
+  const miss = (why) => ({ session: null, miss: why });
+  if (timeoutMs <= 0) return miss('no time left to list sessions');
   const res = await execBounded(cmd, ['session', 'list', '--format', 'json', '-n', '20'], { cwd: workDir, timeoutMs, env });
-  if (!res || !res.stdout.trim()) return null;
+  if (!res) return miss(`\`session list\` gave no result within ${timeoutMs} ms (timed out, or could not start)`);
+  const said = res.stderr.trim() ? `; stderr: ${res.stderr.trim().slice(-200)}` : '';
+  if (!res.stdout.trim()) return miss(`\`session list\` printed nothing (exit ${res.code})${said}`);
   let sessions;
-  try { sessions = JSON.parse(res.stdout); } catch { return null; }
+  try { sessions = JSON.parse(res.stdout); } catch { return miss(`\`session list\` printed no JSON (exit ${res.code}): ${res.stdout.trim().slice(0, 200)}`); }
   if (!Array.isArray(sessions)) sessions = [sessions];
-  return sessions.find((s) => s && s.title === title && s.directory && sameDir(s.directory, workDir)
-    && Number(s.created) >= startedMs - 1000) || null;
+  const titled = sessions.filter((s) => s && s.title === title);
+  if (!titled.length) return miss(`no session titled ${title} among the ${sessions.length} listed`);
+  const here = titled.filter((s) => s.directory && sameDir(s.directory, workDir));
+  if (!here.length) return miss(`session ${titled[0].id} titled ${title} is in ${titled[0].directory}, not ${workDir}`);
+  const session = here.find((s) => Number(s.created) >= startedMs - 1000);
+  if (!session) return miss(`session ${here[0].id} titled ${title} was created at ${here[0].created}, before the run started at ${startedMs}`);
+  return { session, miss: null };
 }
 
 // The agent OpenCode recorded for the session (`opencode export <id>`: .info.agent), or null.
-export async function sessionAgent(cmd, { workDir, sessionId, outFile, timeoutMs = 30000, env }) {
+// What the session record says: the agent that ran (L11), and whether OpenCode rejected a tool
+// call, which it records as the tool's error "The user rejected permission to use this specific
+// tool call." (OpenCode 1.18.34). Null when the export cannot be read.
+export async function sessionRecord(cmd, { workDir, sessionId, outFile, timeoutMs = 30000, env }) {
   const res = await execBounded(cmd, ['export', sessionId], { cwd: workDir, timeoutMs, env, outFile });
   if (!res || res.code !== 0) return null;
-  try { return JSON.parse(res.stdout.slice(res.stdout.indexOf('{')))?.info?.agent ?? null; } catch { return null; }
+  try {
+    const j = JSON.parse(res.stdout.slice(res.stdout.indexOf('{')));
+    const parts = (j.messages ?? []).flatMap((m) => m.parts ?? []);
+    const rejected = parts.some((p) => p.type === 'tool' && p.state?.status === 'error' && /rejected permission/i.test(String(p.state.error ?? '')));
+    return { agent: j.info?.agent ?? null, rejected };
+  } catch { return null; }
 }
 
 function tail(file, lines = 30) {
@@ -260,7 +315,7 @@ function tail(file, lines = 30) {
 /**
  * Runs `opencode <args...> --title <title-token> <prompt>` in workDir, watched.
  * Returns { output, stdout, stderr, exitCode, sessionId, title, agentFallback, sessionAgent,
- *   permissionRejected, files, seconds }.
+ *   permissionRejected, permissionHint, files, seconds }.
  * A non-zero exit is returned, not thrown: the caller decides.
  */
 export async function runOpenCodeWatched({
@@ -301,6 +356,17 @@ export async function runOpenCodeWatched({
   const waitExit = (ms) => Promise.race([exited, sleep(ms).then(() => false)]);
   const elapsed = () => Date.now() - startedMs;
   let session = null;
+  let lastMiss = 'no lookup ran';
+  const lookup = async (timeoutMs) => {
+    const r = await lookupSession(cmd, { workDir, title, startedMs, env, timeoutMs });
+    if (r.miss) lastMiss = r.miss;
+    return r.session;
+  };
+  // A run with no session says why the last lookup missed it (#45).
+  const noSession = (reason, message) => {
+    log(`opencode: session lookup missed: ${lastMiss}`);
+    return fail(reason, `${message} (last lookup: ${lastMiss})`);
+  };
   const fail = (reason, message) => new OpenCodeInfraError(reason,
     `${message}; files kept: ${files.join(', ')}. stderr tail:\n${tail(errFile)}`);
   log(`opencode: pid ${child.pid}, session title ${title}, output ${outFile}`);
@@ -315,12 +381,12 @@ export async function runOpenCodeWatched({
       const remaining = startupMs - elapsed();
       if (remaining <= 0) break;
       if (await waitExit(Math.min(pollMs, remaining))) break;
-      session = await findSession(cmd, { workDir, title, startedMs, env, timeoutMs: Math.max(0, startupMs - elapsed()) });
+      session = await lookup(Math.max(0, startupMs - elapsed()));
     }
     if (!session && !hasExited()) {
       killTree(child);
       const secs = Math.round(startupMs / 1000);
-      throw fail(`no session in ${secs} s`, `OpenCode created no session within ${secs} s (is stdin closed?); killed pid ${child.pid}`);
+      throw noSession(`no session in ${secs} s`, `OpenCode created no session within ${secs} s (is stdin closed?); killed pid ${child.pid}`);
     }
     if (session) log(`opencode: session ${session.id} started after ${Math.round(elapsed() / 1000)} s`);
 
@@ -338,7 +404,7 @@ export async function runOpenCodeWatched({
         throw fail(`no exit in ${secs} s`, `OpenCode did not finish within ${secs} s; killed pid ${child.pid}`);
       }
       if (!session || idleTimeoutMs <= 0) continue;
-      const seen = await findSession(cmd, { workDir, title, startedMs, env, timeoutMs: Math.max(0, Math.min(30_000, totalTimeoutMs - elapsed())) });
+      const { session: seen } = await lookupSession(cmd, { workDir, title, startedMs, env, timeoutMs: Math.max(0, Math.min(30_000, totalTimeoutMs - elapsed())) });
       if (hasExited()) break;
       if (seen && Number(seen.updated) > lastUpdated) lastUpdated = Number(seen.updated);
       const idleFor = Date.now() - lastUpdated;
@@ -351,8 +417,8 @@ export async function runOpenCodeWatched({
     await exited;
     // A run that finished before the first poll: its session must still exist, or it never ran.
     if (!session) {
-      session = await findSession(cmd, { workDir, title, startedMs, env, timeoutMs: Math.max(0, Math.min(15_000, totalTimeoutMs - elapsed())) });
-      if (!session) throw fail(`exited without a session (exit ${exitCode})`, `OpenCode exited with ${exitCode} without creating a session`);
+      session = await lookup(Math.max(0, Math.min(15_000, totalTimeoutMs - elapsed())));
+      if (!session) throw noSession(`exited without a session (exit ${exitCode})`, `OpenCode exited with ${exitCode} without creating a session`);
     }
   } catch (e) {
     killTree(child);
@@ -364,18 +430,21 @@ export async function runOpenCodeWatched({
   const agentIdx = args.indexOf('--agent');
   const requestedAgent = agentIdx >= 0 ? args[agentIdx + 1] : null;
   const exportFile = path.join(logDir, `${title}.export.json`);
-  const recordedAgent = requestedAgent ? await sessionAgent(cmd, { workDir, sessionId: session.id, outFile: exportFile, env }) : null;
+  const record = await sessionRecord(cmd, { workDir, sessionId: session.id, outFile: exportFile, env });
+  const recordedAgent = requestedAgent ? record?.agent ?? null : null;
   fs.rmSync(exportFile, { force: true });
   const agentFallback = !requestedAgent ? false
     : recordedAgent ? recordedAgent !== requestedAgent
     : agentWarning(stderr, requestedAgent);
-  const permissionRejected = permissionRejection(`${stdout}\n${stderr}`);
+  const said = permissionRejection(`${stdout}\n${stderr}`);
+  const permissionRejected = !record ? said : record.rejected ? said ?? 'a tool call (in the session record)' : null;
+  const permissionHint = permissionRejected ? rejectionHint(`${stdout}\n${stderr}`) : null;
   if (exitCode === 0 && !permissionRejected) for (const f of files) fs.rmSync(f, { force: true });
   else log(`opencode: exit ${exitCode}${permissionRejected ? `, permission rejected: ${permissionRejected}` : ''}; files kept: ${files.join(', ')}`);
   return {
     output: `${stdout.trimEnd()}\n${stderr.trimEnd()}`.trim(),
     stdout, stderr, exitCode, sessionId: session.id, title,
-    agentFallback, sessionAgent: recordedAgent, permissionRejected,
+    agentFallback, sessionAgent: recordedAgent, permissionRejected, permissionHint,
     files: exitCode === 0 && !permissionRejected ? [] : files,
     seconds: Math.round(elapsed() / 1000),
   };
