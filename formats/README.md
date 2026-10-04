@@ -86,8 +86,18 @@ A schema that uses any other keyword fails, so no rule is ever silently unenforc
 JSON Schema 2020-12 validator accepts these schemas too.
 
 Run it on files; it prints `ok: <path>`, or `<path>: <error>` for each error, and exits 0 only when
-every file is valid: `python3 tools/validate_records.py <file.json>...`. A file that is not JSON, or
-has no `schema` or an unknown one, is an error for that file, not a crash.
+every file is valid: `python3 tools/validate_records.py <file.json>...`. Each of these is an error
+for that file, never a crash, and the files after it are still checked:
+- a path it cannot read, or bytes that are not UTF-8;
+- text that is not JSON, including `NaN` or `Infinity`, an object with a duplicate key (which value
+  counts would depend on the reader), and nesting too deep to parse;
+- a document with no `schema`, or an unknown one;
+- a string holding a lone surrogate (`"\ud800"`), which UTF-8 cannot encode, so the document has
+  no canonical form;
+- any other failure while checking a document, reported as `internal error on malformed input`.
+
+`validate_document(doc)` does the same for a parsed document, returning the errors; only a schema
+with a keyword it does not implement makes it raise.
 
 **A game repository calls it, never copies it.** List `tools/validate_records.py` in the
 repository's `archaeology.json` `uses`, and fetch it with `formats/*.schema.json` at the pinned

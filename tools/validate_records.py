@@ -13,7 +13,7 @@ helpers import those names, so their signatures do not change (formats/README.md
 Command line: `python3 tools/validate_records.py <file.json>...`. For each file it prints `ok:
 <path>`, or one line per error as `<path>: <error>`. It exits 0 when every file is valid and 1
 otherwise. A file that is not JSON, or has no `schema` or an unknown one, is an error for that file,
-not a crash.
+not a crash; so is any other failure, and the files after it are still checked (formats/README.md).
 """
 import hashlib
 import json
@@ -135,34 +135,106 @@ def load_schemas():
     return _SCHEMAS
 
 
+def unencodable_errors(doc):
+    """Errors for every string (key or value) in doc holding a lone surrogate, as 'path: message'.
+
+    JSON text can carry an escaped lone surrogate ("\\ud800") that Python decodes into a str which
+    UTF-8 cannot encode. Such a document has no UTF-8 serialisation, so it has no canonical id
+    (`canonical_set_hash`) and is not a record. Walks iteratively, so no nesting depth raises."""
+    errors = []
+    stack = [(doc, "$")]
+    while stack:
+        value, path = stack.pop()
+        if isinstance(value, dict):
+            for key, item in value.items():
+                key_path = f"{path}.{_escaped(key)}"
+                if _has_surrogate(key):
+                    errors.append(f"{key_path}: key {_LONE_SURROGATE}")
+                stack.append((item, key_path))
+        elif isinstance(value, list):
+            stack.extend((item, f"{path}[{i}]") for i, item in enumerate(value))
+        elif isinstance(value, str) and _has_surrogate(value):
+            errors.append(f"{path}: {_LONE_SURROGATE}")
+    return sorted(errors)
+
+
+_LONE_SURROGATE = "contains a lone surrogate, which UTF-8 cannot encode, so the document has no canonical form"
+
+
+def _has_surrogate(text):
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        return True
+    return False
+
+
+def _escaped(text):
+    return text.encode("utf-8", "backslashreplace").decode("utf-8")
+
+
 def validate_document(doc):
     """Errors for one parsed record document, as 'path: message' strings; [] when valid.
 
     Picks the schema from formats/ whose `$id` equals the document's top-level `schema` field. A
-    missing or unknown `schema` is an error. Raises ValueError when a schema uses a keyword this
-    validator does not implement (it refuses to use it rather than under-enforce it)."""
+    missing or unknown `schema` is an error, and so is a string holding a lone surrogate. Raises
+    ValueError when a schema uses a keyword this validator does not implement (it refuses to use it
+    rather than under-enforce it). Any other exception raised while checking the document becomes
+    one error, `$: internal error on malformed input: <type>: <message>`, so no input makes it raise."""
+    schemas = load_schemas()
+    try:
+        return _document_errors(doc, schemas)
+    except Exception as e:  # noqa: BLE001 - malformed input must yield an error, never an exception
+        return [f"$: internal error on malformed input: {type(e).__name__}: {e}"]
+
+
+def _document_errors(doc, schemas):
     if not isinstance(doc, dict):
         return ["$: document is not a JSON object"]
     schema_id = doc.get("schema")
     if not isinstance(schema_id, str) or not schema_id:
         return ["$.schema: missing"]
-    schema = load_schemas().get(schema_id)
+    schema = schemas.get(schema_id)
     if schema is None:
         return [f"$.schema: unknown schema {schema_id!r}"]
-    errors = validate(doc, schema)
+    errors = validate(doc, schema) + unencodable_errors(doc)
     if errors:
         # A structural error means the document is already invalid. The semantic rules read fields
-        # the schema guarantees (a file's `path`, `sha256`, `name`), so run them only on a
-        # schema-valid document: otherwise malformed input ({"files": [{}]}) crashes instead of
-        # returning the structural errors (R1).
+        # the schema guarantees (a file's `path`, `sha256`, `name`) and hash the document as UTF-8,
+        # so run them only on a schema-valid, encodable document: otherwise malformed input
+        # ({"files": [{}]}, a title "\\ud800") crashes instead of returning errors (PR #20 R1, R2).
         return errors
     return semantic_errors(schema_id, doc)
 
 
-def validate_file(path):
-    """Print the result for one file; return True when it is valid."""
+def _reject_constant(name):
+    raise ValueError(f"{name} is not JSON")
+
+
+def _unique_keys(pairs):
+    seen = set()
+    for key, _ in pairs:
+        if key in seen:
+            raise ValueError(f"duplicate key {key!r}: a reader may keep either value")
+        seen.add(key)
+    return dict(pairs)
+
+
+def load_file(path):
+    """The parsed document in path. Raises OSError or ValueError: not UTF-8, not JSON, NaN or
+    Infinity (JSON has neither), an object with a duplicate key (which value counts would depend on
+    the reader), or nesting too deep to parse."""
+    text = Path(path).read_text(encoding="utf-8")
     try:
-        doc = json.loads(Path(path).read_text(encoding="utf-8"))
+        return json.loads(text, parse_constant=_reject_constant, object_pairs_hook=_unique_keys)
+    except RecursionError:
+        raise ValueError("nested too deeply to parse") from None
+
+
+def validate_file(path):
+    """Print the result for one file; return True when it is valid. Never raises for its input."""
+    try:
+        doc = load_file(path)
     except (OSError, ValueError) as e:
         print(f"{path}: {e}")
         return False
@@ -177,18 +249,26 @@ def validate_file(path):
 
 def main(argv=None):
     paths = sys.argv[1:] if argv is None else list(argv)
+    # An error line may quote a key or a path that the terminal's encoding cannot show.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="backslashreplace")
     if not paths:
         print("usage: validate_records.py <file.json>...")
         return 2
     try:
         load_schemas()
-    except ValueError as e:
+    except Exception as e:  # noqa: BLE001 - a broken formats/ fails every file, by name
         for path in paths:
-            print(f"{path}: {e}")
+            print(f"{path}: cannot load formats/: {type(e).__name__}: {e}")
         return 1
     valid = True
     for path in paths:
-        if not validate_file(path):
+        try:
+            ok = validate_file(path)
+        except Exception as e:  # noqa: BLE001 - one file never stops the batch
+            print(f"{path}: internal error on malformed input: {type(e).__name__}: {e}")
+            ok = False
+        if not ok:
             valid = False
     return 0 if valid else 1
 
