@@ -1,0 +1,19 @@
+{
+  "schema": "evidence-manifest/1",
+  "run_id": "E900-r0001",
+  "experiment": "E900",
+  "store": "release:E900",
+  "artifact": {
+    "set": "goal2-a949da2f",
+    "variant": null
+  },
+  "files": [
+    {
+      "name": "after.sav",
+      "bytes": 24,
+      "sha256": "c82cd5ca5a74f844fbb2f4439257b78f4ed60ac882a8216893af6a6ede4dbef8",
+      "asset": "c82cd5ca5a74f844-after.sav",
+      "class": "save"
+    }
+  ]
+}

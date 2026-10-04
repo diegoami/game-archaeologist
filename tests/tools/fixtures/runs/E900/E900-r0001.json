@@ -1,0 +1,55 @@
+{
+  "schema": "run/1",
+  "run_id": "E900-r0001",
+  "experiment": "E900",
+  "arm": "fixture",
+  "rep": 1,
+  "code_commit": "0000000",
+  "machine": "fixture",
+  "artifact": {
+    "set": "goal2-a949da2f",
+    "variant": null
+  },
+  "runtime": {
+    "driver": "runtime/driver.py@0000000",
+    "platform": "python-3.12/linux",
+    "fingerprint": {
+      "python": "3.12.3"
+    }
+  },
+  "interventions": [
+    {
+      "level": "I0",
+      "what": "none"
+    }
+  ],
+  "start_state": {
+    "id": "fixture",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "restore": "fresh process"
+  },
+  "seed": null,
+  "actions": {
+    "script": "experiments/E900/actions/demo.py",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "args": []
+  },
+  "observations": [
+    {
+      "step": 0,
+      "source": "ui-text",
+      "field": "stdout",
+      "value": "fixture"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "session.txt",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "store": "release:E900"
+    }
+  ],
+  "started": "2026-10-02T09:00:00Z",
+  "ended": "2026-10-02T09:00:01Z",
+  "status": "completed"
+}

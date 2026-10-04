@@ -129,8 +129,10 @@ from the validator, so the identity rule is never re-implemented.
 `--known` is relative to the working directory, never to the script. Errors are named lines and exit
 1; usage errors exit 2.
 
-Nothing is accepted unvalidated. `check` and `validate` accept a manifest only when it matches the
-schema, its id is the canonical one, and no path is named twice; a `known.json` names each id once.
+Nothing is accepted unvalidated. A manifest is accepted only when it matches the schema, its id is
+the canonical one, and no path is named twice. `check` validates only the entry it selects, and
+that exactly one entry has its id; the other entries of `known.json` are not validated. `validate`
+validates every entry and that no id appears twice (#26).
 Every path, in a manifest or a listing, is relative and POSIX, with no `..`, `.` or empty segment, no
 backslash and no drive letter. A listing line is a 64-hex sha256 (upper case is read as the same
 digest), a byte count of digits only, and such a path. A symbolic link that leaves the checked
@@ -140,6 +142,52 @@ directory, a broken link and a special file are reported and never read, so `che
 A successor set is registered with the same `manifest` command: a shipped file the game writes moves
 from `files` to a `runtime_writes` glob, `runtime_writes` is completed as observed, and the new id's
 entry in `known.json` names the predecessor (U21, above).
+
+### Verifying a bundle and checking citations
+
+Two more tools move here once a second repository copies them (ADR-009): `tools/verify_evidence.py`
+and `tools/check_citations.py`. Fetch them beside `tools/validate_records.py` and
+`formats/*.schema.json` at the pinned commit, keeping that layout: the evidence tool imports the
+validator, so the evidence-manifest rules (schema and the asset name) are never re-implemented. Both
+run from the game repository's working directory, never from the cache folder that holds them, so
+they serve the repository they are run in.
+
+- `python3 tools/verify_evidence.py E<nnn>` reads `evidence/E<nnn>/*.manifest.json`, validates every
+  manifest with `validate_records.validate_document`, downloads release `E<nnn>` in **one**
+  `gh release download E<nnn> -D <dir>` call into a fresh directory under `.cache/evidence/`, and
+  checks every listed asset there by sha256. An asset the bulk call left out is retried once, by
+  name; whatever is still missing is reported by name. A stale cached file never stands in for this
+  run's download (a symlink there is removed, not followed). The experiment must be an id, never a
+  path, and every `*.manifest.json` an `evidence-manifest/1` document. `--local DIR` checks an already-downloaded bundle instead of the release,
+  `--evidence-dir DIR` overrides `evidence/` under the working directory, and `--repo OWNER/NAME`
+  overrides the working directory's repository (`gh repo view`). Exit 0 prints
+  `ok: <n> manifest(s) verified`; any problem is a named line and exit 1.
+- `python3 tools/check_citations.py findings/F<nnn>-*.md` fails (exit 1) when a run id anywhere in
+  the finding has no record under `runs/E<nnn>/`, or when a claim in `## Answer` or `## Inferences`
+  cites no run id. Those two sections hold only list items (`-`, `*`, `+`, `1.` or `1)` markers),
+  each citing a run id on one of its lines, its indented continuation lines included
+  (toy-archaeology#12); `###` sub-headings; table rows, each data row citing a run id (the header
+  and the `|---|` separator under it are exempt); and blank lines (U25). Every other line there is
+  the named error `<file>:<line>: unsupported in a protected section: <line>`: HTML, a blockquote, a
+  fence, any other heading, a setext underline, a thematic break, a paragraph. A section's heading is
+  exactly `## Answer` or `## Inferences`; a second one is the same error. Every heading anywhere in
+  the file is checked too (U27, U28): a line starting with `#` (after any `>`s, list markers and
+  whitespace) or a setext heading. Its raw text is entity-decoded, NFKC-normalised, casefolded and
+  reduced to its letters, with nothing else removed. It is the same
+  error when those letters contain `answer` or `inferences` and the line is not exactly one of the
+  two headings (so ``## `Answer` ``, `## [Answer](#answer)` and `### Answers` are refused), and
+  when they come from more than one Unicode script, as look-alike letters do (#28). HTML headings
+  are banned (U30): any line containing `<h1`–`<h6`, in any case, anywhere in the finding (a fenced
+  code block included), is the same error. So is any `#` or setext heading, anywhere in the
+  finding, whose text contains `<`, `[` or `$` (U31): tags, links, images, autolinks, comments and
+  math all start with one of them, so no markup can split a section's name (`## An<span>s</span>wer`,
+  `## [An](x)s[wer](y)`, `## An$\mathrm{s}$wer`). Write headings as plain text; `(`, backticks and `*` are fine.
+  `--runs DIR` overrides `runs/` under the working directory.
+
+Only `verify_evidence.py` calls the validator (`validate_records.validate_document`);
+`check_citations.py` reads findings and the presence of run records, and no schema. Neither copies
+or edits it. Their tests run in
+`tests/tools/` and in CI (`formats/README.md`).
 
 ## Versioning
 

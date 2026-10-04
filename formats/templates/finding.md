@@ -12,7 +12,9 @@
 ## Answer
 
 <A few bullets. Each sentence cites the run ids it rests on. No sentence here that the Observations
-do not support.>
+do not support. `## Answer` and `## Inferences` hold only list items, `###` sub-headings, tables
+whose data rows each cite a run, and blank lines; `check_citations.py` refuses anything else there
+(U25).>
 
 ## Method
 

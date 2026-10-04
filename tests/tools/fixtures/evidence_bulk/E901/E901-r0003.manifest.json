@@ -1,0 +1,26 @@
+{
+  "schema": "evidence-manifest/1",
+  "run_id": "E901-r0003",
+  "experiment": "E901",
+  "store": "release:E901",
+  "artifact": {
+    "set": "goal2-a949da2f",
+    "variant": null
+  },
+  "files": [
+    {
+      "name": "c.bin",
+      "bytes": 7,
+      "sha256": "b9dd960c1753459a78115d3cb845a57d924b6877e805b08bd01086ccdf34433c",
+      "asset": "b9dd960c1753459a-c.bin",
+      "class": "save"
+    },
+    {
+      "name": "d.bin",
+      "bytes": 5,
+      "sha256": "4f4a9410ffcdf895c4adb880659e9b5c0dd1f23a30790684340b3eaacb045398",
+      "asset": "4f4a9410ffcdf895-d.bin",
+      "class": "save"
+    }
+  ]
+}

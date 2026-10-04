@@ -26,5 +26,7 @@ jobs:
       - run: python3 tests/formats/check_validator.py
       # The artifact registration tool game repositories call (formats/README.md).
       - run: python3 tests/formats/check_register_artifact.py
+      # The evidence and citation tools game repositories call (formats/README.md).
+      - run: python3 -m unittest discover -s tests/tools -t .
       # The copied harness tools run here (harness.lock pins them).
       - run: node tools/harness/review.mjs --self-test
