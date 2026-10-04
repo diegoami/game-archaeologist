@@ -198,6 +198,68 @@ def main():
              proc.returncode == 1 and "is not an integer" in proc.stdout,
              f"exit {proc.returncode} {proc.stdout!r}")
 
+        # R1: check refuses a manifest whose own canonical identity does not hold (PR #24 R1), for a
+        # directory and for a listing, naming the id it was asked for.
+        forged_id = "forged-00000000"
+        forged = dict(m)
+        forged["id"] = forged_id
+        forged_known = tmp / "forged-known.json"
+        forged_known.write_text(json.dumps({"sets": [{"manifest": forged}]}), encoding="utf-8")
+        for label, args in (("directory", ["check", d, forged_id, "--known", forged_known]),
+                            ("listing", ["check", "--list", tmp / "good-listing.txt", forged_id,
+                                         "--known", forged_known])):
+            proc = run(args)
+            no_traceback(problems, f"CLI check forged manifest {label}", proc)
+            case(problems, f"CLI check refuses a forged manifest id for a {label}",
+                 proc.returncode == 1 and forged_id in proc.stdout,
+                 f"exit {proc.returncode} {proc.stdout!r}")
+
+        # R2: a listing that names the same path twice is an error naming the line, whatever the order
+        # (PR #24 R2): a later line never silently replaces an earlier observation.
+        first = m["files"][0]
+        listing_line = f"{first['sha256']}  {first['bytes']}  {first['path']}"
+        zero = "0" * 64
+        for order, text in (("wrong then right", f"{zero}  {first['bytes']}  {first['path']}\n{listing_line}\n"),
+                            ("right then wrong", f"{listing_line}\n{zero}  {first['bytes']}  {first['path']}\n")):
+            duplicate = tmp / f"dup-{order.split()[0]}.txt"
+            duplicate.write_text(text, encoding="utf-8")
+            _, errors = ra.read_listing(duplicate)
+            case(problems, f"read_listing names a duplicate path ({order})",
+                 any("line 2" in e and "duplicate" in e for e in errors), f"errors {errors}")
+            proc = run(["check", "--list", duplicate, set_id, "--known", known])
+            no_traceback(problems, f"CLI check duplicate listing {order}", proc)
+            case(problems, f"CLI check rejects a duplicate listing path ({order})",
+                 proc.returncode == 1 and "line 2" in proc.stdout and "duplicate" in proc.stdout,
+                 f"exit {proc.returncode} {proc.stdout!r}")
+
+        # Sweep of the same two classes: no input is accepted unvalidated, and no later value
+        # silently replaces an earlier one. A known.json with a duplicate JSON key would keep
+        # whichever value the reader chose; a manifest that lists one path twice keys its files by
+        # path, so later entries would replace earlier ones.
+        dup_keys = tmp / "dup-keys.json"
+        dup_keys.write_text('{"sets": [], "sets": [{"manifest": ' + json.dumps(m) + "}]}",
+                            encoding="utf-8")
+        proc = run(["validate", "--known", dup_keys])
+        no_traceback(problems, "CLI validate duplicate json key", proc)
+        case(problems, "CLI validate rejects a known.json with a duplicate key",
+             proc.returncode == 1 and "duplicate key" in proc.stdout,
+             f"exit {proc.returncode} {proc.stdout!r}")
+        twice = dict(m)
+        twice["files"] = [m["files"][0], dict(m["files"][0])]
+        twice["id"] = f"demo-{ra.canonical_set_hash(twice)[:8]}"
+        twice_known = tmp / "twice-known.json"
+        twice_known.write_text(json.dumps({"sets": [{"manifest": twice}]}), encoding="utf-8")
+        proc = run(["validate", "--known", twice_known])
+        no_traceback(problems, "CLI validate duplicate manifest path", proc)
+        case(problems, "CLI validate rejects a manifest that lists a path twice",
+             proc.returncode == 1 and "duplicate" in proc.stdout,
+             f"exit {proc.returncode} {proc.stdout!r}")
+        proc = run(["check", d, twice["id"], "--known", twice_known])
+        no_traceback(problems, "CLI check duplicate manifest path", proc)
+        case(problems, "CLI check refuses a manifest that lists a path twice",
+             proc.returncode == 1 and "duplicate" in proc.stdout,
+             f"exit {proc.returncode} {proc.stdout!r}")
+
         # CLI: validate and bad input.
         proc = run(["validate", "--known", known])
         no_traceback(problems, "CLI validate", proc)

@@ -96,8 +96,22 @@ def build_manifest(directory, label, title, version, how, when, note=None,
 
 
 def manifest_errors(manifest):
-    """Errors for a built manifest against the artifact-set/1 schema and semantic rules."""
-    return validate_document(manifest)
+    """Errors for a manifest against the artifact-set/1 schema and semantic rules.
+
+    ``validate_document`` checks the schema and that ``id`` is the canonical manifest's sha256
+    prefix. A manifest that names one path twice is invalid too: ``hash_tree`` and ``compare`` key
+    files by path, so which entry counts would depend on their order (PR #24 R2, swept)."""
+    errors = list(validate_document(manifest))
+    if isinstance(manifest, dict) and isinstance(manifest.get("files"), list):
+        seen = set()
+        for index, entry in enumerate(manifest["files"]):
+            path = entry.get("path") if isinstance(entry, dict) else None
+            if not isinstance(path, str):
+                continue
+            if path in seen:
+                errors.append(f"$.files[{index}].path: duplicate path {path!r}")
+            seen.add(path)
+    return errors
 
 
 def hash_tree(directory, manifest):
@@ -124,7 +138,9 @@ def read_listing(path):
     """Parse ``<sha256>  <bytes>  <relative/path>`` lines into ``({path: (bytes, sha256)}, errors)``.
 
     A line that is not three whitespace-separated fields, or whose byte count is not an integer, is
-    an error naming the line number; the rest of the file is still read."""
+    an error naming the line number; the rest of the file is still read. A path named on two lines is
+    an error naming the later line: a later observation never silently replaces an earlier one
+    (PR #24 R2)."""
     observed = {}
     problems = []
     for number, line in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), 1):
@@ -141,6 +157,9 @@ def read_listing(path):
         except ValueError:
             problems.append(f"line {number}: bytes {parts[1]!r} is not an integer")
             continue
+        if rel in observed:
+            problems.append(f"line {number}: duplicate path {rel!r}, already listed on an earlier line")
+            continue
         observed[rel] = (size, digest.lower())
     return observed, problems
 
@@ -150,10 +169,16 @@ def compare(observed, manifest, strict=False):
 
     A listed file whose size or sha256 differs is a problem; a listed file that is absent is
     ``missing``; an observed file that is neither listed nor a runtime write is ``unlisted`` and is
-    a problem only with ``strict``."""
-    listed = {f["path"]: (f["bytes"], f["sha256"]) for f in manifest.get("files", [])}
-    runtime_writes = manifest.get("runtime_writes", [])
+    a problem only with ``strict``. A manifest that names one path twice is a problem: keying files by
+    path would let a later entry replace an earlier one (PR #24 R2, swept)."""
+    listed = {}
     problems = []
+    for entry in manifest.get("files", []):
+        path = entry["path"]
+        if path in listed:
+            problems.append(f"{path}: duplicate path in the manifest")
+        listed[path] = (entry["bytes"], entry["sha256"])
+    runtime_writes = manifest.get("runtime_writes", [])
     unlisted = []
     for rel, (size, digest) in sorted(observed.items()):
         if rel in listed:
@@ -186,7 +211,7 @@ def known_errors(known):
         if not isinstance(manifest, dict):
             problems.append(f"sets[{index}]: no manifest object")
             continue
-        errors = validate_document(manifest)
+        errors = manifest_errors(manifest)
         problems.extend(f"sets[{index}] ({manifest.get('id', '?')}): {error}" for error in errors)
     return problems
 
@@ -201,8 +226,12 @@ def find_set(known, set_id):
 
 
 def load_known(path):
-    """The parsed known.json at path. Raises OSError or ValueError naming a malformed document."""
-    doc = json.loads(Path(path).read_text(encoding="utf-8"))
+    """The parsed known.json at path. Raises OSError or ValueError naming a malformed document.
+
+    Uses the validator's ``load_file``, so a duplicate JSON key (which value counts would depend on
+    the reader) or a NaN/Infinity is a named error, exactly as for every other record document
+    (PR #24 sweep: no later value silently replaces an earlier one)."""
+    doc = validate_records.load_file(path)
     if not isinstance(doc, dict) or not isinstance(doc.get("sets"), list):
         raise ValueError("missing 'sets' list")
     return doc
@@ -238,6 +267,13 @@ def cmd_check(args):
         print(f"no known.json entry for {set_id}")
         return 1
     manifest = entry["manifest"]
+    # Never trust the entry's own id: recompute the canonical identity before accepting a copy
+    # (PR #24 R1). A forged id is a named error, not a pass.
+    identity_errors = manifest_errors(manifest)
+    if identity_errors:
+        for error in identity_errors:
+            print(f"{set_id}: {error}")
+        return 1
     if args.list_path:
         try:
             observed, problems = read_listing(args.list_path)
