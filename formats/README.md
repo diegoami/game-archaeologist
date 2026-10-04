@@ -129,8 +129,10 @@ from the validator, so the identity rule is never re-implemented.
 `--known` is relative to the working directory, never to the script. Errors are named lines and exit
 1; usage errors exit 2.
 
-Nothing is accepted unvalidated. `check` and `validate` accept a manifest only when it matches the
-schema, its id is the canonical one, and no path is named twice; a `known.json` names each id once.
+Nothing is accepted unvalidated. A manifest is accepted only when it matches the schema, its id is
+the canonical one, and no path is named twice. `check` validates only the entry it selects, and
+that exactly one entry has its id; the other entries of `known.json` are not validated. `validate`
+validates every entry and that no id appears twice (#26).
 Every path, in a manifest or a listing, is relative and POSIX, with no `..`, `.` or empty segment, no
 backslash and no drive letter. A listing line is a 64-hex sha256 (upper case is read as the same
 digest), a byte count of digits only, and such a path. A symbolic link that leaves the checked
@@ -168,15 +170,18 @@ they serve the repository they are run in.
   and the `|---|` separator under it are exempt); and blank lines (U25). Every other line there is
   the named error `<file>:<line>: unsupported in a protected section: <line>`: HTML, a blockquote, a
   fence, any other heading, a setext underline, a thematic break, a paragraph. A section's heading is
-  exactly `## Answer` or `## Inferences`; a second one is the same error. So is any other heading,
-  anywhere in the file, whose text names a section (U27): a line starting with `#` (after any `>`s,
-  list markers and whitespace), a setext heading or an HTML `<h1>`–`<h6>`, whose rendered text,
-  NFKC-normalised, casefolded and reduced to its letters, is `answer` or `inferences`. That catches
-  ``## `Answer` ``, `## [Answer](#answer)`, a trailing no-break space, emphasis, any `#` count, tabs
-  and entities. Look-alike letters from another script are a known limit (#28).
+  exactly `## Answer` or `## Inferences`; a second one is the same error. Every heading anywhere in
+  the file is checked too (U27, U28): a line starting with `#` (after any `>`s, list markers and
+  whitespace), a setext heading or an HTML `<h1>`–`<h6>`. Its raw text is entity-decoded,
+  NFKC-normalised, casefolded and reduced to its letters, with nothing else removed. It is the same
+  error when those letters contain `answer` or `inferences` and the line is not exactly one of the
+  two headings (so ``## `Answer` ``, `## [Answer](#answer)` and `### Answers` are refused), and
+  when they come from more than one Unicode script, as look-alike letters do (#28).
   `--runs DIR` overrides `runs/` under the working directory.
 
-Neither tool ever copies or edits the validator: they call it. Their tests run in
+Only `verify_evidence.py` calls the validator (`validate_records.validate_document`);
+`check_citations.py` reads findings and the presence of run records, and no schema. Neither copies
+or edits it. Their tests run in
 `tests/tools/` and in CI (`formats/README.md`).
 
 ## Versioning

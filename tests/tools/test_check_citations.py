@@ -309,10 +309,12 @@ def spelled(heading: str) -> str:
 
 
 class U27Test(unittest.TestCase):
-    """The owner's decision U27: any heading (a line starting with `#`, a setext heading, an HTML
-    `<h1>`..`<h6>`) whose rendered text, NFKC-normalised, casefolded and reduced to its letters, is
-    `answer` or `inferences` must be exactly `## Answer` or `## Inferences`, else it is a named error.
-    This replaces round 3's deny-list of decorations, which Sol's round-3 R1 got past."""
+    """The owner's decision U27, as revised by U28: any heading (a line starting with `#`, a setext
+    heading, an HTML `<h1>`..`<h6>`) whose raw letters (entities decoded, NFKC, casefolded) contain
+    `answer` or `inferences` must be exactly `## Answer` or `## Inferences`, else it is a named
+    error. This replaces round 3's deny-list of decorations, which Sol's round-3 R1 got past. Round
+    4's two cases that only a model of rendering caught (a comment or an unknown tag inside the
+    word) were removed with that model (U28)."""
 
     def assert_named(self, heading: str, first: str | None = None) -> None:
         result = run_check_text(spelled(heading))
@@ -334,7 +336,6 @@ class U27Test(unittest.TestCase):
                 f"# {name}", f"### {name}", f"#### {name}", f"##### {name}", f"###### {name}",
                 f"##\t{name}", f"##\t{name}\t", f"## {name}  ", f"## {name}  ",
                 f"<h2>{name}</h2>", f'<H2 id="x">{name}</H2>', f"<h3>{name}</h3>",
-                f"## {name[:3]}<!-- a>b -->{name[3:]}",                      # a comment inside
                 f"## [{name}](#a \"title (x)\")", f"## [{name}][ref]", f"## ![{name}](x.png)",
                 f"## {name[0]}&#{ord(name[1])};{name[2:]}",                 # an entity
                 f"## {''.join(chr(ord(c) + 0xFEE0) for c in name)}",       # fullwidth, NFKC
@@ -346,7 +347,6 @@ class U27Test(unittest.TestCase):
                 f"## {name}<noscript>x</noscript>", f"## {name}<span hidden>x</span>",
                 f'## {name}<span style="display: none">x</span>', f"## {name} ![x](y.png)",
                 f"## {name[0]}:{name[1:]}:",                               # `:...:` that is no emoji
-                f"## {name[0]}<x>{name[1:]}",                              # an unknown tag
             ]
             for heading in spellings:
                 with self.subTest(heading=heading):
@@ -371,6 +371,64 @@ class U27Test(unittest.TestCase):
         for sep in ("\u0085", " "):
             with self.subTest(sep=repr(sep)):
                 self.assert_named(f"## Ans{sep}wer")
+
+
+
+def headed(heading: str) -> subprocess.CompletedProcess:
+    """Check a finding whose real sections cite, with `heading` and a cited line after them."""
+    return run_check_text("## Answer\n\n- Cites E900-r0001.\n\n## Inferences\n\n- Cites E900-r0001.\n\n"
+                          f"## Notes\n\n{heading}\n\nSome notes.\n")
+
+
+class U28Test(unittest.TestCase):
+    """The owner's decision U28: a heading's raw letters (entities decoded, NFKC, casefolded) that
+    contain `answer` or `inferences` are an error unless the line is exactly the section's heading,
+    and a heading whose letters come from more than one Unicode script is an error (#28)."""
+
+    def assert_refused(self, heading: str) -> None:
+        result = headed(heading)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertTrue(unsupported_at(result, 11, heading.split("\n")[0]), result.stdout)
+
+    def test_sol_round_4_r1_a_quoted_gt_in_an_attribute_is_refused(self):
+        # R1: `<[^>]*>` stopped at the `>` inside the attribute, so the tag was not removed whole
+        # and the letters were not `answer`. U28 removes nothing, so the name is contained.
+        for name in ("Answer", "Inferences"):
+            for heading in (f'<h2 title=">x">{name}</h2>', f'## <span title=">x">{name}</span>'):
+                with self.subTest(heading=heading):
+                    self.assert_refused(heading)
+
+    def test_sol_round_4_r2_headings_that_do_not_render_as_the_name_are_refused(self):
+        # R2: these do not render as `Answer`; round 4 refused them only by guessing at rendering.
+        # Under U28 they are refused because their raw letters contain the name, as intended.
+        for name in ("Answer", "Inferences"):
+            for heading in (f"## `{name}<script>x</script>`", f'## {name}<span title="hidden">x</span>'):
+                with self.subTest(heading=heading):
+                    self.assert_refused(heading)
+
+    def test_headings_whose_words_contain_a_name_are_refused(self):
+        for heading in ("### Answers", "### Inferences about x", "## Reanswering the question",
+                        "# The answer", "Inferences drawn\n---", "<h3>Short answer</h3>",
+                        "## Inferences about the executable"):
+            with self.subTest(heading=heading):
+                self.assert_refused(heading)
+
+    def test_letters_from_more_than_one_script_are_refused(self):
+        # A Cyrillic `А` (U+0410) or a Greek `Α` (U+0391) in `Answer`, and a Cyrillic `е` (U+0435) in
+        # a heading that names no section: their letters never reduce to a name, but they mix.
+        for heading in ("## Аnswer", "## Αnswer", "## Infеrences", "## Spеed",
+                        "### Αlpha and beta", "## &#1040;nswer", "Spеed\n===",
+                        "<h2>Аnswer</h2>"):
+            with self.subTest(heading=heading):
+                self.assert_refused(heading)
+
+    def test_ordinary_headings_pass(self):
+        for heading in ("## Speed", "### The `cycles=max` arm", "## Speed → time",
+                        "## ⌈x⌉ rounding", "### Café au lait", "## E900-r0001 and 0x7ABD",
+                        "## Method", "Speed\n---", "<h3>Speed</h3>", "## Αθήνα"):
+            with self.subTest(heading=heading):
+                result = headed(heading)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

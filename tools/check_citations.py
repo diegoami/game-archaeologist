@@ -24,18 +24,16 @@ Every other line there is the named error `<file>:<line>: unsupported in a prote
 blockquote, a fence, any heading but `###`, a setext underline, a thematic break, a paragraph line,
 or a list item or continuation line whose text opens one of these. A section's heading is exactly
 `## Answer` or `## Inferences` and runs to the next line starting with `## `; a second one is an
-error. So is any other heading that names a section, anywhere in the file (the owner's decision U27,
-2026-10-04): a heading is a line starting with `#` (after any blockquote `>`s, list markers and
-whitespace), a setext heading (the lines of text above a `=` or `-` underline), or an HTML `<h1>` to
-`<h6>` up to its closing tag (or, unclosed, up to any of its lines before a blank one). Its text is
-what may render: with and without each of dropping HTML comments,
-`<script>`/`<style>`/`<template>`/`<noscript>` and `hidden` or `display:none` elements, images, link
-destinations (`](...)`, `][...]`), footnote references, emoji shortcodes and tags, and decoding
-entities, so a wrong guess about the renderer only makes the check stricter; it is then
-NFKC-normalised, casefolded and reduced to its letters (`str.isalpha`). If the result is exactly
-`answer` or `inferences` and the line is not exactly `## Answer` or `## Inferences`, the line is the
-named error. Look-alike letters from another script (a Cyrillic `А`) are out of scope (#28). Lines
-are split only where Markdown splits them (`\n`, `\r\n`, `\r`), never at the other separators
+error. Two more errors hold for every heading anywhere in the file (the owner's decisions U27 and
+U28, 2026-10-04). A heading is a line starting with `#` after any blockquote `>`s, list markers and
+whitespace; a setext heading (the run of non-blank lines above a `=` or `-` underline); or an HTML
+`<h1>` to `<h6>`, from its line to the line that closes it (unclosed, to the line before the first
+blank one). Its raw text is entity-decoded (`html.unescape`), NFKC-normalised, casefolded and
+reduced to its letters (`str.isalpha`); nothing else is removed and no rendering is modelled. The
+heading is the named error when its letters contain `answer` or `inferences` and its line is not
+exactly `## Answer` or `## Inferences`, and when its letters come from more than one Unicode script
+(the first word of each letter's `unicodedata.name`), as look-alike letters do (#28). Lines are split
+only where Markdown splits them (`\n`, `\r\n`, `\r`), never at the other separators
 `str.splitlines` knows.
 
 Any input that cannot be read is a named error, never a traceback.
@@ -69,21 +67,13 @@ BLOCK = re.compile(r"^(?:>|#|`{3}|~{3}|=+[ \t]*$|-+[ \t]*$)")
 HTML = re.compile(r"<[A-Za-z/!?]")
 # A table's delimiter row: cells of dashes with optional alignment colons.
 SEPARATOR = re.compile(r"^\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$")
-# U27: the headings that may name a protected section. An ATX heading is a line whose first character
-# after blockquote `>`s, list markers and whitespace is `#`; a setext underline is a line of `=` or
-# `-` after the same prefixes; an HTML heading opens with `<h1>` to `<h6>`.
+# U27/U28: the heading lines. An ATX heading is a line whose first character after blockquote `>`s,
+# list markers and whitespace is `#`; a setext underline is a line of `=` or `-` after the same
+# prefixes; an HTML heading opens with `<h1>` to `<h6>`.
 ATX_START = re.compile(r"^[ \t>]*(?:(?:[-*+]|\d{1,9}[.)])[ \t]+[ \t>]*)*#")
 SETEXT_UNDERLINE = re.compile(r"^[ \t>]*(?:=+|-+)[ \t]*$")
 H_OPEN = re.compile(r"<h[1-6](?![0-9A-Za-z])", re.IGNORECASE)
 H_CLOSE = re.compile(r"</h[1-6][ \t\n]*>", re.IGNORECASE)
-COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
-TAG = re.compile(r"<[^>]*>")
-HIDDEN = re.compile(r"<(script|style|template|noscript)\b.*?</\1\s*>"
-                    r"|<([A-Za-z][A-Za-z0-9]*)\b[^>]*\b(?:hidden|display\s*:\s*none)[^>]*>.*?</\2\s*>",
-                    re.IGNORECASE | re.DOTALL)
-IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
-FOOTNOTE = re.compile(r"\[\^[^\]]*\]")
-EMOJI = re.compile(r":[A-Za-z0-9_+-]+:")
 NAMES = {heading[3:].casefold() for heading in SECTIONS}
 
 
@@ -106,110 +96,49 @@ def item_text(line: str) -> str:
     return line.strip()
 
 
-def drop_destinations(text: str) -> str:
-    """`text` without its link destinations and reference labels: `[Answer](#answer)` and
-    `[Answer][ref]` render `Answer`. Parentheses nest, a backslash escapes the next character, and
-    a destination in `<...>` may hold a `)`."""
-    out = []
-    i = 0
-    while i < len(text):
-        if text.startswith("](", i):
-            depth, j = 0, i + 1
-            while j < len(text):
-                if text[j] == "\\":
-                    j += 1
-                elif text[j] == "<" and depth == 1 and text.find(">", j) >= 0:
-                    j = text.find(">", j)
-                elif text[j] == "(":
-                    depth += 1
-                elif text[j] == ")":
-                    depth -= 1
-                    if depth == 0:
-                        break
-                j += 1
-            out.append("]")
-            i = j + 1
-            continue
-        if text.startswith("][", i) and text.find("]", i + 2) >= 0:
-            out.append("]")
-            i = text.find("]", i + 2) + 1
-            continue
-        out.append(text[i])
-        i += 1
-    return "".join(out)
+def heading_letters(text: str) -> str:
+    """The letters of a heading's raw text (U28): entities decoded, NFKC-normalised, casefolded,
+    and only the characters `str.isalpha` keeps. Nothing else is removed."""
+    text = unicodedata.normalize("NFKC", html.unescape(text)).casefold()
+    return "".join(c for c in text if c.isalpha())
 
 
-# What a renderer may drop from a heading's text. Each is tried both applied and not, and a heading
-# names a section when any combination reduces to its name, so a wrong guess about the renderer can
-# only make the check stricter: `## A:nswer:` is caught whether or not `:nswer:` is an emoji.
-RENDERINGS = (
-    lambda text: COMMENT.sub("", text),                                       # HTML comments
-    lambda text: HIDDEN.sub("", text),                                        # script, style, hidden
-    lambda text: IMAGE.sub("", text),                                         # an image beside the text
-    drop_destinations,                                                        # link destinations
-    lambda text: FOOTNOTE.sub("", text),                                      # `[^note]` renders a number
-    lambda text: EMOJI.sub("", text),                                         # `:shortcode:` renders a picture
-    lambda text: TAG.sub("", text),                                           # tags
-    html.unescape,                                                            # `&#110;` renders `n`
-)
+def script(letter: str) -> str:
+    """A letter's script: the first word of its Unicode name (`LATIN`, `CYRILLIC`, `GREEK`)."""
+    return unicodedata.name(letter, "UNNAMED").split()[0]
 
 
-def subsequence(needle: str, haystack: str) -> bool:
-    letters = iter(haystack)
-    return all(c in letters for c in needle)
+def heading_refused(text: str, line: str) -> bool:
+    """Whether a heading whose raw text is `text`, starting at `line`, is a named error (U28): its
+    letters contain a section's name and the line is not exactly that section's heading, or they
+    come from more than one script."""
+    letters = heading_letters(text)
+    if line not in SECTIONS and any(name in letters for name in NAMES):
+        return True
+    return len({script(c) for c in letters}) > 1
 
 
-def names_a_section(text: str) -> bool:
-    """Whether `text`, as it may render (U27), reduces to `answer` or `inferences`: NFKC-normalised,
-    casefolded, and only the characters `str.isalpha` keeps."""
-    # Every rendering but decoding entities only deletes, so without a `&` the letters of any
-    # rendering are a subsequence of the whole text's: a text whose letters do not hold a name in
-    # order cannot reduce to it, and its renderings are skipped.
-    if "&" not in text:
-        everything = unicodedata.normalize("NFKC", text).casefold()
-        if not any(subsequence(name, "".join(c for c in everything if c.isalpha())) for name in NAMES):
-            return False
-    # Each rendering applied or not, in order: a set, so renderings that change nothing add nothing.
-    renderings = {text}
-    for render in RENDERINGS:
-        renderings |= {render(rendered) for rendered in renderings}
-    for rendered in renderings:
-        rendered = unicodedata.normalize("NFKC", rendered).casefold()
-        if "".join(c for c in rendered if c.isalpha()) in NAMES:
-            return True
-    return False
-
-
-def misnamed_headings(lines: list[str]) -> list[int]:
-    """The 0-based indexes of the lines that start a heading naming a protected section without
-    being exactly `## Answer` or `## Inferences` (U27): an ATX heading, a setext heading (whose text
-    may be any trailing run of the lines above its underline, so a heading split over lines is
-    seen), or an HTML `<h1>`..`<h6>` read up to its closing tag or the end of the file."""
+def refused_headings(lines: list[str]) -> list[int]:
+    """The 0-based indexes of the lines that start a refused heading (U28): an ATX heading; a setext
+    heading, whose text is the run of non-blank lines above its underline; or an HTML `<h1>`..`<h6>`,
+    from its line to the line that closes it, or, unclosed, to the line before the first blank one."""
     found: set[int] = set()
     for i, line in enumerate(lines):
-        if line in SECTIONS:
-            continue
-        if ATX_START.match(line) and names_a_section(line):
+        if ATX_START.match(line) and heading_refused(line, line):
             found.add(i)
-        if SETEXT_UNDERLINE.match(line) and i > 0:
-            start = i
+        if SETEXT_UNDERLINE.match(line) and i > 0 and lines[i - 1].strip(" \t>"):
+            start = i - 1
             while start > 0 and lines[start - 1].strip(" \t>"):
                 start -= 1
-            for first in range(start, i):
-                if lines[first] not in SECTIONS and names_a_section("\n".join(lines[first:i])):
-                    found.add(first)
-        for opened in H_OPEN.finditer(line):
-            # Up to its closing tag; and, since a renderer may close it sooner, every run of its
-            # lines up to the first blank line (an HTML block ends there).
-            block = [line[opened.start():]] + lines[i + 1:]
-            whole = "\n".join(block)
-            closed = H_CLOSE.search(whole)
-            texts = [whole[:closed.end()] if closed else whole]
-            for end in range(1, len(block) + 1):
-                if not block[end - 1].strip():
+            if heading_refused("\n".join(lines[start:i]), lines[start]):
+                found.add(start)
+        if H_OPEN.search(line):
+            end = i
+            while not H_CLOSE.search("\n".join(lines[i:end + 1])[H_OPEN.search(line).start():]):
+                if end + 1 >= len(lines) or not lines[end + 1].strip():
                     break
-                texts.append("\n".join(block[:end]))
-            if any(names_a_section(text) for text in texts):
+                end += 1
+            if heading_refused("\n".join(lines[i:end + 1]), line):
                 found.add(i)
     return sorted(found)
 
@@ -286,7 +215,7 @@ def check(finding: Path, runs: Path) -> list[str]:
 
     bodies: dict[str, list[list[tuple[int, str]]]] = {heading: [] for heading in SECTIONS}
     body: list[tuple[int, str]] | None = None
-    for index in misnamed_headings(lines):
+    for index in refused_headings(lines):
         problems.append(f"{finding}:{index + 1}: unsupported in a protected section: {lines[index]}")
     for number, line in enumerate(lines, start=1):
         if line in SECTIONS:
