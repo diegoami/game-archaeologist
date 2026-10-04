@@ -141,6 +141,32 @@ A successor set is registered with the same `manifest` command: a shipped file t
 from `files` to a `runtime_writes` glob, `runtime_writes` is completed as observed, and the new id's
 entry in `known.json` names the predecessor (U21, above).
 
+### Verifying a bundle and checking citations
+
+Two more tools move here once a second repository copies them (ADR-009): `tools/verify_evidence.py`
+and `tools/check_citations.py`. Fetch them beside `tools/validate_records.py` and
+`formats/*.schema.json` at the pinned commit, keeping that layout: the evidence tool imports the
+validator, so the evidence-manifest rules (schema and the asset name) are never re-implemented. Both
+run from the game repository's working directory, never from the cache folder that holds them, so
+they serve the repository they are run in.
+
+- `python3 tools/verify_evidence.py E<nnn>` reads `evidence/E<nnn>/*.manifest.json`, validates every
+  manifest with `validate_records.validate_document`, downloads release `E<nnn>` in **one**
+  `gh release download E<nnn> -D <dir>` call into a fresh directory under `.cache/evidence/`, and
+  checks every listed asset there by sha256. An asset the bulk call left out is retried once, by
+  name; whatever is still missing is reported by name. A stale cached file never stands in for this
+  run's download. `--local DIR` checks an already-downloaded bundle instead of the release,
+  `--evidence-dir DIR` overrides `evidence/` under the working directory, and `--repo OWNER/NAME`
+  overrides the working directory's repository (`gh repo view`). Exit 0 prints
+  `ok: <n> manifest(s) verified`; any problem is a named line and exit 1.
+- `python3 tools/check_citations.py findings/F<nnn>-*.md` fails (exit 1) when a run id anywhere in
+  the finding has no record under `runs/E<nnn>/`, or when a bullet in `## Answer` or `## Inferences`
+  cites no run id on any of its lines. An indented continuation line belongs to its bullet
+  (toy-archaeology#12). `--runs DIR` overrides `runs/` under the working directory.
+
+Neither tool ever copies or edits the validator: they call it. Their tests run in
+`tests/tools/` and in CI (`formats/README.md`).
+
 ## Versioning
 
 A schema id (`run/1`) never changes meaning. A breaking change is a new id (`run/2`) beside the old
