@@ -172,13 +172,13 @@ they serve the repository they are run in.
   fence, any other heading, a setext underline, a thematic break, a paragraph. A section's heading is
   exactly `## Answer` or `## Inferences`; a second one is the same error. Every heading anywhere in
   the file is checked too (U27, U28): a line starting with `#` (after any `>`s, list markers and
-  whitespace), a setext heading, or an HTML heading block: HTML is not parsed, and any line
-  containing `<h1`–`<h6`, in any case, starts a block that runs to the next blank line or the end of
-  the file (U29). Its raw text is entity-decoded, NFKC-normalised, casefolded and reduced to its
-  letters, with nothing else removed. It is the same
+  whitespace) or a setext heading. Its raw text is entity-decoded, NFKC-normalised, casefolded and
+  reduced to its letters, with nothing else removed. It is the same
   error when those letters contain `answer` or `inferences` and the line is not exactly one of the
   two headings (so ``## `Answer` ``, `## [Answer](#answer)` and `### Answers` are refused), and
-  when they come from more than one Unicode script, as look-alike letters do (#28).
+  when they come from more than one Unicode script, as look-alike letters do (#28). HTML headings
+  are banned (U30): any line containing `<h1`–`<h6`, in any case, anywhere in the finding (a fenced
+  code block included), is the same error. Write headings in Markdown.
   `--runs DIR` overrides `runs/` under the working directory.
 
 Only `verify_evidence.py` calls the validator (`validate_records.validate_document`);

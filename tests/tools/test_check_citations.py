@@ -309,8 +309,8 @@ def spelled(heading: str) -> str:
 
 
 class U27Test(unittest.TestCase):
-    """The owner's decision U27, as revised by U28: any heading (a line starting with `#`, a setext
-    heading, an HTML `<h1>`..`<h6>`) whose raw letters (entities decoded, NFKC, casefolded) contain
+    """The owner's decision U27, as revised by U28: any heading (a line starting with `#` or a setext
+    heading; an HTML `<h1>`..`<h6>` line is refused whatever it says, U30) whose raw letters (entities decoded, NFKC, casefolded) contain
     `answer` or `inferences` must be exactly `## Answer` or `## Inferences`, else it is a named
     error. This replaces round 3's deny-list of decorations, which Sol's round-3 R1 got past. Round
     4's two cases that only a model of rendering caught (a comment or an unknown tag inside the
@@ -425,58 +425,52 @@ class U28Test(unittest.TestCase):
     def test_ordinary_headings_pass(self):
         for heading in ("## Speed", "### The `cycles=max` arm", "## Speed → time",
                         "## ⌈x⌉ rounding", "### Café au lait", "## E900-r0001 and 0x7ABD",
-                        "## Method", "Speed\n---", "<h3>Speed</h3>", "## Αθήνα"):
+                        "## Method", "Speed\n---", "## Αθήνα"):
             with self.subTest(heading=heading):
                 result = headed(heading)
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
 
 
-class U29Test(unittest.TestCase):
-    """The owner's decision U29: HTML headings are not parsed. Any line containing `<h1`..`<h6`, in
-    any case, starts a block that runs to the next blank line or the end of the file, and the whole
-    block's raw text is checked by both U28 rules."""
+class U30Test(unittest.TestCase):
+    """The owner's decision U30, replacing U29: HTML headings are banned in findings. Any line
+    containing `<h1`..`<h6`, in any case, anywhere in the file, is the named error. Nothing is
+    parsed or matched across lines."""
 
     def assert_refused(self, text: str, number: int, line: str) -> None:
         result = run_check_text(text)
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
         self.assertTrue(unsupported_at(result, number, line), result.stdout)
 
-    def test_sol_round_5_r1_reproductions_are_refused(self):
-        # A `</h2>` inside a quoted attribute ended round 5's closing-tag search on the first line,
-        # and a second heading on a line was never scanned.
+    def test_sol_round_6_r1_probes_are_refused(self):
+        # R1: a blank line inside the heading ended U29's block before the name, and tags splitting
+        # the word kept its letters from containing the name.
         for name in ("Answer", "Inferences"):
-            for block in (f'<h2 title="</h2>">\n{name}\n</h2>', f"<h2>Speed</h2><h2>\n{name}\n</h2>"):
+            for block in (f"<h2>\n\n{name}\n\n</h2>", f"<h2>{name[:2]}<span>{name[2]}</span>{name[3:]}</h2>"):
                 with self.subTest(block=block):
                     self.assert_refused(spelled(block), 11, block.split("\n")[0])
 
-    def test_any_case_and_any_position_on_the_line_starts_a_block(self):
-        for name in ("Answer", "Inferences"):
-            for block in (f"<H2>\n{name}\n</H2>", f"Some text, then <h2>\n{name}\n</h2>",
-                          f"<h6 class=x>\n{name}", f"<h1\n{name}>"):
-                with self.subTest(block=block):
-                    self.assert_refused(spelled(block), 11, block.split("\n")[0])
+    def test_any_html_heading_outside_a_protected_section_is_refused(self):
+        # No name, no protected section: the tag alone is the error.
+        for block in ("<H3 class=x>", "<H3 class=x>Speed</H3>", "<h2>Speed</h2>", "Text, then <h1>x</h1>",
+                      "<h6>", "<h3>Café</h3>"):
+            with self.subTest(block=block):
+                self.assert_refused(spelled(block), 11, block)
 
-    def test_a_block_runs_to_the_end_of_the_file(self):
-        for name in ("Answer", "Inferences"):
-            with self.subTest(name=name):
-                text = ("## Answer\n\n- Cites E900-r0001.\n\n## Inferences\n\n- Cites E900-r0001.\n\n"
-                        f"## Notes\n\n<h2>Speed</h2>\nmore text\nand the last line: {name}")
-                self.assert_refused(text, 11, "<h2>Speed</h2>")
+    def test_an_html_heading_inside_a_fence_is_refused(self):
+        # U30 says anywhere: a fenced code block is not exempt.
+        text = ("## Answer\n\n- Cites E900-r0001.\n\n## Inferences\n\n- Cites E900-r0001.\n\n"
+                "## Notes\n\n```html\n<h6>Speed</h6>\n```\n")
+        self.assert_refused(text, 12, "<h6>Speed</h6>")
 
-    def test_a_block_whose_name_is_on_its_last_line_is_refused(self):
-        for name in ("Answer", "Inferences"):
-            with self.subTest(name=name):
-                self.assert_refused(spelled(f"<h2>Speed</h2>\nline two\nline three, {name}"), 11,
-                                    "<h2>Speed</h2>")
+    def test_each_html_heading_line_is_named(self):
+        result = run_check_text(spelled("<h2>Speed</h2>\n<h3>Timing</h3>"))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertTrue(unsupported_at(result, 11, "<h2>Speed</h2>"), result.stdout)
+        self.assertTrue(unsupported_at(result, 12, "<h3>Timing</h3>"), result.stdout)
 
-    def test_a_blank_line_ends_the_block(self):
-        # The name after the blank line is outside the block, so the heading passes.
-        result = headed("<h2>Speed</h2>\nline two\n\nThe answer, in a later paragraph.")
-        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-
-    def test_html_heading_blocks_without_a_name_pass(self):
-        for block in ("<h2>Speed</h2>", '<h3 title="</h3>">Speed</h3>\nand timing', "<H2>Café</H2>"):
+    def test_tags_that_are_not_headings_pass_outside_protected_sections(self):
+        for block in ("<hr>", "<header>x</header>", "<h7>x</h7>", "<html>", "h2 in prose"):
             with self.subTest(block=block):
                 result = headed(block)
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)

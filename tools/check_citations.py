@@ -26,15 +26,17 @@ or a list item or continuation line whose text opens one of these. A section's h
 `## Answer` or `## Inferences` and runs to the next line starting with `## `; a second one is an
 error. Two more errors hold for every heading anywhere in the file (the owner's decisions U27 and
 U28, 2026-10-04). A heading is a line starting with `#` after any blockquote `>`s, list markers and
-whitespace; a setext heading (the run of non-blank lines above a `=` or `-` underline); or an HTML
-heading block (U29): HTML is not parsed, and any line containing `<h1` to `<h6`, in any case, starts
-a block that runs to the next blank line (spaces and tabs only) or the end of the file. Its raw text is entity-decoded (`html.unescape`), NFKC-normalised, casefolded and
-reduced to its letters (`str.isalpha`); nothing else is removed and no rendering is modelled. The
+whitespace, or a setext heading (the run of non-blank lines above a `=` or `-` underline). Its raw
+text is entity-decoded (`html.unescape`), NFKC-normalised, casefolded and reduced to its letters (`str.isalpha`); nothing else is removed and no rendering is modelled. The
 heading is the named error when its letters contain `answer` or `inferences` and its line is not
 exactly `## Answer` or `## Inferences`, and when its letters come from more than one Unicode script
 (the first word of each letter's `unicodedata.name`), as look-alike letters do (#28). Lines are split
 only where Markdown splits them (`\n`, `\r\n`, `\r`), never at the other separators
 `str.splitlines` knows.
+
+HTML headings are banned in findings (the owner's decision U30, 2026-10-04, replacing U29): any line
+containing `<h1` to `<h6`, in any case, anywhere in the file (a fenced code block included), is the
+named error. Nothing is parsed or matched across lines.
 
 Any input that cannot be read is a named error, never a traceback.
 
@@ -69,7 +71,7 @@ HTML = re.compile(r"<[A-Za-z/!?]")
 SEPARATOR = re.compile(r"^\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$")
 # U27/U28: the heading lines. An ATX heading is a line whose first character after blockquote `>`s,
 # list markers and whitespace is `#`; a setext underline is a line of `=` or `-` after the same
-# prefixes; an HTML heading block starts at any line containing `<h1` to `<h6`, in any case (U29).
+# prefixes. U30: any line containing `<h1` to `<h6`, in any case, is an error on its own.
 ATX_START = re.compile(r"^[ \t>]*(?:(?:[-*+]|\d{1,9}[.)])[ \t]+[ \t>]*)*#")
 SETEXT_UNDERLINE = re.compile(r"^[ \t>]*(?:=+|-+)[ \t]*$")
 H_OPEN = re.compile(r"<h[1-6]", re.IGNORECASE)
@@ -118,9 +120,9 @@ def heading_refused(text: str, line: str) -> bool:
 
 
 def refused_headings(lines: list[str]) -> list[int]:
-    """The 0-based indexes of the lines that start a refused heading (U28): an ATX heading; a setext
-    heading, whose text is the run of non-blank lines above its underline; or an HTML heading block
-    (U29), from any line containing `<h1`..`<h6` to the next blank line or the end of the file."""
+    """The 0-based indexes of the lines that start a refused heading: an ATX heading or a setext
+    heading, whose text is the run of non-blank lines above its underline, refused under U28; and
+    every line containing `<h1`..`<h6`, refused whatever it says (U30)."""
     found: set[int] = set()
     for i, line in enumerate(lines):
         if ATX_START.match(line) and heading_refused(line, line):
@@ -132,11 +134,7 @@ def refused_headings(lines: list[str]) -> list[int]:
             if heading_refused("\n".join(lines[start:i]), lines[start]):
                 found.add(start)
         if H_OPEN.search(line):
-            end = i + 1
-            while end < len(lines) and lines[end].strip(" \t"):
-                end += 1
-            if heading_refused("\n".join(lines[i:end]), line):
-                found.add(i)
+            found.add(i)
     return sorted(found)
 
 
