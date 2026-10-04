@@ -478,8 +478,8 @@ class U30Test(unittest.TestCase):
 
 class U31Test(unittest.TestCase):
     """The owner's decision U31: any ATX or setext heading, anywhere in a finding, whose text
-    contains `<` or `[` is the named error. Tags, links, images, autolinks and comments all start
-    with one of them, so no markup can add letters that split a word past U28."""
+    contains `<`, `[` or `$` is the named error. Tags, links, images, autolinks, comments and math
+    all start with one of them, so no markup can add letters that split a word past U28."""
 
     def assert_refused(self, heading: str) -> None:
         result = run_check_text(spelled(heading))
@@ -510,6 +510,22 @@ class U31Test(unittest.TestCase):
 
     def test_an_image_and_an_autolink_in_a_heading_are_refused(self):
         for heading in ("## ![x](y)", "## Speed ![x](y)", "## <https://x>", "## See <https://x>"):
+            with self.subTest(heading=heading):
+                self.assert_refused(heading)
+
+    def test_math_that_splits_a_section_name_is_refused(self):
+        # The main session's sweep of round 8: GitHub math renders `An$\mathrm{s}$wer` as Answer.
+        for heading in ("## An$\\mathrm{s}$wer", "## Infer$e$nces"):
+            with self.subTest(heading=heading):
+                self.assert_refused(heading)
+
+    def test_a_dollar_heading_outside_any_protected_section_is_refused(self):
+        for heading in ("## Speed $x$", "### Costs $5", "> ## Quoted $y$", "- ### Listed $$z$$"):
+            with self.subTest(heading=heading):
+                self.assert_refused(heading)
+
+    def test_a_setext_heading_with_a_dollar_is_refused(self):
+        for heading in ("Speed $x$\n---", "An$\\mathrm{s}$wer\n===", "First line\n$y$ second\n==="):
             with self.subTest(heading=heading):
                 self.assert_refused(heading)
 

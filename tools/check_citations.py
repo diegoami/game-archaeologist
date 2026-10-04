@@ -38,9 +38,9 @@ HTML headings are banned in findings (the owner's decision U30, 2026-10-04, repl
 containing `<h1` to `<h6`, in any case, anywhere in the file (a fenced code block included), is the
 named error. Nothing is parsed or matched across lines.
 
-Any ATX or setext heading, anywhere in the file, whose text contains `<` or `[` is the named error
-too (the owner's decision U31, 2026-10-04). Tags, links, images, autolinks and comments all start
-with one of them, so no markup can add letters that split a section's name past U28.
+Any ATX or setext heading, anywhere in the file, whose text contains `<`, `[` or `$` is the named
+error too (the owner's decision U31, 2026-10-04). Tags, links, images, autolinks, comments and math
+all start with one of them, so no markup can add letters that split a section's name past U28.
 
 Any input that cannot be read is a named error, never a traceback.
 
@@ -80,8 +80,8 @@ ATX_START = re.compile(r"^[ \t>]*(?:(?:[-*+]|\d{1,9}[.)])[ \t]+[ \t>]*)*#")
 SETEXT_UNDERLINE = re.compile(r"^[ \t>]*(?:=+|-+)[ \t]*$")
 H_OPEN = re.compile(r"<h[1-6]", re.IGNORECASE)
 # U31: what a heading's text may not contain, as every kind of inline markup that adds letters
-# (a tag, a comment, an autolink, a link, an image) starts with one of them.
-MARKUP = re.compile(r"[<\[]")
+# (a tag, a comment, an autolink, a link, an image, math) starts with one of them.
+MARKUP = re.compile(r"[<\[$]")
 NAMES = {heading[3:].casefold() for heading in SECTIONS}
 
 
@@ -130,7 +130,7 @@ def refused_headings(lines: list[str]) -> list[int]:
     """The 0-based indexes of the lines that start a refused heading: an ATX heading or a setext
     heading, whose text is the run of non-blank lines above its underline, refused under U28; and
     every line containing `<h1`..`<h6`, refused whatever it says (U30). An ATX or setext heading
-    whose text contains `<` or `[` is refused whatever its letters (U31)."""
+    whose text contains `<`, `[` or `$` is refused whatever its letters (U31)."""
     found: set[int] = set()
     for i, line in enumerate(lines):
         if ATX_START.match(line) and (MARKUP.search(line) or heading_refused(line, line)):
