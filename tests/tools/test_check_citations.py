@@ -431,5 +431,56 @@ class U28Test(unittest.TestCase):
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
 
+
+class U29Test(unittest.TestCase):
+    """The owner's decision U29: HTML headings are not parsed. Any line containing `<h1`..`<h6`, in
+    any case, starts a block that runs to the next blank line or the end of the file, and the whole
+    block's raw text is checked by both U28 rules."""
+
+    def assert_refused(self, text: str, number: int, line: str) -> None:
+        result = run_check_text(text)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertTrue(unsupported_at(result, number, line), result.stdout)
+
+    def test_sol_round_5_r1_reproductions_are_refused(self):
+        # A `</h2>` inside a quoted attribute ended round 5's closing-tag search on the first line,
+        # and a second heading on a line was never scanned.
+        for name in ("Answer", "Inferences"):
+            for block in (f'<h2 title="</h2>">\n{name}\n</h2>', f"<h2>Speed</h2><h2>\n{name}\n</h2>"):
+                with self.subTest(block=block):
+                    self.assert_refused(spelled(block), 11, block.split("\n")[0])
+
+    def test_any_case_and_any_position_on_the_line_starts_a_block(self):
+        for name in ("Answer", "Inferences"):
+            for block in (f"<H2>\n{name}\n</H2>", f"Some text, then <h2>\n{name}\n</h2>",
+                          f"<h6 class=x>\n{name}", f"<h1\n{name}>"):
+                with self.subTest(block=block):
+                    self.assert_refused(spelled(block), 11, block.split("\n")[0])
+
+    def test_a_block_runs_to_the_end_of_the_file(self):
+        for name in ("Answer", "Inferences"):
+            with self.subTest(name=name):
+                text = ("## Answer\n\n- Cites E900-r0001.\n\n## Inferences\n\n- Cites E900-r0001.\n\n"
+                        f"## Notes\n\n<h2>Speed</h2>\nmore text\nand the last line: {name}")
+                self.assert_refused(text, 11, "<h2>Speed</h2>")
+
+    def test_a_block_whose_name_is_on_its_last_line_is_refused(self):
+        for name in ("Answer", "Inferences"):
+            with self.subTest(name=name):
+                self.assert_refused(spelled(f"<h2>Speed</h2>\nline two\nline three, {name}"), 11,
+                                    "<h2>Speed</h2>")
+
+    def test_a_blank_line_ends_the_block(self):
+        # The name after the blank line is outside the block, so the heading passes.
+        result = headed("<h2>Speed</h2>\nline two\n\nThe answer, in a later paragraph.")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_html_heading_blocks_without_a_name_pass(self):
+        for block in ("<h2>Speed</h2>", '<h3 title="</h3>">Speed</h3>\nand timing', "<H2>Café</H2>"):
+            with self.subTest(block=block):
+                result = headed(block)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
