@@ -55,7 +55,13 @@
     "claudeFallback": "sonnet",
     "startupTimeoutSec": 180,
     "idleTimeoutSec": 600,
-    "totalTimeoutSec": 3600
+    "totalTimeoutSec": 3600,
+    "hard": [
+      "zai-glm-5.3",
+      "deepseek-pro",
+      "luna"
+    ],
+    "sol": "gpt-6.1-sol"
   },
   "jev": {
     "model": "jev-1.13",

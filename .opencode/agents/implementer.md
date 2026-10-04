@@ -3,6 +3,8 @@ description: Implementer for one task or fix, run by tools/implement.mjs on the 
 mode: all
 permission:
   edit: allow
+  external_directory:
+    "/tmp/opencode/*": deny
   task:
     "*": deny
   bash:
@@ -32,6 +34,13 @@ the run works.
 - Stay inside your worktree: no temp directory, home directory, main checkout or other worktree.
   OpenCode rejects a path outside it, and the script then counts the run as failed. Scratch files
   live in the worktree and are deleted before you commit. Call tools by name from PATH.
+  Run every shell command from the worktree root with paths relative to it (`grep -n X src/a.cs`,
+  not `cd src && grep -n X a.cs`). Never `cd`, and never write `..` in a command: OpenCode checks
+  paths against the worktree root, not against an earlier `cd` in the same command, so
+  `cd a && …; cd ../b` is rejected as outside the worktree, and the run fails (L31).
+  Give the read, edit and write tools paths relative to the worktree root too (`src/a.cs`), never
+  an absolute path: OpenCode resolves a relative path there, although the tools' descriptions ask
+  for an absolute one, and a guessed absolute path is rejected and ends the run (L36).
 - The Done-when lines are binding as written. One you cannot satisfy means you **stop and report
   why**: never weaken an assertion, skip a test, or edit the task file. A defect in code outside
   your task is reported, never patched.

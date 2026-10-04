@@ -210,7 +210,14 @@ watched match. G1 (goal2 T02, merged 2026-10-04, goal2 F001) measured them:
 
 - **Implementer:** `node tools/harness/implement.mjs --task T<nn> --slug <slug> --issue <n> --brief <file> [--model <name>]`,
   with `run_in_background`, never a shell `&`. On rework the same command resumes the branch.
-- **Reviewer:** `node tools/harness/review.mjs --pr <n> --brief <file> --exclude <implementer> --issue <n> --apply-label [--reviewer gpt-6.1-sol]`. A hard task passes `--model deepseek-flash` to the implementer and `--reviewer gpt-6.1-sol` here.
+- **Reviewer:** `node tools/harness/review.mjs --pr <n> --brief <file> --exclude <implementer> --issue <n> --apply-label`, plus:
+  - an easy task: nothing more (the chain, Luna);
+  - a hard task: `--hard` (`reviewer.hard`: GLM-5.3, then DeepSeek V4 Pro and Luna if one cannot run);
+  - a guard task, or a hard task's last rework round: `--hard --sol` (GPT-6.1 Sol at low effort first).
+
+  `--reviewer <name>` still runs one named model alone. A hard task passes `--model deepseek-flash`
+  to the implementer. A review by a Claude agent is posted with
+  `node tools/harness/post-review.mjs --pr <n> --brief <file> --review <file> --by "claude (opus)" --issue <n> --apply-label`.
 - **Every implementer that measures** (a research task, a runtime spike, a static reading): its brief
   says that every measured output goes under a tracked path the task owns, is committed and pushed
   after each batch and at least every 30 minutes, and is never deleted or overwritten (L207).

@@ -159,3 +159,55 @@ export function readReview(stdout, header) {
   const r = readAt(last);
   return done(r.kind === 'ok' ? r : { ...r, review: whole });
 }
+
+// How many Done-when lines the task file in a brief has: the numbered lines under its
+// "**Done when**" field (the task template) or a "Done when" heading (an issue body), each at the
+// start of its line, so a mention of the field in prose is not taken for it. 0 when there is none,
+// and then nothing is counted (L32).
+export function doneWhenCount(brief) {
+  const lines = String(brief).split(/\r?\n/);
+  const start = lines.findIndex((l) => /^\s*(?:[-*+]\s+)?\*\*Done when\b[^*]*\*\*|^#{1,6}\s*Done when\b/i.test(l));
+  if (start < 0) return 0;
+  let n = 0;
+  for (const l of lines.slice(start + 1)) {
+    // The next field (an unindented "- **Field**", as in the task template), heading or rule. An
+    // indented bold sub-bullet under a Done-when line is part of it (found on PR 27's own body).
+    if (/^[-*+]\s+\*\*|^#{1,6}\s|^-{3,}\s*$/.test(l)) break;
+    if (/^\s*\d+\.\s/.test(l)) n++;
+  }
+  return n;
+}
+
+// Whether a review accounts for each of `count` Done-when lines: exactly one line each, either
+// "DW<k>: ran <command> → <result>" or "DW<k>: not run — <reason>" (L32). Anything else on a DW
+// line, or the same number twice, does not account for it (Luna's R1 on PR 22). An approval with a
+// line missing, malformed, repeated or not run is not an approval.
+// Returns { missing: [k], notRun: [k], malformed: [k], repeated: [k] }.
+export function accountDoneWhen(review, count) {
+  const seen = new Map();
+  for (const l of String(review).split(/\r?\n/)) {
+    const m = l.replace(/[*_]/g, '').match(/^\s*(?:[-+]\s+)?`?DW\s*(\d+)`?\s*[:.)\-–—]\s*(.*)$/i);
+    if (m) seen.set(Number(m[1]), [...(seen.get(Number(m[1])) ?? []), m[2].trim()]);
+  }
+  const all = Array.from({ length: count }, (_, i) => i + 1);
+  const one = (k) => (seen.get(k)?.length === 1 ? seen.get(k)[0] : null);
+  const ran = (t) => /^ran\s+\S.*\s(?:→|->)\s*\S/i.test(t);
+  const notRun = (t) => /^not\s+run\s*(?:—|–|-|:)\s*\S/i.test(t);
+  return {
+    missing: all.filter((k) => !seen.has(k)),
+    repeated: all.filter((k) => seen.get(k)?.length > 1),
+    notRun: all.filter((k) => one(k) !== null && notRun(one(k))),
+    malformed: all.filter((k) => one(k) !== null && !ran(one(k)) && !notRun(one(k))),
+  };
+}
+
+// The commits a brief names as the one to review: a full 40-hex hash after "at", "HEAD is" or
+// "HEAD:", as process.md §5's brief writes them ("You review PR #<n> at <sha>", "HEAD is <sha>").
+// Other hashes (a PR body citing another commit) are not targets and are left alone (#23). Only the
+// reviewer's block is read, the lines before the pasted task file's title (`# T<nn> …`, as
+// docs/tasks/TEMPLATE.md opens): a task file may cite its evidence "at <sha>" too (#32). Any other
+// heading stays in the block, so it cannot hide a stale head (Luna's R1 on PR 34).
+export function briefTargets(brief) {
+  const block = String(brief).split(/^#\s+T\d+\b/m)[0];
+  return [...block.matchAll(/\b(?:at|HEAD\s+is|HEAD:)\s+`?([0-9a-fA-F]{40})\b/g)].map((m) => m[1].toLowerCase());
+}
