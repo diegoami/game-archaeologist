@@ -20,5 +20,7 @@ jobs:
       - run: python3 tools/check_links.py
       # The record formats: schemas against their valid and invalid examples, and the vocabulary (formats/README.md).
       - run: python3 tests/formats/check_examples.py
+      # The validator game repositories fetch and call (formats/README.md).
+      - run: python3 tools/validate_records.py formats/examples/valid/*.json
       # The copied harness tools run here (harness.lock pins them).
       - run: node tools/harness/review.mjs --self-test

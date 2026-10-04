@@ -48,8 +48,8 @@ The vocabularies these use are in [vocabulary/](../vocabulary/): [status](../voc
 
 ## Two rules no schema can express
 
-`tests/formats/check_examples.py` checks them on the examples. Game repositories apply them with the
-same code, copied, until a second consumer moves it here (ADR-009).
+`tools/validate_records.py` implements them, and `tests/formats/check_examples.py` checks them on the
+examples. Game repositories call the validator rather than copying it (ADR-009).
 
 1. **Artifact-set id.** `id` is `<label>-<h8>`, where `<h8>` is the first 8 hex of the sha256 of the
    *canonical manifest*:
@@ -75,14 +75,26 @@ same code, copied, until a second consumer moves it here (ADR-009).
 
 ## The validator
 
-`python3 tests/formats/check_examples.py` (stdlib only, run in CI) implements exactly the JSON Schema
-keywords these schemas use:
+`tools/validate_records.py` (stdlib only, Python ≥ 3.11) validates a record document against the
+schema its top-level `schema` field names, and applies the two rules above. It implements exactly
+the JSON Schema keywords these schemas use:
 - `type`, `required`, `properties`, `additionalProperties`, `items`;
 - `enum`, `const`, `pattern`, `minItems`, `minimum`, `minLength`, `anyOf`;
 - the annotations `$schema`, `$id`, `title`, `description`.
 
-A schema that uses any other keyword fails the check, so no rule is ever silently unenforced. Any
-standard JSON Schema 2020-12 validator accepts these schemas too.
+A schema that uses any other keyword fails, so no rule is ever silently unenforced. Any standard
+JSON Schema 2020-12 validator accepts these schemas too.
+
+Run it on files; it prints `ok: <path>`, or `<path>: <error>` for each error, and exits 0 only when
+every file is valid: `python3 tools/validate_records.py <file.json>...`. A file that is not JSON, or
+has no `schema` or an unknown one, is an error for that file, not a crash.
+
+**A game repository calls it, never copies it.** List `tools/validate_records.py` in the
+repository's `archaeology.json` `uses`, and fetch it with `formats/*.schema.json` at the pinned
+commit, keeping `tools/validate_records.py` beside `formats/`; the module finds the schemas relative
+to its own path. Never copy or edit it, so every repository stays on the rules of the commit it
+pins. `tests/formats/check_examples.py` (run in CI) uses the same module to check the examples
+against `expected-errors.json` and the claim statuses against 06 §4.
 
 ## Versioning
 
