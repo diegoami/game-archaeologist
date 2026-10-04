@@ -206,6 +206,16 @@ watched match. G1 (goal2 T02, merged 2026-10-04, goal2 F001) measured them:
 - **Fixed cost:** about 14 s from the title to the main screen at every setting, set by the settle
   polls, and about 1 s per savestate restore.
 
+## Today only: OpenCode Go quota low (2026-10-04)
+
+The owner, 2026-10-04: the OpenCode Go tokens are running out, so DeepSeek models go to the end for
+the rest of the day. Revert this section and `reviewer.hard` on 2026-10-05.
+- Hard implementer: `--model zai-glm-5.3` (GLM-5.3 on Z.AI) instead of `deepseek-flash`. The ladder
+  for today is GLM-5.3 Flash → GLM-5.3 → Claude Opus, and DeepSeek V4.1 Flash only if all of these
+  fail.
+- `reviewer.hard` is `zai-glm-5.3`, `luna`, `deepseek-pro` (DeepSeek V4 Pro last).
+- A run already in flight on DeepSeek finishes; its next round follows this section.
+
 ## How a run is made
 
 - **Implementer:** `node tools/harness/implement.mjs --task T<nn> --slug <slug> --issue <n> --brief <file> [--model <name>]`,
