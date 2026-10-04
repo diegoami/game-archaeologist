@@ -135,9 +135,11 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 
 | U27 | **A heading that reduces to "answer" or "inferences" must be exactly `## Answer` or `## Inferences`.** A heading is any line starting with `#`, a setext heading, or an HTML `<h1>`–`<h6>`. Its text is NFKC-normalised, casefolded and reduced to its letters. If the result is exactly `answer` or `inferences` and the line is not exactly `## Answer` / `## Inferences`, the line is an error (T10, Sol's round-3 R1 on #27: a code span, a link or a non-breaking space in the heading switched checking off). | Finite: it replaces the deny-list of spellings. Other headings stay free. Known limit: a look-alike letter from another script (a Cyrillic А) does not reduce to `answer`. It is out of T10's scope and filed as a follow-up; only a fixed heading list would close it. |
 
+| U28 | **U27 is matched on raw text, by containment, and a heading may not mix scripts.** This replaces U27's rendered-text reading (T10, Sol's round-4 R1 and R2 on #27). A heading line's raw text is entity-decoded, NFKC-normalised and casefolded, then reduced to its letters; nothing is deleted to model rendering. If those letters contain `answer` or `inferences`, the line must be exactly `## Answer` or `## Inferences`, or it is an error. A heading whose letters come from more than one Unicode script is also an error (#28: look-alike letters). | Finite: no rendering model to get wrong. Headings that merely mention the words become errors, by design. Of the 36 existing headings in toy, goal2 and isle-wars findings, only goal2 F002's `### Inferences about the executable` needs renaming, and none mixes scripts. |
+
 ### Still open
 
-None. U1–U27 are made, and ADR-001..009 were accepted on 2026-10-02.
+None. U1–U28 are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
