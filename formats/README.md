@@ -168,8 +168,12 @@ they serve the repository they are run in.
   and the `|---|` separator under it are exempt); and blank lines (U25). Every other line there is
   the named error `<file>:<line>: unsupported in a protected section: <line>`: HTML, a blockquote, a
   fence, any other heading, a setext underline, a thematic break, a paragraph. A section's heading is
-  exactly `## Answer` or `## Inferences`; a second one, or any other spelling of either anywhere in
-  the file (case, closing `#`s, a tab, a quote, HTML, setext), is the same error.
+  exactly `## Answer` or `## Inferences`; a second one is the same error. So is any other heading,
+  anywhere in the file, whose text names a section (U27): a line starting with `#` (after any `>`s,
+  list markers and whitespace), a setext heading or an HTML `<h1>`–`<h6>`, whose rendered text,
+  NFKC-normalised, casefolded and reduced to its letters, is `answer` or `inferences`. That catches
+  ``## `Answer` ``, `## [Answer](#answer)`, a trailing no-break space, emphasis, any `#` count, tabs
+  and entities. Look-alike letters from another script are a known limit (#28).
   `--runs DIR` overrides `runs/` under the working directory.
 
 Neither tool ever copies or edits the validator: they call it. Their tests run in

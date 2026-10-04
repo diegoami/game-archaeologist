@@ -243,7 +243,7 @@ class U25Test(unittest.TestCase):
 
     def test_every_other_spelling_of_a_section_heading_is_a_named_error(self):
         spellings = ["## ANSWER", "## answer", "## Answer ##", "##\tAnswer", "## Answer ", " ## Answer",
-                     "# Answer", "### Inferences", "> > ## Inferences", "<h2>Answer</h2>", "Answer"]
+                     "# Answer", "### Inferences", "> > ## Inferences", "<h2>Answer</h2>"]
         for heading in spellings:
             with self.subTest(heading=heading):
                 text = ("## Answer\n\n- Cites E900-r0001.\n\n## Inferences\n\n- Cites E900-r0001.\n\n"
@@ -299,6 +299,78 @@ class U25Test(unittest.TestCase):
         after = "> A quote\n\n```\ncode\n```\n\n<details>HTML</details>\n\n#### Deep\n\nA paragraph."
         result = run_check_text(finding_text("- Cites E900-r0001.", after=after))
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+
+def spelled(heading: str) -> str:
+    """A finding whose real sections cite, followed by `heading` (which starts at line 11) and an
+    uncited claim under it."""
+    return ("## Answer\n\n- Cites E900-r0001.\n\n## Inferences\n\n- Cites E900-r0001.\n\n"
+            f"## Notes\n\n{heading}\n\n- An uncited claim\n")
+
+
+class U27Test(unittest.TestCase):
+    """The owner's decision U27: any heading (a line starting with `#`, a setext heading, an HTML
+    `<h1>`..`<h6>`) whose rendered text, NFKC-normalised, casefolded and reduced to its letters, is
+    `answer` or `inferences` must be exactly `## Answer` or `## Inferences`, else it is a named error.
+    This replaces round 3's deny-list of decorations, which Sol's round-3 R1 got past."""
+
+    def assert_named(self, heading: str, first: str | None = None) -> None:
+        result = run_check_text(spelled(heading))
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        line = first if first is not None else heading.split("\n")[0]
+        self.assertTrue(unsupported_at(result, 11, line), result.stdout)
+
+    def test_sol_round_3_r1_spellings_are_named_errors(self):
+        for name in ("Answer", "Inferences"):
+            for heading in (f"## `{name}`", f"## [{name}](#{name.lower()})", f"## {name} ",
+                            f"## {name} "):
+                with self.subTest(heading=heading):
+                    self.assert_named(heading)
+
+    def test_decorated_spellings_are_named_errors(self):
+        for name in ("Answer", "Inferences"):
+            spellings = [
+                f"## *{name}*", f"## **{name}**", f"## _{name}_", f"## ~~{name}~~",   # emphasis
+                f"# {name}", f"### {name}", f"#### {name}", f"##### {name}", f"###### {name}",
+                f"##\t{name}", f"##\t{name}\t", f"## {name}  ", f"## {name}  ",
+                f"<h2>{name}</h2>", f'<H2 id="x">{name}</H2>', f"<h3>{name}</h3>",
+                f"## {name[:3]}<!-- a>b -->{name[3:]}",                      # a comment inside
+                f"## [{name}](#a \"title (x)\")", f"## [{name}][ref]", f"## ![{name}](x.png)",
+                f"## {name[0]}&#{ord(name[1])};{name[2:]}",                 # an entity
+                f"## {''.join(chr(ord(c) + 0xFEE0) for c in name)}",       # fullwidth, NFKC
+                f"## {name[:2]}​{name[2:]}",                           # a zero-width space
+                f"- ## {name}", f"1. > ## {name}", f"#{name}", f"   ## {name}",
+                f"## [{name}](<a)b>)",                                     # a `<...>` destination
+                f"## {name}[^note]", f"## {name} :smile:",                 # footnote, emoji
+                f"## {name}<script>x</script>", f"## {name}<style>p {{}}</style>",
+                f"## {name}<noscript>x</noscript>", f"## {name}<span hidden>x</span>",
+                f'## {name}<span style="display: none">x</span>', f"## {name} ![x](y.png)",
+                f"## {name[0]}:{name[1:]}:",                               # `:...:` that is no emoji
+                f"## {name[0]}<x>{name[1:]}",                              # an unknown tag
+            ]
+            for heading in spellings:
+                with self.subTest(heading=heading):
+                    self.assert_named(heading)
+
+    def test_setext_headings_are_named_errors(self):
+        for name in ("Answer", "Inferences"):
+            for heading in (f"{name}\n===", f"{name}\n---", f"*{name}*\n------", f"> {name}\n> ---",
+                            f"{name[:3]}\n{name[3:]}\n---"):
+                with self.subTest(heading=heading):
+                    self.assert_named(heading)
+
+    def test_html_heading_over_several_lines_is_a_named_error(self):
+        for name in ("Answer", "Inferences"):
+            with self.subTest(name=name):
+                self.assert_named(f"<h2>\n{name}\n</h2>", "<h2>")
+                self.assert_named(f"<h2>{name}\n\n- An uncited claim inside the unclosed heading")
+
+    def test_a_heading_split_only_by_a_separator_markdown_does_not_split_at(self):
+        # `str.splitlines` splits at NEL (U+0085) and LINE SEPARATOR (U+2028); Markdown does not, so
+        # the heading is one line whose letters are `answer`.
+        for sep in ("\u0085", " "):
+            with self.subTest(sep=repr(sep)):
+                self.assert_named(f"## Ans{sep}wer")
 
 
 if __name__ == "__main__":
