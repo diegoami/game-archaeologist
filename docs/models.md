@@ -343,6 +343,14 @@ No DeepSeek model runs: the OpenCode Go credits are gone. This holds until the o
   three rounds, all of the same class (a crash on malformed input). Sol on T09 and T10 named two
   per round, each pair new. Luna on ic2-conquest PR #38 named one per round for eight rounds. From
   2026-10-04, every brief carries "Report every blocking finding in this one review".
+- **A checker of rendered Markdown** (T10, nine rounds, 2026-10-04): every rule that read raw text
+  left a markup escape: list markers, repeated sections, HTML headings, tags, links and math
+  splitting a word. Sol found a new one each round; Opus closed each one it was given. It converged
+  only when the owner chose fail-closed bans (U25, U27–U31). Sol approved round 6 with a proven
+  bypass rated "not blocking" because the rule defined it out, and reading the "not blocking"
+  findings caught it. The main session's own sweep found the math escape that Sol missed in round 8.
+  For a rule about rendered text, ask the owner for a ban early, rather than modelling the
+  rendering.
 - **GPT-6 Luna** on the harness bump (T08): it re-ran the byte comparison against the template on
   GitHub, and approved with no findings.
 - **GLM-5.3 on Z.AI** (replay reviewer): 2 of 8, but approved every head. As Sol's substitute on
