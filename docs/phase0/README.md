@@ -138,10 +138,11 @@ P7 the capability token list and network host lists · P8 Claude as default rese
 | U28 | **U27 is matched on raw text, by containment, and a heading may not mix scripts.** This replaces U27's rendered-text reading (T10, Sol's round-4 R1 and R2 on #27). A heading line's raw text is entity-decoded, NFKC-normalised and casefolded, then reduced to its letters; nothing is deleted to model rendering. If those letters contain `answer` or `inferences`, the line must be exactly `## Answer` or `## Inferences`, or it is an error. A heading whose letters come from more than one Unicode script is also an error (#28: look-alike letters). | Finite: no rendering model to get wrong. Headings that merely mention the words become errors, by design. Of the 36 existing headings in toy, goal2 and isle-wars findings, only goal2 F002's `### Inferences about the executable` needs renaming, and none mixes scripts. |
 
 | U29 | **An HTML heading is matched as a block, not parsed.** Any line containing `<h1`–`<h6` (case-insensitive) starts a heading block that runs to the next blank line, or to the end of the file. The whole block's raw text goes through U28: entity-decoded, NFKC, casefolded, letters only. If it contains `answer` or `inferences`, or mixes scripts, the block is an error (T10, Sol's round-5 R1 on #27: a quoted `</h2>` in an attribute, and a second `<h2>` on the same line). | No HTML parsing remains to get wrong. A paragraph of HTML that merely mentions the words next to a heading tag is refused, by design. No existing finding uses HTML headings. |
+| U30 | **HTML headings are banned in findings.** Any line containing `<h1`–`<h6` (case-insensitive), anywhere in a finding, is the error `<file>:<line>: unsupported in a protected section: <line>`. It replaces U29's block rule; U28 still applies to Markdown and setext headings (T10, Sol's round-6 R1 on #27: a blank line inside `<h2>…</h2>`, and tags splitting the word, as in `An<span>s</span>wer`). | Nothing is parsed or matched across lines. A finding writes its headings in Markdown; HTML headings cannot reach a reader as an unchecked Answer. |
 
 ### Still open
 
-None. U1–U29 are made, and ADR-001..009 were accepted on 2026-10-02.
+None. U1–U30 are made, and ADR-001..009 were accepted on 2026-10-02.
 
 ## Independent review
 
