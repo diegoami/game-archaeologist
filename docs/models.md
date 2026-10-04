@@ -215,6 +215,9 @@ the rest of the day. Revert this section and `reviewer.hard` on 2026-10-05.
   fail.
 - `reviewer.hard` is `zai-glm-5.3`, `luna`, `deepseek-pro` (DeepSeek V4 Pro last).
 - A run already in flight on DeepSeek finishes; its next round follows this section.
+- From about 13:20, Z.AI's 5-hour usage limit stops GLM-5.3 and GLM-5.3 Flash until 19:20 today. Until
+  then, easy implementers fall to the Claude fallback (Sonnet), hard implementers go to Claude Opus,
+  and `--hard` reviews reach Luna, after GLM-5.3 fails fast.
 
 ## How a run is made
 
