@@ -263,6 +263,32 @@ the rest of the day. Revert this section and `reviewer.hard` on 2026-10-05.
   costliest mistake a review can make.
   ```
 
+  Right after it, every review brief carries this section in full (the owner, 2026-10-04): in
+  ic2-conquest PR #38, GPT-6 Luna asked for rework eight times with exactly one blocking finding per
+  round, and most of those findings were visible in the first round:
+
+  ```text
+  ## Report every blocking finding in this one review
+
+  This review is your only pass before the author fixes. Do not stop at the first blocking
+  finding: finish reading the whole diff and the task file, check every Done-when line and
+  every item under "Blocking means", and report all blocking findings together.
+
+  - Before you write the verdict, make one last pass over the full diff for anything you have
+    not yet rated, and say "Final pass done" as the last line before the verdict.
+  - Number the findings R1, R2, … in order of severity. A finding you held back because an
+    earlier one was already blocking is a review defect: if two problems share a cause, list
+    both and say so.
+  - Do not rely on a later round. The author fixes everything you list, and the next review
+    checks those fixes and new code only, not anything you saw but did not report.
+  - If you ran out of time or context before covering the whole diff, say which files or
+    sections you did not cover. Do not approve in that case.
+  ```
+
+  If a reviewer still reports one blocker per round after this, the main session stops after the
+  second such round. It goes through the whole diff itself for the same class of problem before the
+  next review, and records the pattern under "What each model has shown so far".
+
   Every task file's Scope says in one line what the task protects (`Protects:`), so item 2 can name
   it. Before merging an approval whose findings are marked "not blocking", the main session reads
   them. If one is a proven way past what item 2 names, the review counts as rework: say so on the
@@ -317,6 +343,10 @@ the rest of the day. Revert this section and `reviewer.hard` on 2026-10-05.
 - **GPT-6.1 Sol at `low`** (T07, four runs): each review re-ran all eight Done-when lines, the
   mutations and the earlier reproductions, and each blocking finding was proven live. It held scope
   strictly: it called an unasked rule blocking even where the stricter behaviour was safer.
+- **One blocker per round** (recorded 2026-10-04): Sol on T07 named one blocking finding in each of
+  three rounds, all of the same class (a crash on malformed input). Sol on T09 and T10 named two
+  per round, each pair new. Luna on ic2-conquest PR #38 named one per round for eight rounds. From
+  2026-10-04, every brief carries "Report every blocking finding in this one review".
 - **GPT-6 Luna** on the harness bump (T08): it re-ran the byte comparison against the template on
   GitHub, and approved with no findings.
 - **GLM-5.3 on Z.AI** (replay reviewer): 2 of 8, but approved every head. As Sol's substitute on
