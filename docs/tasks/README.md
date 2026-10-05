@@ -17,3 +17,4 @@ Each title ends with the task's plan label (A1, A2, …) from
 | T08 | Harness bump 74e53ae → c6ef85c (L31–L46) | #21 | T03 |
 | T09 | register_artifact.py: one artifact registration tool game repositories can call (#23, ADR-009) | #23 | T07 |
 | T10 | verify_evidence.py and check_citations.py: shared research tools (#25, ADR-009) | #25 | T09 |
+| T11 | check_citations: `static:<path>[:line]` citations (#29, U26) | #29 | T10 |
