@@ -3,10 +3,12 @@
 
 `python3 tools/check_citations.py <finding.md>` fails (exit 1) when a run id (`E<nnn>-r<nnnn>`)
 anywhere in the finding has no record under `runs/E<nnn>/`, or when a claim in `## Answer` or
-`## Inferences` cites no run id. Exit 0 otherwise. `--runs <dir>` checks against another records
-directory; without it the records live in `runs/` under the working directory, never under this
-script's directory, so a game repository that fetches this file into a cache folder still checks
-its own records (ADR-009).
+`## Inferences` cites no run id. Exit 0 otherwise. A cited run record must be listed by
+`git -C <root> ls-files` and exist on disk inside the repository root, exactly as a `static:` path
+must (T12): a record merely on disk, or one tracked but deleted, fails. `--runs <dir>` checks
+against another records directory; without it the records live in `runs/` under the working
+directory, never under this script's directory, so a game repository that fetches this file into a
+cache folder still checks its own records (ADR-009).
 
 A static claim cites its evidence as `static:<path>[:<line>]` anywhere in the finding (U26), and
 such a token counts as a citation in `## Answer` and `## Inferences` exactly as a run id does. The
@@ -15,8 +17,8 @@ directory above it a symlink, resolved inside the repository root, and existing 
 directory, as a directory with a tracked file under it that passes the same checks). With `:line`
 it must be a file with at least that many lines. `--root <dir>` names the repository root, default
 the working directory, never this script's directory. A root that is not a git repository's top
-level, or a `git` that is missing, is one named error and exit 1 when the finding holds a `static:`
-token; a finding without one needs no repository. A finding that is not UTF-8 is
+level, or a `git` that is missing, is one named error and exit 1 when the finding holds a run id or a
+`static:` token; a finding with neither needs no repository. A finding that is not UTF-8 is
 one named error at the line of its first bad byte.
 
 The two protected sections hold only these lines (the owner's decision U25, 2026-10-04), so the
@@ -223,6 +225,15 @@ def load_tracked(root: Path) -> tuple[set[str], str | None]:
     return {os.fsdecode(name) for name in result.stdout.split(b"\0") if name}, None
 
 
+def run_record_rel(root: Path, runs: Path, run_id: str) -> str:
+    """A cited run record's path relative to `root`, computed lexically: the `..` segments of a path
+    outside the root are kept for `on_disk` to refuse, and no symlink is resolved, so a symlinked
+    directory still reads as one."""
+    experiment = run_id.split("-", 1)[0]
+    return os.path.relpath(os.path.abspath(runs / experiment / f"{run_id}.json"),
+                           os.path.abspath(root))
+
+
 def on_disk(root: Path, root_resolved: Path, rel: str, directory: bool = False) -> str | None:
     """Why the tracked path `rel` is not evidence on disk now, or `None` when it is: no directory
     above it is a symlink (git tracks nothing beyond one, so the disk would not be the index), it
@@ -308,6 +319,24 @@ def static_problems(lines: list[str], finding: Path, root: Path,
     return problems
 
 
+def run_record_problems(finding: Path, root: Path, runs: Path, run_ids: set[str],
+                        tracked: set[str]) -> list[str]:
+    """The problems of every cited run id (T12): its record (`runs/E<nnn>/<id>.json`) must be listed
+    by `git ls-files` and be on disk inside the repository root, the same rule a `static:` path
+    follows. A record merely on disk, or one whose tracked file is gone, fails with a named line."""
+    problems = []
+    root_resolved = root.resolve()
+    for run_id in sorted(run_ids):
+        rel = run_record_rel(root, runs, run_id)
+        if rel not in tracked:
+            problems.append(f"{finding}: cites run {run_id}: no tracked path {rel}")
+            continue
+        reason = on_disk(root, root_resolved, rel)
+        if reason is not None:
+            problems.append(f"{finding}: cites run {run_id}: {reason}")
+    return problems
+
+
 def check_body(finding: Path, heading: str, body: list[tuple[int, str]]) -> list[str]:
     """The problems of one protected section's body, given as (line number, line) pairs."""
     problems = []
@@ -376,19 +405,16 @@ def check(finding: Path, runs: Path, root: Path) -> list[str]:
         number = len(re.split(rb"\r\n|\r|\n", data[:e.start]))
         return [f"{finding}:{number}: cannot check citations: not UTF-8"
                 f" (byte {data[e.start]:#04x} at offset {e.start})"]
-    # Only a static token needs the repository: a finding citing runs alone checks as before U26.
+    # A run id and a static token both need the repository (T12): a finding with neither checks as
+    # before U26.
+    run_ids = set(RUN_ID.findall(text))
     tracked: set[str] = set()
-    if STATIC.search(text):
+    if run_ids or STATIC.search(text):
         tracked, git_problem = load_tracked(root)
         if git_problem is not None:
             return [git_problem]
     lines = re.split(r"\r\n|\r|\n", text)
-    problems: list[str] = []
-
-    for run_id in sorted(set(RUN_ID.findall(text))):
-        experiment = run_id.split("-", 1)[0]
-        if not (runs / experiment / f"{run_id}.json").is_file():
-            problems.append(f"{finding}: cites missing run {run_id} (no {runs / experiment / f'{run_id}.json'})")
+    problems: list[str] = run_record_problems(finding, root, runs, run_ids, tracked)
 
     problems += static_problems(lines, finding, root, tracked)
 
