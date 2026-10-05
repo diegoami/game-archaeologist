@@ -951,7 +951,10 @@ class StaticCitationTest(unittest.TestCase):
 
     def test_a_token_at_the_start_of_a_line_or_after_punctuation_is_checked(self):
         # The boundary before `static:` is any character but a letter, digit or `_`, or none.
-        for line in ("static:a//b", "(static:a//b", "x-static:a//b", "*static:a//b"):
+        # Letters and digits are ASCII, as in a run id's boundary: after `é` the token is checked
+        # (Python's Unicode `\b` would skip it).
+        for line in ("static:a//b", "(static:a//b", "x-static:a//b", "*static:a//b",
+                     "\u00e9static:a//b"):
             with self.subTest(line=line):
                 result = self.check_text("# F990 Static fixture\n\n## Answer\n\n- Rests on E900-r0001.\n\n"
                                          f"## Method\n\n{line}\n\n## Inferences\n\n- Rests on E900-r0001.\n")
