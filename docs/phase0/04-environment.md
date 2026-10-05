@@ -94,7 +94,7 @@ is not trusted (IC2 `|| true` lesson).
 | `agent-opencode` | `tool:opencode@1.18`, `svc:opencode-go` | harness (session-start hook does it in cloud) | now |
 | `toy` | python ≥3.11, `artifact:toy-*` (downloaded by hash from the `toy-archaeology` release) | `toy-archaeology` | M2 |
 | `iwp-runtime` / `iw-dos-runtime` | decided by W3a (Windows, or Wine+Xvfb) / W3b (DOSBox-X) | game repo `setup/iwp/`, `setup/iw-dos/` | W-M1 |
-| `re-static` | `tool:ghidra@12`, JDK 21, committed scripts | game repo, local only | when the first static task is approved |
+| `re-static` | `tool:ghidra@12`, JDK 21, committed scripts | game repo, local only | before the first research task (U32, 2026-10-05; was "when the first static task is approved") |
 
 Pin where results can depend on the version (Wine, emulators, OpenCode CLI, Ghidra when citing
 listings); do not pin where they cannot (Python minor, gh). A pinned version is *checked* by

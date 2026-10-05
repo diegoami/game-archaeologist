@@ -166,8 +166,10 @@ based seed) share almost nothing below "launch".
 - Exported annotations (symbol names, struct layouts) live in `static/` as text with the binary hash.
 - The productive loop seen in IC2 — disassembly says Randomize is not called on load; SEED.LOG
   counts confirm behaviourally — is exactly **corroboration**: the spec rewards combining methods.
-- Static analysis is never started "because it is possible" (Isle Wars prompt, step 6); it answers a
-  named question or recovers a representation claim a behavioural question needs.
+- ~~Static analysis is never started "because it is possible" (Isle Wars prompt, step 6); it answers a
+  named question or recovers a representation claim a behavioural question needs.~~ Superseded by
+  U32 (2026-10-05): static analysis comes first for every question; experiments only when it cannot
+  answer, or to corroborate.
 
 ## 9. Specification (minimal)
 

@@ -180,8 +180,9 @@ most consequential finding (load does not reseed). Its result is useful whicheve
 Run on both artifacts, it is also the first cross-artifact comparison. On DOS Isle Wars, DOSBox-X
 savestates may later enable branching experiments (06 §6) that the Win9x game may not allow.
 
-**Not before W7x:** combat, AI, or anything needing state control; decompilation (no question needs it
-yet — W4x may raise one).
+**Not before W7x:** combat, AI, or anything needing state control. ~~Decompilation (no question needs it
+yet — W4x may raise one).~~ Superseded by U32 (2026-10-05): decompilation comes first, for every
+question.
 
 ## 7. Architectural risks
 
