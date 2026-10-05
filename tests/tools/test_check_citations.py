@@ -12,6 +12,7 @@ quoted bullets, `<li>` items and heading spellings (`U25Test`).
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import tempfile
@@ -534,6 +535,443 @@ class U31Test(unittest.TestCase):
                         "## (x) `y` *z*", "Speed (x)\n---"):
             with self.subTest(heading=heading):
                 result = headed(heading)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+
+# The environment of the static tests' own `git` calls: nothing that points git at another
+# repository, and no user or system configuration (hooks, templates, `safe.directory`).
+GIT_TEST_ENV = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+GIT_TEST_ENV.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+
+
+class StaticCitationTest(unittest.TestCase):
+    """The owner's decision U26: `static:<path>[:<line>]` counts as a citation wherever a run id
+    does, and `check_citations.py` checks the path against `git ls-files`. Each test builds its own
+    temporary git repository, so the tracked, containment and line checks are exercised for real.
+
+    Isolation (Sol's round-1 R2): the temporary directory may lie inside another repository (a
+    reviewer's TMPDIR in its worktree). The tool itself refuses a root that is not its repository's
+    top level, so no test depends on where TMPDIR is; the test's own `git` calls run without the
+    variables that redirect git or load the user's and the system's configuration. Only the test of
+    a root outside every repository sets `GIT_CEILING_DIRECTORIES`, so that it exercises the
+    no-repository branch wherever it runs; the test of a root inside a repository sets none."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name).resolve()
+        self.git("init", "-q")
+        self.git("config", "user.email", "t11@example.org")
+        self.git("config", "user.name", "T11")
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def git(self, *args: str, root: Path | None = None) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", "-C", str(root if root is not None else self.root), *args],
+                              capture_output=True, text=True, check=True, env=GIT_TEST_ENV)
+
+    def write(self, rel: str, content: str, tracked: bool = True) -> Path:
+        path = self.root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+        if tracked:
+            self.git("add", "--", rel)
+        return path
+
+    def check_text(self, text: str, root: Path | None = None,
+                   env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
+        """Check a finding written into the temporary repository from `text`."""
+        finding = self.root / "finding.md"
+        finding.write_text(text, encoding="utf-8")
+        return subprocess.run(
+            [sys.executable, str(REPO_ROOT / "tools/check_citations.py"), str(finding),
+             "--runs", str(FIXTURES / "runs"), "--root", str(root if root is not None else self.root)],
+            cwd=REPO_ROOT, capture_output=True, text=True,
+            env=env if env is not None else GIT_TEST_ENV)
+
+    def check(self, answer: str, inferences: str = "- Rests on E900-r0001.",
+              root: Path | None = None, env: dict[str, str] | None = None
+              ) -> subprocess.CompletedProcess:
+        """A finding whose `## Answer` holds `answer`; line 5 is the first body line. The Inferences
+        default cites a fixture run, so a test isolates the Answer's static token."""
+        return self.check_text(f"# F990 Static fixture\n\n## Answer\n\n{answer}\n\n"
+                               f"## Inferences\n\n{inferences}\n", root=root, env=env)
+
+    def assert_named(self, answer: str, expected: str, env: dict[str, str] | None = None) -> None:
+        """The finding whose Answer is `answer` exits 1, `expected` is on its output, no traceback."""
+        result = self.check(answer, env=env)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(expected, result.stdout)
+        self.assertNotIn("Traceback", result.stdout + result.stderr)
+
+    def test_tracked_file_passes(self):
+        self.write("data.txt", "one\ntwo\nthree\n")
+        result = self.check("- Rests on static:data.txt.")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("ok: citations in", result.stdout)
+
+    def test_tracked_directory_passes(self):
+        self.write("code/a.txt", "one\ntwo\n")
+        result = self.check("- Rests on static:code/.")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("ok: citations in", result.stdout)
+        # A directory without the trailing slash names the same tracked directory.
+        result = self.check("- Rests on static:code.")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_line_within_the_file_passes(self):
+        self.write("data.txt", "one\ntwo\nthree\n")
+        result = self.check("- Rests on static:data.txt:3.")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_a_bullet_holding_only_a_static_citation_is_cited(self):
+        self.write("data.txt", "one\n")
+        result = self.check("- Rests on static:data.txt.", "- Rests on static:data.txt.")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_a_table_row_holding_only_a_static_citation_is_cited(self):
+        self.write("data.txt", "one\n")
+        body = "| Lead | Evidence |\n| --- | --- |\n| Rests on | static:data.txt |"
+        result = self.check(body, body)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_backticks_and_trailing_punctuation_pass(self):
+        self.write("data.txt", "one\ntwo\n")
+        answer = "- Rests on `static:data.txt`,\n- Rests on static:data.txt:2."
+        result = self.check(answer)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_a_missing_path_is_a_named_error(self):
+        result = self.check("- Rests on static:no/such.txt.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(":5: static citation static:no/such.txt: no tracked path no/such.txt",
+                      result.stdout)
+
+    def test_an_untracked_file_is_a_named_error(self):
+        self.write("data.txt", "one\n", tracked=False)
+        result = self.check("- Rests on static:data.txt.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(":5: static citation static:data.txt: no tracked path data.txt", result.stdout)
+
+    def test_line_zero_is_a_named_error(self):
+        self.write("data.txt", "one\ntwo\n")
+        result = self.check("- Rests on static:data.txt:0.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(":5: static citation static:data.txt:0: line 0 is outside data.txt",
+                      result.stdout)
+
+    def test_a_line_past_the_end_is_a_named_error(self):
+        self.write("data.txt", "one\ntwo\n")
+        result = self.check("- Rests on static:data.txt:3.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(":5: static citation static:data.txt:3: line 3 is outside data.txt (1..2)",
+                      result.stdout)
+
+    def test_a_line_on_a_directory_is_a_named_error(self):
+        self.write("code/a.txt", "one\n")
+        result = self.check("- Rests on static:code:1.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(":5: static citation static:code:1: code is a directory", result.stdout)
+
+    def test_a_dot_or_dotdot_segment_is_malformed(self):
+        self.write("data.txt", "one\n")
+        for token in ("static:.", "static:..", "static:a/../b", "static:a/./b"):
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token}.")
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(f":5: malformed static citation: {token}", result.stdout)
+
+    def test_an_absolute_path_is_malformed(self):
+        result = self.check("- Rests on static:/etc/passwd.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(":5: malformed static citation: static:/etc/passwd", result.stdout)
+
+    def test_a_tracked_symlink_leaving_the_root_is_a_named_error(self):
+        os.symlink(str(REPO_ROOT / "README.md"), str(self.root / "escape"))
+        self.git("add", "--", "escape")
+        result = self.check("- Rests on static:escape.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(":5: static citation static:escape: escape resolves outside the repository root",
+                      result.stdout)
+
+    def test_a_bare_static_token_is_malformed(self):
+        result = self.check("- Rests on static: .")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(":5: malformed static citation: static:", result.stdout)
+
+    def test_a_double_slash_is_malformed(self):
+        result = self.check("- Rests on static:a//b.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(":5: malformed static citation: static:a//b", result.stdout)
+
+    def test_a_root_that_is_not_a_git_repository_is_one_named_error(self):
+        self.write("data.txt", "one\n")
+        with tempfile.TemporaryDirectory() as other:
+            # The ceiling stops git's discovery at the temporary folder, so this visits the
+            # no-repository branch even when TMPDIR lies inside a repository.
+            other = Path(other).resolve()
+            (other / "data.txt").write_text("one\n", encoding="utf-8")
+            env = dict(GIT_TEST_ENV, GIT_CEILING_DIRECTORIES=str(other.parent))
+            result = self.check("- Rests on static:data.txt.", root=other, env=env)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(1, len(result.stdout.splitlines()), result.stdout)
+        self.assertIn(f"{other}: not a git repository", result.stdout)
+
+    def test_a_finding_without_a_static_token_needs_no_repository(self):
+        with tempfile.TemporaryDirectory() as other:
+            other = Path(other).resolve()
+            env = dict(GIT_TEST_ENV, GIT_CEILING_DIRECTORIES=str(other.parent))
+            result = self.check("- Rests on E900-r0001.", root=other, env=env)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+            result = self.check("- Rests on E900-r0001.", root=self.root / "absent", env=env)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_a_root_inside_another_repository_is_one_named_error(self):
+        # Sol's round-1 R2: a folder inside a repository is no repository's top level; git would
+        # answer for the enclosing one. No ceiling here: the tool alone must refuse it.
+        self.write("sub/data.txt", "one\n")
+        sub = self.root / "sub"
+        result = self.check("- Rests on static:data.txt.", root=sub)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(1, len(result.stdout.splitlines()), result.stdout)
+        self.assertIn(f"{sub}: not a git repository (it lies inside {self.root})", result.stdout)
+
+    def test_git_variables_that_name_another_repository_are_ignored(self):
+        # A `GIT_DIR` from the caller's environment would make `git -C <root>` read another
+        # repository's index, where the cited path is tracked although it is not in the root's.
+        self.write("data.txt", "one\n", tracked=False)
+        with tempfile.TemporaryDirectory() as other:
+            other = Path(other).resolve()
+            self.git("init", "-q", root=other)
+            (other / "data.txt").write_text("one\n", encoding="utf-8")
+            self.git("add", "--", "data.txt", root=other)
+            for name, value in (("GIT_DIR", str(other / ".git")),
+                                ("GIT_INDEX_FILE", str(other / ".git" / "index"))):
+                with self.subTest(variable=name):
+                    self.assert_named("- Rests on static:data.txt.",
+                                      ":5: static citation static:data.txt: no tracked path data.txt",
+                                      env=dict(GIT_TEST_ENV, **{name: value}))
+
+    def test_a_tracked_file_deleted_from_disk_is_a_named_error(self):
+        # Sol's round-1 R1: in the index but not on disk, with and without `:line`.
+        self.write("data.txt", "one\n")
+        (self.root / "data.txt").unlink()
+        for token in ("static:data.txt", "static:data.txt:1"):
+            with self.subTest(token=token):
+                self.assert_named(f"- Rests on {token}.",
+                                  f":5: static citation {token}: data.txt is tracked but missing on disk")
+
+    def test_a_tracked_dangling_symlink_is_a_named_error(self):
+        # Sol's round-1 R1: a symlink to an absent file inside the root.
+        os.symlink("absent.txt", str(self.root / "link"))
+        self.git("add", "--", "link")
+        self.assert_named("- Rests on static:link.",
+                          ":5: static citation static:link: link is tracked but missing on disk")
+
+    def test_a_tracked_file_the_disk_holds_a_directory_for_is_a_named_error(self):
+        self.write("data.txt", "one\n")
+        (self.root / "data.txt").unlink()
+        (self.root / "data.txt").mkdir()
+        (self.root / "data.txt" / "inner").write_text("one\n", encoding="utf-8")
+        self.assert_named("- Rests on static:data.txt.",
+                          ":5: static citation static:data.txt: data.txt is not a file on disk")
+
+    def test_a_directory_whose_tracked_files_are_all_gone_is_a_named_error(self):
+        self.write("code/a.txt", "one\n")
+        self.write("code/b.txt", "two\n")
+        (self.root / "code" / "a.txt").unlink()
+        (self.root / "code" / "b.txt").unlink()
+        (self.root / "code" / "untracked.txt").write_text("three\n", encoding="utf-8")
+        for token in ("static:code/", "static:code"):
+            with self.subTest(token=token):
+                self.assert_named(f"- Rests on {token}.",
+                                  f":5: static citation {token}: no tracked file under code is on"
+                                  " disk inside the repository root")
+
+    def test_a_directory_removed_from_disk_is_a_named_error(self):
+        self.write("code/a.txt", "one\n")
+        (self.root / "code" / "a.txt").unlink()
+        (self.root / "code").rmdir()
+        self.assert_named("- Rests on static:code/.",
+                          ":5: static citation static:code/: code is tracked but missing on disk")
+
+    def test_a_directory_whose_only_tracked_file_leaves_the_root_is_a_named_error(self):
+        (self.root / "code").mkdir()
+        os.symlink(str(REPO_ROOT / "README.md"), str(self.root / "code" / "escape"))
+        self.git("add", "--", "code/escape")
+        self.assert_named("- Rests on static:code/.",
+                          ":5: static citation static:code/: no tracked file under code is on disk"
+                          " inside the repository root")
+
+    def test_a_tracked_directory_replaced_by_a_symlink_is_a_named_error(self):
+        # The index tracks code/a.txt; on disk `code` is a symlink to another folder in the root
+        # holding an a.txt that git does not track there.
+        self.write("code/a.txt", "one\n")
+        (self.root / "code" / "a.txt").unlink()
+        (self.root / "code").rmdir()
+        (self.root / "other").mkdir()
+        (self.root / "other" / "a.txt").write_text("one\n", encoding="utf-8")
+        os.symlink("other", str(self.root / "code"))
+        self.assert_named("- Rests on static:code/a.txt.",
+                          ":5: static citation static:code/a.txt: code is a symlink on disk,"
+                          " not a tracked directory")
+
+    def test_a_line_past_python_s_int_conversion_limit_is_a_named_error(self):
+        # Sol's round-1 R3: 4,301 digits and more exceed `int()`'s default limit of 4,300.
+        self.write("data.txt", "one\ntwo\n")
+        for digits in ("1" * 4301, "9" * 20000):
+            with self.subTest(length=len(digits)):
+                self.assert_named(f"- Rests on static:data.txt:{digits}.",
+                                  f":5: static citation static:data.txt:{digits}: line {digits} is"
+                                  " outside data.txt (1..2)")
+
+    def test_a_line_with_as_many_digits_as_the_count_is_compared_by_value(self):
+        # The length comparison only short-cuts longer lines; equal lengths still compare values.
+        self.write("data.txt", "".join(f"{i}\n" for i in range(12)))
+        result = self.check("- Rests on static:data.txt:12.")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assert_named("- Rests on static:data.txt:13.",
+                          ":5: static citation static:data.txt:13: line 13 is outside data.txt (1..12)")
+
+    def test_a_token_outside_a_protected_section_is_checked(self):
+        result = self.check_text("# F990 Static fixture\n\n## Answer\n\n- Rests on static:data.txt.\n\n"
+                                 "## Method\n\nA malformed static:a//b token.\n\n## Inferences\n\n"
+                                 "- Rests on static:data.txt.\n")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("malformed static citation: static:a//b", result.stdout)
+
+    def test_a_boundary_not_a_letter_digit_or_underscore_is_required(self):
+        # `mystatic:...` and `_static:...` are not tokens; only the word `static:` after a boundary is.
+        self.write("data.txt", "one\n")
+        result = self.check_text("# F990 Static fixture\n\n## Answer\n\n- Rests on static:data.txt.\n\n"
+                                 "## Method\n\nmystatic:a//b and _static:a//b here.\n\n## Inferences\n\n"
+                                 "- Rests on static:data.txt.\n")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_a_thirty_digit_line_is_a_named_error_not_a_crash(self):
+        self.write("data.txt", "one\ntwo\n")
+        digits = "1" + "0" * 29
+        result = self.check(f"- Rests on static:data.txt:{digits}.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(f"line {digits} is outside data.txt", result.stdout)
+        self.assertNotIn("Traceback", result.stdout + result.stderr)
+
+    def test_a_nul_in_a_path_is_a_named_error_not_a_crash(self):
+        self.write("data.txt", "one\n")
+        result = self.check("- Rests on static:a\x00b.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("malformed static citation", result.stdout)
+        self.assertNotIn("Traceback", result.stdout + result.stderr)
+
+    def test_a_finding_that_is_not_utf8_is_a_named_error_not_a_crash(self):
+        self.write("data.txt", "one\n")
+        finding = self.root / "finding.md"
+        finding.write_bytes(b"# F990\n\n## Answer\n\n- static:data.txt \xff\xfe\n")
+        result = subprocess.run(
+            [sys.executable, str(REPO_ROOT / "tools/check_citations.py"), str(finding),
+             "--runs", str(FIXTURES / "runs"), "--root", str(self.root)],
+            cwd=REPO_ROOT, capture_output=True, text=True, env=GIT_TEST_ENV)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("cannot check citations", result.stdout)
+        # Round 2: the named line of the first byte that is not UTF-8.
+        self.assertIn(f"{finding}:5: cannot check citations: not UTF-8 (byte 0xff at offset 37)",
+                      result.stdout)
+        self.assertNotIn("Traceback", result.stdout + result.stderr)
+
+    # Round 3 (Sol's round-2 R1-R3): every rule of the token grammar has a test that fails when the
+    # rule is deleted. The PR body's mutation table maps each grammar element to its tests.
+
+    def test_a_leading_zero_line_is_malformed(self):
+        # Twelve lines, so `01`, `09` and `012` are inside the file: only the grammar rejects them.
+        self.write("data.txt", "".join(f"line {n}\n" for n in range(1, 13)))
+        for token in ("static:data.txt:01", "static:data.txt:09", "static:data.txt:012"):
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token}.")
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(f":5: malformed static citation: {token}", result.stdout)
+
+    def test_repeated_trailing_slashes_are_malformed(self):
+        # `code` is a tracked directory, so only the single optional trailing `/` rejects these.
+        self.write("code/a.txt", "one\n")
+        for token in ("static:code//", "static:code///"):
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token}")
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(f":5: malformed static citation: {token}", result.stdout)
+
+    def test_a_segment_character_outside_the_ascii_alphabet_is_malformed(self):
+        # Each path is a tracked file, so only the `[A-Za-z0-9_.-]` alphabet rejects it.
+        # Each bad character is tried in the file segment and in a directory segment.
+        for bad in ("é", "+", ")", "@", "~", "`", ":"):
+            for path in (f"a{bad}b.txt", f"dir/a{bad}b.txt", f"d{bad}r/a.txt"):
+                with self.subTest(path=path):
+                    self.write(path, "one\n")
+                    result = self.check(f"- Rests on static:{path} here.")
+                    self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                    self.assertIn(f":5: malformed static citation: static:{path}", result.stdout)
+
+    def test_every_segment_character_passes_in_every_segment(self):
+        # Each of A-Z, a-z, 0-9, `_`, `.` and `-` in a directory segment and in the file segment,
+        # three segments deep.
+        self.write("Ab_9.-c/Dz_0.-e/Xy_5.-z.txt", "one\n")
+        for token in ("static:Ab_9.-c/Dz_0.-e/Xy_5.-z.txt", "static:Ab_9.-c/Dz_0.-e/",
+                      "static:Ab_9.-c/Dz_0.-e", "static:Ab_9.-c/"):
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token} here.")
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_every_line_digit_passes(self):
+        # 120 lines: single, two and three digits, every digit 0-9 in some place, both bounds.
+        self.write("data.txt", "".join(f"line {n}\n" for n in range(1, 121)))
+        tokens = ["static:data.txt:1", "static:data.txt:9", "static:data.txt:10",
+                  "static:data.txt:23", "static:data.txt:45", "static:data.txt:67",
+                  "static:data.txt:89", "static:data.txt:99", "static:data.txt:100",
+                  "static:data.txt:120"]
+        for token in tokens:
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token} here.")
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_each_trailing_character_is_stripped(self):
+        # Each of `` ` . , ; : ) ] } ' " * `` alone after a valid token, with and without a line.
+        self.write("data.txt", "one\ntwo\n")
+        for char in "`.,;:)]}'\"*":
+            for token in ("static:data.txt", "static:data.txt:2"):
+                with self.subTest(token=token + char):
+                    result = self.check(f"- Rests on {token}{char} here.")
+                    self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_a_valid_prefix_followed_by_other_characters_is_malformed(self):
+        # The whole argument must match: a valid path or line followed by anything else fails,
+        # including a non-ASCII digit (`\u0660`, which Python's `\d` and `int()` accept).
+        self.write("data.txt", "one\ntwo\n")
+        for token in ("static:data.txt)x", "static:data.txt`x", "static:data.txt:1x",
+                      "static:data.txt:1:2", "static:data.txt::1", "static::1",
+                      "static:data.txt:1\u0660"):
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token} here.")
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(f":5: malformed static citation: {token}", result.stdout)
+
+    def test_a_token_at_the_start_of_a_line_or_after_punctuation_is_checked(self):
+        # The boundary before `static:` is any character but a letter, digit or `_`, or none.
+        # Letters and digits are ASCII, as in a run id's boundary: after `é` the token is checked
+        # (Python's Unicode `\b` would skip it).
+        for line in ("static:a//b", "(static:a//b", "x-static:a//b", "*static:a//b",
+                     "\u00e9static:a//b"):
+            with self.subTest(line=line):
+                result = self.check_text("# F990 Static fixture\n\n## Answer\n\n- Rests on E900-r0001.\n\n"
+                                         f"## Method\n\n{line}\n\n## Inferences\n\n- Rests on E900-r0001.\n")
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(":9: malformed static citation: static:a//b", result.stdout)
+
+    def test_a_letter_digit_or_underscore_before_static_is_no_token(self):
+        # One case per class of the boundary: upper, lower, digit and `_`.
+        for prefix in ("A", "z", "0", "9", "_"):
+            with self.subTest(prefix=prefix):
+                result = self.check_text("# F990 Static fixture\n\n## Answer\n\n- Rests on E900-r0001.\n\n"
+                                         f"## Method\n\n{prefix}static:a//b\n\n## Inferences\n\n"
+                                         "- Rests on E900-r0001.\n")
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
 

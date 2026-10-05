@@ -8,6 +8,17 @@ directory; without it the records live in `runs/` under the working directory, n
 script's directory, so a game repository that fetches this file into a cache folder still checks
 its own records (ADR-009).
 
+A static claim cites its evidence as `static:<path>[:<line>]` anywhere in the finding (U26), and
+such a token counts as a citation in `## Answer` and `## Inferences` exactly as a run id does. The
+path must be a tracked file (or a directory with tracked files under it) that is on disk now: no
+directory above it a symlink, resolved inside the repository root, and existing as a file (for a
+directory, as a directory with a tracked file under it that passes the same checks). With `:line`
+it must be a file with at least that many lines. `--root <dir>` names the repository root, default
+the working directory, never this script's directory. A root that is not a git repository's top
+level, or a `git` that is missing, is one named error and exit 1 when the finding holds a `static:`
+token; a finding without one needs no repository. A finding that is not UTF-8 is
+one named error at the line of its first bad byte.
+
 The two protected sections hold only these lines (the owner's decision U25, 2026-10-04), so the
 check fails closed instead of parsing ever more Markdown:
 
@@ -51,7 +62,9 @@ from __future__ import annotations
 
 import argparse
 import html
+import os
 import re
+import subprocess
 import sys
 import unicodedata
 from pathlib import Path
@@ -59,6 +72,17 @@ from pathlib import Path
 # A run id, bounded by anything but a letter or digit: `_E001-r0001_` (emphasis) is one, which a
 # `\b` pattern missed because `_` is a word character.
 RUN_ID = re.compile(r"(?<![A-Za-z0-9])E[0-9]{3,}-r[0-9]{4,}(?![A-Za-z0-9])")
+# A static citation (U26), starting at the beginning of a line or after a character that is not a
+# letter, a digit or `_`, as a run id is. Its argument is the run of non-space characters after the
+# colon; trailing punctuation and backticks are not part of it.
+STATIC = re.compile(r"(?<![A-Za-z0-9_])static:(?P<arg>\S*)")
+STATIC_TRAILING = "`.,;:)]}'\"*"
+# The argument in full: one or more `[A-Za-z0-9_.-]` segments joined by `/`, an optional trailing
+# `/`, and an optional `:<line>` with no leading zero. `.`/`..` segments and a leading `/` are
+# checked after the match, because the segment character class admits them.
+STATIC_ARG = re.compile(
+    r"(?P<path>(?:[A-Za-z0-9_.-]+/)*[A-Za-z0-9_.-]+/?)"
+    r"(?::(?P<line>0|[1-9][0-9]*))?")
 SECTIONS = ("## Answer", "## Inferences")
 # A list marker after any indentation: `-`, `*`, `+`, or up to nine digits with `.` or `)`, then a
 # space, a tab or the end of the line. `1.5 million`, `-foo` and `*emphasis*` are not markers.
@@ -147,6 +171,143 @@ def refused_headings(lines: list[str]) -> list[int]:
     return sorted(found)
 
 
+def has_citation(text: str) -> bool:
+    """Whether a claim's text holds a run id or a static citation token (U26)."""
+    return RUN_ID.search(text) is not None or STATIC.search(text) is not None
+
+
+def line_count(content: str) -> int:
+    """The number of lines in a file's text: Markdown's line breaks, no phantom line after a
+    trailing newline."""
+    if content == "":
+        return 0
+    lines = re.split(r"\r\n|\r|\n", content)
+    if lines[-1] == "":
+        lines.pop()
+    return len(lines)
+
+
+# The variables that make `git` read another repository than the one `-C <root>` names. They are
+# dropped for every `git` call, so the tracked check reads the root's own index whatever the caller's
+# environment holds (a hook, an alias or a reviewer's shell may set them).
+GIT_REDIRECTS = ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
+                 "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_NAMESPACE")
+
+
+def git(root: Path, *args: str) -> subprocess.CompletedProcess:
+    env = {k: v for k, v in os.environ.items() if k not in GIT_REDIRECTS}
+    return subprocess.run(["git", "-C", str(root), *args], capture_output=True, env=env)
+
+
+def load_tracked(root: Path) -> tuple[set[str], str | None]:
+    """The repository's tracked paths, or a named error when `root` is not the top level of a git
+    repository or `git` is missing. A root inside another repository is not one: `git` would list
+    the enclosing repository's files from there, so its top level must be the root itself. Paths are
+    decoded with `os.fsdecode`, so a name that is not UTF-8 is still one."""
+    try:
+        top = git(root, "rev-parse", "--show-toplevel")
+    except FileNotFoundError:
+        return set(), f"{root}: git is not available"
+    if top.returncode != 0:
+        return set(), f"{root}: not a git repository"
+    toplevel = os.fsdecode(top.stdout.rstrip(b"\n"))
+    try:
+        same = Path(toplevel).resolve() == root.resolve()
+    except (OSError, RuntimeError):
+        same = False
+    if not same:
+        return set(), f"{root}: not a git repository (it lies inside {toplevel})"
+    result = git(root, "ls-files", "-z")
+    if result.returncode != 0:
+        return set(), f"{root}: not a git repository"
+    return {os.fsdecode(name) for name in result.stdout.split(b"\0") if name}, None
+
+
+def on_disk(root: Path, root_resolved: Path, rel: str, directory: bool = False) -> str | None:
+    """Why the tracked path `rel` is not evidence on disk now, or `None` when it is: no directory
+    above it is a symlink (git tracks nothing beyond one, so the disk would not be the index), it
+    resolves inside the root, and what it resolves to exists as the kind the index names, a file
+    (a symlink's target included) or a `directory`. A deleted file, a dangling symlink, or a file
+    the disk now holds a directory for, is not evidence."""
+    parts = rel.split("/")
+    for i in range(1, len(parts)):
+        prefix = "/".join(parts[:i])
+        if (root / prefix).is_symlink():
+            return f"{prefix} is a symlink on disk, not a tracked directory"
+    try:
+        resolved = (root / rel).resolve()
+    except (OSError, RuntimeError) as e:  # noqa: BLE001 - no input may traceback
+        return f"cannot resolve {rel}: {e}"
+    if not resolved.is_relative_to(root_resolved):
+        return f"{rel} resolves outside the repository root"
+    if not resolved.exists():
+        return f"{rel} is tracked but missing on disk"
+    if directory and not resolved.is_dir():
+        return f"{rel} is not a directory on disk"
+    if not directory and not resolved.is_file():
+        return f"{rel} is not a file on disk"
+    return None
+
+
+def static_problems(lines: list[str], finding: Path, root: Path,
+                    tracked: set[str]) -> list[str]:
+    """The problems of every `static:` token in the finding (U26): a token that is not
+    `<path>[:<line>]`, a path that is not tracked, resolves outside the root, or names a line that
+    the file does not have."""
+    problems = []
+    root_resolved = root.resolve()
+
+    def problem(number: int, text: str) -> None:
+        problems.append(f"{finding}:{number}: {text}")
+
+    for number, line in enumerate(lines, start=1):
+        for match in STATIC.finditer(line):
+            raw = match.group(0)
+            argument = match.group("arg").rstrip(STATIC_TRAILING)
+            parsed = STATIC_ARG.fullmatch(argument)
+            if parsed is None:
+                problem(number, f"malformed static citation: {raw}")
+                continue
+            path = parsed.group("path")
+            clean = path.rstrip("/")
+            if any(segment in (".", "..") for segment in clean.split("/")):
+                problem(number, f"malformed static citation: {raw}")
+                continue
+            token = f"static:{argument}"
+            files_under = [t for t in tracked if t.startswith(clean + "/")]
+            directory = path.endswith("/") or clean not in tracked
+            if not (files_under if directory else clean in tracked):
+                problem(number, f"static citation {token}: no tracked path {clean}")
+                continue
+            reason = on_disk(root, root_resolved, clean, directory)
+            if reason is None and directory and \
+                    all(on_disk(root, root_resolved, t) is not None for t in files_under):
+                reason = f"no tracked file under {clean} is on disk inside the repository root"
+            if reason is not None:
+                problem(number, f"static citation {token}: {reason}")
+                continue
+            line_number = parsed.group("line")
+            if line_number is None:
+                continue
+            target = root / clean
+            if directory:
+                problem(number, f"static citation {token}: {clean} is a directory")
+                continue
+            try:
+                content = target.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError) as e:  # noqa: BLE001 - no input may traceback
+                problem(number, f"static citation {token}: cannot read {clean}:"
+                                 f" {type(e).__name__}")
+                continue
+            count = line_count(content)
+            # Compared by length first, so a line of any number of digits is never converted to an
+            # int past Python's conversion limit: with no leading zero, more digits is larger.
+            if line_number == "0" or len(line_number) > len(str(count)) or int(line_number) > count:
+                problem(number, f"static citation {token}: line {line_number} is outside {clean}"
+                                 f" (1..{count})")
+    return problems
+
+
 def check_body(finding: Path, heading: str, body: list[tuple[int, str]]) -> list[str]:
     """The problems of one protected section's body, given as (line number, line) pairs."""
     problems = []
@@ -158,7 +319,7 @@ def check_body(finding: Path, heading: str, body: list[tuple[int, str]]) -> list
 
     def close_item() -> None:
         nonlocal item
-        if item is not None and not RUN_ID.search("\n".join(item)):
+        if item is not None and not has_citation("\n".join(item)):
             problems.append(f"{finding}: {heading} bullet cites no run id: {chr(10).join(item).strip()}")
         item = None
 
@@ -173,7 +334,7 @@ def check_body(finding: Path, heading: str, body: list[tuple[int, str]]) -> list
             header = table_row == 1 and i + 1 < len(body) and body[i + 1][1].startswith("|") \
                 and bool(SEPARATOR.match(body[i + 1][1])) and cells(line) == cells(body[i + 1][1])
             separator = table_row == 2 and bool(SEPARATOR.match(line)) and cells(line) == cells(body[i - 1][1])
-            if not (header or separator or RUN_ID.search(line)):
+            if not (header or separator or has_citation(line)):
                 problems.append(f"{finding}: {heading} table row cites no run id: {line}")
             continue
         table_row = 0
@@ -205,17 +366,31 @@ def check_body(finding: Path, heading: str, body: list[tuple[int, str]]) -> list
     return problems
 
 
-def check(finding: Path, runs: Path) -> list[str]:
-    problems = []
+def check(finding: Path, runs: Path, root: Path) -> list[str]:
     if not finding.is_file():
         return [f"{finding}: no such file"]
-    text = finding.read_text(encoding="utf-8")
+    data = finding.read_bytes()
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as e:
+        number = len(re.split(rb"\r\n|\r|\n", data[:e.start]))
+        return [f"{finding}:{number}: cannot check citations: not UTF-8"
+                f" (byte {data[e.start]:#04x} at offset {e.start})"]
+    # Only a static token needs the repository: a finding citing runs alone checks as before U26.
+    tracked: set[str] = set()
+    if STATIC.search(text):
+        tracked, git_problem = load_tracked(root)
+        if git_problem is not None:
+            return [git_problem]
     lines = re.split(r"\r\n|\r|\n", text)
+    problems: list[str] = []
 
     for run_id in sorted(set(RUN_ID.findall(text))):
         experiment = run_id.split("-", 1)[0]
         if not (runs / experiment / f"{run_id}.json").is_file():
             problems.append(f"{finding}: cites missing run {run_id} (no {runs / experiment / f'{run_id}.json'})")
+
+    problems += static_problems(lines, finding, root, tracked)
 
     bodies: dict[str, list[list[tuple[int, str]]]] = {heading: [] for heading in SECTIONS}
     body: list[tuple[int, str]] | None = None
@@ -245,10 +420,13 @@ def main(argv=None) -> int:
     parser.add_argument("finding", type=Path)
     parser.add_argument("--runs", type=Path, default=None,
                         help="the records directory (default: runs/ under the working directory)")
+    parser.add_argument("--root", type=Path, default=None,
+                        help="the repository root (default: the working directory)")
     args = parser.parse_args(argv)
     runs = args.runs if args.runs is not None else Path.cwd() / "runs"
+    root = args.root if args.root is not None else Path.cwd()
     try:
-        problems = check(args.finding, runs)
+        problems = check(args.finding, runs, root)
     except Exception as e:  # noqa: BLE001 - no input may produce a traceback
         print(f"{args.finding}: cannot check citations: {type(e).__name__}: {e}")
         return 1
