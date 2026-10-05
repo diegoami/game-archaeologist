@@ -901,12 +901,14 @@ class StaticCitationTest(unittest.TestCase):
 
     def test_a_segment_character_outside_the_ascii_alphabet_is_malformed(self):
         # Each path is a tracked file, so only the `[A-Za-z0-9_.-]` alphabet rejects it.
-        for path in ("évidence.txt", "dir/évidence.txt", "a+b.txt", "x)y", "a@b", "a~b", "a`x"):
-            with self.subTest(path=path):
-                self.write(path, "one\n")
-                result = self.check(f"- Rests on static:{path} here.")
-                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
-                self.assertIn(f":5: malformed static citation: static:{path}", result.stdout)
+        # Each bad character is tried in the file segment and in a directory segment.
+        for bad in ("é", "+", ")", "@", "~", "`", ":"):
+            for path in (f"a{bad}b.txt", f"dir/a{bad}b.txt", f"d{bad}r/a.txt"):
+                with self.subTest(path=path):
+                    self.write(path, "one\n")
+                    result = self.check(f"- Rests on static:{path} here.")
+                    self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                    self.assertIn(f":5: malformed static citation: static:{path}", result.stdout)
 
     def test_every_segment_character_passes_in_every_segment(self):
         # Each of A-Z, a-z, 0-9, `_`, `.` and `-` in a directory segment and in the file segment,
@@ -940,10 +942,12 @@ class StaticCitationTest(unittest.TestCase):
                     self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def test_a_valid_prefix_followed_by_other_characters_is_malformed(self):
-        # The whole argument must match: a valid path or line followed by anything else fails.
+        # The whole argument must match: a valid path or line followed by anything else fails,
+        # including a non-ASCII digit (`\u0660`, which Python's `\d` and `int()` accept).
         self.write("data.txt", "one\ntwo\n")
         for token in ("static:data.txt)x", "static:data.txt`x", "static:data.txt:1x",
-                      "static:data.txt:1:2", "static:data.txt::1", "static::1"):
+                      "static:data.txt:1:2", "static:data.txt::1", "static::1",
+                      "static:data.txt:1\u0660"):
             with self.subTest(token=token):
                 result = self.check(f"- Rests on {token} here.")
                 self.assertEqual(1, result.returncode, result.stdout + result.stderr)
