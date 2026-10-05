@@ -203,7 +203,7 @@ converting a line of any length to a number. A token that is not `<path>[:<line>
 `<file>:<line>: static citation <token>: <reason>`. `--root DIR` names the repository root, default
 the working directory, never this script's directory; a root that is not a git repository's top
 level (a folder inside another repository is not one), or a missing `git`, is one named error and
-exit 1. `GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the other variables that point `git` at
+exit 1 when the finding holds a `static:` token; a finding without one needs no repository. `GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the other variables that point `git` at
 another repository are dropped for these calls, so the root's own index is the one read.
 
 Only `verify_evidence.py` calls the validator (`validate_records.validate_document`);

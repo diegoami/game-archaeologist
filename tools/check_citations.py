@@ -15,7 +15,8 @@ directory above it a symlink, resolved inside the repository root, and existing 
 directory, as a directory with a tracked file under it that passes the same checks). With `:line`
 it must be a file with at least that many lines. `--root <dir>` names the repository root, default
 the working directory, never this script's directory. A root that is not a git repository's top
-level, or a `git` that is missing, is one named error and exit 1. A finding that is not UTF-8 is
+level, or a `git` that is missing, is one named error and exit 1 when the finding holds a `static:`
+token; a finding without one needs no repository. A finding that is not UTF-8 is
 one named error at the line of its first bad byte.
 
 The two protected sections hold only these lines (the owner's decision U25, 2026-10-04), so the
@@ -375,9 +376,12 @@ def check(finding: Path, runs: Path, root: Path) -> list[str]:
         number = len(re.split(rb"\r\n|\r|\n", data[:e.start]))
         return [f"{finding}:{number}: cannot check citations: not UTF-8"
                 f" (byte {data[e.start]:#04x} at offset {e.start})"]
-    tracked, git_problem = load_tracked(root)
-    if git_problem is not None:
-        return [git_problem]
+    # Only a static token needs the repository: a finding citing runs alone checks as before U26.
+    tracked: set[str] = set()
+    if STATIC.search(text):
+        tracked, git_problem = load_tracked(root)
+        if git_problem is not None:
+            return [git_problem]
     lines = re.split(r"\r\n|\r|\n", text)
     problems: list[str] = []
 

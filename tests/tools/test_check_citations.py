@@ -717,6 +717,15 @@ class StaticCitationTest(unittest.TestCase):
         self.assertEqual(1, len(result.stdout.splitlines()), result.stdout)
         self.assertIn(f"{other}: not a git repository", result.stdout)
 
+    def test_a_finding_without_a_static_token_needs_no_repository(self):
+        with tempfile.TemporaryDirectory() as other:
+            other = Path(other).resolve()
+            env = dict(GIT_TEST_ENV, GIT_CEILING_DIRECTORIES=str(other.parent))
+            result = self.check("- Rests on E900-r0001.", root=other, env=env)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+            result = self.check("- Rests on E900-r0001.", root=self.root / "absent", env=env)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
     def test_a_root_inside_another_repository_is_one_named_error(self):
         # Sol's round-1 R2: a folder inside a repository is no repository's top level; git would
         # answer for the enclosing one. No ceiling here: the tool alone must refuse it.
