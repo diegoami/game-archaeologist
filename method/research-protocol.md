@@ -33,6 +33,11 @@ Runtime, Design, Measurements and Outputs bind you.
   summary the brief gives. Every path you pass to a tool or type is inside your worktree; scratch
   work goes in `scratch/`, deleted before you finish. If `git check-ignore -q scratch/x` fails,
   `scratch/` is not ignored here: stop and report. Never cd, never write `..`.
+- Static first (U32). Answer the question by unpacking and decompiling the executable first
+  (Ghidra or the repository's recorded equivalent; a missing tool is installed, never a reason to
+  skip). Run experiments only when static analysis cannot answer it, or to corroborate a static
+  answer; the finding's Method then says what static analysis was tried and why it was not enough.
+  Toy research is the exception (§6).
 - Raw before interpretation. Write one run record per run (`runs/E<nnn>/<run-id>.json`, valid
   `run/1`) and its evidence manifest, upload the bundle to release `E<nnn>`, and commit and push
   them, **before** you write any finding. A run that aborts is recorded as aborted, never dropped.
@@ -71,6 +76,9 @@ falsify it. The task file follows. Work through the gates, in order:
 G0 Tree and records: the tree proof your agent file asks for; every run record validates against
    run/1; for at least one evidence file, download it from release E<nnn> and check its sha256
    against the manifest.
+G0a Static first (U32): the question was attacked statically (unpacked, decompiled) before any
+   runs, or the finding's Method shows why static analysis could not answer it. Runs made because a
+   tool was not installed are a contract defect (C): rework. Toy research is exempt (§6).
 G1 Artifact identity: every run's artifact set and variant match artifacts/known.json and the
    task's Artifact line; a patched variant is named as such.
 G2 Environment identity: the runtime fingerprint is recorded; state how your environment differs.
@@ -201,8 +209,8 @@ must not learn the sealed rules except by experiment.
   enforced, which is why disclosure is defined above instead of assumed away. The research reviewer
   also checks that the finding claims nothing its runs do not show.
 - **Network**: N1 (N2 through OpenCode), never N4. No web search.
-- **Method**: behavioural only. Unpacking or reading the `.pyz` is static analysis, which is out of
-  scope for Y2. The run records and the Method section show only I0–I3 behavioural methods, and the
+- **Method**: behavioural only, the one exception to U32 (static first): unpacking or reading the
+  `.pyz` is static analysis and would read the sealed rules, so it is out of scope for Y2. The run records and the Method section show only I0–I3 behavioural methods, and the
   research reviewer checks that.
 - **Barred sessions**: the sessions recorded on diegoami/toy-target#1 and #3 never run toy research
   or its review. Since A6, neither does the main session that scored F001 (it read `SEALED.md` and
