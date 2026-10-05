@@ -164,7 +164,9 @@ they serve the repository they are run in.
   `ok: <n> manifest(s) verified`; any problem is a named line and exit 1.
 - `python3 tools/check_citations.py findings/F<nnn>-*.md` fails (exit 1) when a run id anywhere in
   the finding has no record under `runs/E<nnn>/`, or when a claim in `## Answer` or `## Inferences`
-  cites no run id. Those two sections hold only list items (`-`, `*`, `+`, `1.` or `1)` markers),
+  cites no run id. A cited run record, like a `static:` path, must be listed by `git ls-files` and be
+  on disk inside the repository root: a record merely on disk, or one tracked but deleted, fails
+  (T12). Those two sections hold only list items (`-`, `*`, `+`, `1.` or `1)` markers),
   each citing a run id on one of its lines, its indented continuation lines included
   (toy-archaeology#12); `###` sub-headings; table rows, each data row citing a run id (the header
   and the `|---|` separator under it are exempt); and blank lines (U25). Every other line there is
@@ -203,7 +205,8 @@ converting a line of any length to a number. A token that is not `<path>[:<line>
 `<file>:<line>: static citation <token>: <reason>`. `--root DIR` names the repository root, default
 the working directory, never this script's directory; a root that is not a git repository's top
 level (a folder inside another repository is not one), or a missing `git`, is one named error and
-exit 1 when the finding holds a `static:` token; a finding without one needs no repository. `GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the other variables that point `git` at
+exit 1 when the finding holds a run id or a `static:` token; a finding with neither needs no
+repository. `GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the other variables that point `git` at
 another repository are dropped for these calls, so the root's own index is the one read.
 
 Only `verify_evidence.py` calls the validator (`validate_records.validate_document`);

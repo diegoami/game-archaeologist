@@ -126,7 +126,7 @@ class CheckCitationsTest(unittest.TestCase):
         # never saw it and a citation of a run with no record passed.
         result = run_check_text(finding_text("- Cites E900-r0001.", after="See _E901-r0001_."))
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
-        self.assertIn("cites missing run E901-r0001", result.stdout)
+        self.assertIn("cites run E901-r0001", result.stdout)
 
     def test_uncited_inferences_bullet_exits_1(self):
         result = run_check_text(finding_text("- Cites E900-r0001.", "- An uncited inference"))
@@ -154,7 +154,7 @@ class CheckCitationsTest(unittest.TestCase):
             [sys.executable, "tools/check_citations.py", str(FIXTURES / "citations" / "finding-good.md")],
             cwd=REPO_ROOT, capture_output=True, text=True)
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
-        self.assertIn(f"cites missing run E900-r0001 (no {REPO_ROOT / 'runs' / 'E900' / 'E900-r0001.json'})",
+        self.assertIn("cites run E900-r0001: no tracked path runs/E900/E900-r0001.json",
                       result.stdout)
 
     def test_missing_finding_file_exits_1(self):
@@ -562,6 +562,8 @@ class StaticCitationTest(unittest.TestCase):
         self.git("init", "-q")
         self.git("config", "user.email", "t11@example.org")
         self.git("config", "user.name", "T11")
+        # T12: the Inferences default cites this run, so the run record must be tracked here too.
+        self.write("runs/E900/E900-r0001.json", "{}\n")
 
     def tearDown(self):
         self._tmp.cleanup()
@@ -585,7 +587,8 @@ class StaticCitationTest(unittest.TestCase):
         finding.write_text(text, encoding="utf-8")
         return subprocess.run(
             [sys.executable, str(REPO_ROOT / "tools/check_citations.py"), str(finding),
-             "--runs", str(FIXTURES / "runs"), "--root", str(root if root is not None else self.root)],
+             "--runs", str(self.root / "runs"),
+             "--root", str(root if root is not None else self.root)],
             cwd=REPO_ROOT, capture_output=True, text=True,
             env=env if env is not None else GIT_TEST_ENV)
 
@@ -717,13 +720,15 @@ class StaticCitationTest(unittest.TestCase):
         self.assertEqual(1, len(result.stdout.splitlines()), result.stdout)
         self.assertIn(f"{other}: not a git repository", result.stdout)
 
-    def test_a_finding_without_a_static_token_needs_no_repository(self):
+    def test_a_finding_with_neither_a_run_id_nor_a_static_token_needs_no_repository(self):
+        # T12: a run id needs the repository as a static token does, so only a finding with neither
+        # kind of citation is checked without one.
         with tempfile.TemporaryDirectory() as other:
             other = Path(other).resolve()
             env = dict(GIT_TEST_ENV, GIT_CEILING_DIRECTORIES=str(other.parent))
-            result = self.check("- Rests on E900-r0001.", root=other, env=env)
+            result = self.check("### Notes", "### Notes", root=other, env=env)
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-            result = self.check("- Rests on E900-r0001.", root=self.root / "absent", env=env)
+            result = self.check("### Notes", "### Notes", root=self.root / "absent", env=env)
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def test_a_root_inside_another_repository_is_one_named_error(self):
@@ -973,6 +978,79 @@ class StaticCitationTest(unittest.TestCase):
                                          f"## Method\n\n{prefix}static:a//b\n\n## Inferences\n\n"
                                          "- Rests on E900-r0001.\n")
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+
+class TrackedRunRecordTest(unittest.TestCase):
+    """T12: a cited run record follows the rule T11 gave a `static:` path. It must be listed by
+    `git ls-files` in the repository root and be on disk inside it; a record merely on disk, or a
+    tracked one deleted, is a named error. Each test builds its own temporary git repository, so the
+    tracked and on-disk checks are exercised for real, and a root with no repository is one error."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name).resolve()
+        self.git("init", "-q")
+        self.git("config", "user.email", "t12@example.org")
+        self.git("config", "user.name", "T12")
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def git(self, *args: str, root: Path | None = None) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", "-C", str(root if root is not None else self.root), *args],
+                              capture_output=True, text=True, check=True, env=GIT_TEST_ENV)
+
+    def write_run(self, run_id: str, tracked: bool = True) -> Path:
+        path = self.root / "runs" / run_id.split("-", 1)[0] / f"{run_id}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+        if tracked:
+            self.git("add", "--", str(path.relative_to(self.root)))
+        return path
+
+    def check(self, answer: str, inferences: str = "- Rests on E900-r0001.",
+              root: Path | None = None, env: dict[str, str] | None = None
+              ) -> subprocess.CompletedProcess:
+        finding = self.root / "finding.md"
+        finding.write_text(f"# F990 Tracked-run fixture\n\n## Answer\n\n{answer}\n\n"
+                           f"## Inferences\n\n{inferences}\n", encoding="utf-8")
+        return subprocess.run(
+            [sys.executable, str(REPO_ROOT / "tools/check_citations.py"), str(finding),
+             "--runs", str((root if root is not None else self.root) / "runs"),
+             "--root", str(root if root is not None else self.root)],
+            cwd=REPO_ROOT, capture_output=True, text=True,
+            env=env if env is not None else GIT_TEST_ENV)
+
+    def test_a_tracked_record_passes(self):
+        self.write_run("E900-r0001")
+        result = self.check("- Rests on E900-r0001.")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("ok: citations in", result.stdout)
+
+    def test_an_untracked_record_is_a_named_error(self):
+        self.write_run("E900-r0001", tracked=False)
+        result = self.check("- Rests on E900-r0001.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(": cites run E900-r0001: no tracked path runs/E900/E900-r0001.json",
+                      result.stdout)
+
+    def test_a_tracked_record_deleted_from_disk_is_a_named_error(self):
+        path = self.write_run("E900-r0001")
+        path.unlink()
+        result = self.check("- Rests on E900-r0001.")
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(": cites run E900-r0001: runs/E900/E900-r0001.json is tracked but"
+                      " missing on disk", result.stdout)
+
+    def test_a_run_id_without_a_git_repository_is_one_named_error(self):
+        # The same named error T11 gives a static token (T12).
+        with tempfile.TemporaryDirectory() as other:
+            other = Path(other).resolve()
+            env = dict(GIT_TEST_ENV, GIT_CEILING_DIRECTORIES=str(other.parent))
+            result = self.check("- Rests on E900-r0001.", root=other, env=env)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(1, len(result.stdout.splitlines()), result.stdout)
+        self.assertIn(f"{other}: not a git repository", result.stdout)
 
 
 if __name__ == "__main__":
