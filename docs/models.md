@@ -218,6 +218,17 @@ The owner lifted every earlier limit on using models (the DeepSeek suspension of
 `exhausted` provider is passed over for the chain's next model, named explicitly and in the report.
 `reviewer.hard` is `zai-glm-5.3`, `deepseek-pro`, `luna` again.
 
+## The reviewer's credential jail is off (owner, 2026-10-05)
+
+Harness #68 (75ac325) runs a reviewer's commands without GitHub credentials. That also took away
+every read a review needs: private clones and releases, `ga.py`'s fetch, upstream comparisons. The
+owner turned it off in this repository and those derived from it, until it is thought out
+(harness_imperial#97). How: each checkout's untracked `.claude/settings.local.json` sets
+`HARNESS_BWRAP` to a missing path. That is the jail's own off switch, so no harness file is edited.
+`review.mjs` and the guard then print the "jail is off" warning; the guard still refuses a
+reviewer's push or `gh` write. Shells started before the setting existed pass the same variable on
+the command line.
+
 ## How a run is made
 
 - **Implementer:** `node tools/harness/implement.mjs --task T<nn> --slug <slug> --issue <n> --brief <file> [--model <name>]`,
