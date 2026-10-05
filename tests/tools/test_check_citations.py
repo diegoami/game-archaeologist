@@ -878,6 +878,95 @@ class StaticCitationTest(unittest.TestCase):
                       result.stdout)
         self.assertNotIn("Traceback", result.stdout + result.stderr)
 
+    # Round 3 (Sol's round-2 R1-R3): every rule of the token grammar has a test that fails when the
+    # rule is deleted. The PR body's mutation table maps each grammar element to its tests.
+
+    def test_a_leading_zero_line_is_malformed(self):
+        # Twelve lines, so `01`, `09` and `012` are inside the file: only the grammar rejects them.
+        self.write("data.txt", "".join(f"line {n}\n" for n in range(1, 13)))
+        for token in ("static:data.txt:01", "static:data.txt:09", "static:data.txt:012"):
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token}.")
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(f":5: malformed static citation: {token}", result.stdout)
+
+    def test_repeated_trailing_slashes_are_malformed(self):
+        # `code` is a tracked directory, so only the single optional trailing `/` rejects these.
+        self.write("code/a.txt", "one\n")
+        for token in ("static:code//", "static:code///"):
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token}")
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(f":5: malformed static citation: {token}", result.stdout)
+
+    def test_a_segment_character_outside_the_ascii_alphabet_is_malformed(self):
+        # Each path is a tracked file, so only the `[A-Za-z0-9_.-]` alphabet rejects it.
+        for path in ("évidence.txt", "dir/évidence.txt", "a+b.txt", "x)y", "a@b", "a~b", "a`x"):
+            with self.subTest(path=path):
+                self.write(path, "one\n")
+                result = self.check(f"- Rests on static:{path} here.")
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(f":5: malformed static citation: static:{path}", result.stdout)
+
+    def test_every_segment_character_passes_in_every_segment(self):
+        # Each of A-Z, a-z, 0-9, `_`, `.` and `-` in a directory segment and in the file segment,
+        # three segments deep.
+        self.write("Ab_9.-c/Dz_0.-e/Xy_5.-z.txt", "one\n")
+        for token in ("static:Ab_9.-c/Dz_0.-e/Xy_5.-z.txt", "static:Ab_9.-c/Dz_0.-e/",
+                      "static:Ab_9.-c/Dz_0.-e", "static:Ab_9.-c/"):
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token} here.")
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_every_line_digit_passes(self):
+        # 120 lines: single, two and three digits, every digit 0-9 in some place, both bounds.
+        self.write("data.txt", "".join(f"line {n}\n" for n in range(1, 121)))
+        tokens = ["static:data.txt:1", "static:data.txt:9", "static:data.txt:10",
+                  "static:data.txt:23", "static:data.txt:45", "static:data.txt:67",
+                  "static:data.txt:89", "static:data.txt:99", "static:data.txt:100",
+                  "static:data.txt:120"]
+        for token in tokens:
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token} here.")
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_each_trailing_character_is_stripped(self):
+        # Each of `` ` . , ; : ) ] } ' " * `` alone after a valid token, with and without a line.
+        self.write("data.txt", "one\ntwo\n")
+        for char in "`.,;:)]}'\"*":
+            for token in ("static:data.txt", "static:data.txt:2"):
+                with self.subTest(token=token + char):
+                    result = self.check(f"- Rests on {token}{char} here.")
+                    self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_a_valid_prefix_followed_by_other_characters_is_malformed(self):
+        # The whole argument must match: a valid path or line followed by anything else fails.
+        self.write("data.txt", "one\ntwo\n")
+        for token in ("static:data.txt)x", "static:data.txt`x", "static:data.txt:1x",
+                      "static:data.txt:1:2", "static:data.txt::1", "static::1"):
+            with self.subTest(token=token):
+                result = self.check(f"- Rests on {token} here.")
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(f":5: malformed static citation: {token}", result.stdout)
+
+    def test_a_token_at_the_start_of_a_line_or_after_punctuation_is_checked(self):
+        # The boundary before `static:` is any character but a letter, digit or `_`, or none.
+        for line in ("static:a//b", "(static:a//b", "x-static:a//b", "*static:a//b"):
+            with self.subTest(line=line):
+                result = self.check_text("# F990 Static fixture\n\n## Answer\n\n- Rests on E900-r0001.\n\n"
+                                         f"## Method\n\n{line}\n\n## Inferences\n\n- Rests on E900-r0001.\n")
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(":9: malformed static citation: static:a//b", result.stdout)
+
+    def test_a_letter_digit_or_underscore_before_static_is_no_token(self):
+        # One case per class of the boundary: upper, lower, digit and `_`.
+        for prefix in ("A", "z", "0", "9", "_"):
+            with self.subTest(prefix=prefix):
+                result = self.check_text("# F990 Static fixture\n\n## Answer\n\n- Rests on E900-r0001.\n\n"
+                                         f"## Method\n\n{prefix}static:a//b\n\n## Inferences\n\n"
+                                         "- Rests on E900-r0001.\n")
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
