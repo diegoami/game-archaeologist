@@ -193,13 +193,18 @@ digit or `_`; its argument is the run of non-space characters after the colon, w
 `` ` . , ; : ) ] } ' " * `` removed. What remains must be `<path>[:<line>]` in full, where `<path>`
 is one or more `[A-Za-z0-9_.-]` segments joined by `/`, with an optional trailing `/`, no `.` or `..`
 segment and no leading `/`, and `<line>` is a decimal without a leading zero. The path must be listed
-by `git -C <root> ls-files` (a directory is accepted when it has a tracked file under it); resolved,
-it must stay inside the repository root (a tracked symlink that leaves it fails); and, with `:line`,
-the file must have at least that many lines. A token that is not `<path>[:<line>]` is
+by `git -C <root> ls-files` (a directory is accepted when it has a tracked file under it) and be on
+disk now: no directory above it is a symlink, it resolves inside the repository root (a tracked
+symlink that leaves it fails), and what it resolves to exists as a file, or for a directory as a
+directory with at least one tracked file under it that passes the same checks (a deleted file or a
+dangling symlink fails). With `:line`, the file must have at least that many lines, compared without
+converting a line of any length to a number. A token that is not `<path>[:<line>]` is
 `<file>:<line>: malformed static citation: <token>`; every other failure is
 `<file>:<line>: static citation <token>: <reason>`. `--root DIR` names the repository root, default
-the working directory, never this script's directory; a root that is not a git repository, or a
-missing `git`, is one named error and exit 1.
+the working directory, never this script's directory; a root that is not a git repository's top
+level (a folder inside another repository is not one), or a missing `git`, is one named error and
+exit 1. `GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the other variables that point `git` at
+another repository are dropped for these calls, so the root's own index is the one read.
 
 Only `verify_evidence.py` calls the validator (`validate_records.validate_document`);
 `check_citations.py` reads findings and the presence of run records, and no schema. Neither copies

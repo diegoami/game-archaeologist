@@ -538,14 +538,27 @@ class U31Test(unittest.TestCase):
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
 
+# The environment of the static tests' own `git` calls: nothing that points git at another
+# repository, and no user or system configuration (hooks, templates, `safe.directory`).
+GIT_TEST_ENV = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+GIT_TEST_ENV.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+
+
 class StaticCitationTest(unittest.TestCase):
     """The owner's decision U26: `static:<path>[:<line>]` counts as a citation wherever a run id
     does, and `check_citations.py` checks the path against `git ls-files`. Each test builds its own
-    temporary git repository, so the tracked, containment and line checks are exercised for real."""
+    temporary git repository, so the tracked, containment and line checks are exercised for real.
+
+    Isolation (Sol's round-1 R2): the temporary directory may lie inside another repository (a
+    reviewer's TMPDIR in its worktree). The tool itself refuses a root that is not its repository's
+    top level, so no test depends on where TMPDIR is; the test's own `git` calls run without the
+    variables that redirect git or load the user's and the system's configuration. Only the test of
+    a root outside every repository sets `GIT_CEILING_DIRECTORIES`, so that it exercises the
+    no-repository branch wherever it runs; the test of a root inside a repository sets none."""
 
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
-        self.root = Path(self._tmp.name)
+        self.root = Path(self._tmp.name).resolve()
         self.git("init", "-q")
         self.git("config", "user.email", "t11@example.org")
         self.git("config", "user.name", "T11")
@@ -553,9 +566,9 @@ class StaticCitationTest(unittest.TestCase):
     def tearDown(self):
         self._tmp.cleanup()
 
-    def git(self, *args: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["git", "-C", str(self.root), *args],
-                              capture_output=True, text=True, check=True)
+    def git(self, *args: str, root: Path | None = None) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", "-C", str(root if root is not None else self.root), *args],
+                              capture_output=True, text=True, check=True, env=GIT_TEST_ENV)
 
     def write(self, rel: str, content: str, tracked: bool = True) -> Path:
         path = self.root / rel
@@ -565,21 +578,31 @@ class StaticCitationTest(unittest.TestCase):
             self.git("add", "--", rel)
         return path
 
-    def check_text(self, text: str, root: Path | None = None) -> subprocess.CompletedProcess:
+    def check_text(self, text: str, root: Path | None = None,
+                   env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
         """Check a finding written into the temporary repository from `text`."""
         finding = self.root / "finding.md"
         finding.write_text(text, encoding="utf-8")
         return subprocess.run(
             [sys.executable, str(REPO_ROOT / "tools/check_citations.py"), str(finding),
              "--runs", str(FIXTURES / "runs"), "--root", str(root if root is not None else self.root)],
-            cwd=REPO_ROOT, capture_output=True, text=True)
+            cwd=REPO_ROOT, capture_output=True, text=True,
+            env=env if env is not None else GIT_TEST_ENV)
 
     def check(self, answer: str, inferences: str = "- Rests on E900-r0001.",
-              root: Path | None = None) -> subprocess.CompletedProcess:
+              root: Path | None = None, env: dict[str, str] | None = None
+              ) -> subprocess.CompletedProcess:
         """A finding whose `## Answer` holds `answer`; line 5 is the first body line. The Inferences
         default cites a fixture run, so a test isolates the Answer's static token."""
         return self.check_text(f"# F990 Static fixture\n\n## Answer\n\n{answer}\n\n"
-                               f"## Inferences\n\n{inferences}\n", root=root)
+                               f"## Inferences\n\n{inferences}\n", root=root, env=env)
+
+    def assert_named(self, answer: str, expected: str, env: dict[str, str] | None = None) -> None:
+        """The finding whose Answer is `answer` exits 1, `expected` is on its output, no traceback."""
+        result = self.check(answer, env=env)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn(expected, result.stdout)
+        self.assertNotIn("Traceback", result.stdout + result.stderr)
 
     def test_tracked_file_passes(self):
         self.write("data.txt", "one\ntwo\nthree\n")
@@ -684,10 +707,122 @@ class StaticCitationTest(unittest.TestCase):
     def test_a_root_that_is_not_a_git_repository_is_one_named_error(self):
         self.write("data.txt", "one\n")
         with tempfile.TemporaryDirectory() as other:
-            result = self.check("- Rests on static:data.txt.", root=Path(other))
+            # The ceiling stops git's discovery at the temporary folder, so this visits the
+            # no-repository branch even when TMPDIR lies inside a repository.
+            other = Path(other).resolve()
+            (other / "data.txt").write_text("one\n", encoding="utf-8")
+            env = dict(GIT_TEST_ENV, GIT_CEILING_DIRECTORIES=str(other.parent))
+            result = self.check("- Rests on static:data.txt.", root=other, env=env)
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
         self.assertEqual(1, len(result.stdout.splitlines()), result.stdout)
-        self.assertIn(f"{Path(other)}: not a git repository", result.stdout)
+        self.assertIn(f"{other}: not a git repository", result.stdout)
+
+    def test_a_root_inside_another_repository_is_one_named_error(self):
+        # Sol's round-1 R2: a folder inside a repository is no repository's top level; git would
+        # answer for the enclosing one. No ceiling here: the tool alone must refuse it.
+        self.write("sub/data.txt", "one\n")
+        sub = self.root / "sub"
+        result = self.check("- Rests on static:data.txt.", root=sub)
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(1, len(result.stdout.splitlines()), result.stdout)
+        self.assertIn(f"{sub}: not a git repository (it lies inside {self.root})", result.stdout)
+
+    def test_git_variables_that_name_another_repository_are_ignored(self):
+        # A `GIT_DIR` from the caller's environment would make `git -C <root>` read another
+        # repository's index, where the cited path is tracked although it is not in the root's.
+        self.write("data.txt", "one\n", tracked=False)
+        with tempfile.TemporaryDirectory() as other:
+            other = Path(other).resolve()
+            self.git("init", "-q", root=other)
+            (other / "data.txt").write_text("one\n", encoding="utf-8")
+            self.git("add", "--", "data.txt", root=other)
+            for name, value in (("GIT_DIR", str(other / ".git")),
+                                ("GIT_INDEX_FILE", str(other / ".git" / "index"))):
+                with self.subTest(variable=name):
+                    self.assert_named("- Rests on static:data.txt.",
+                                      ":5: static citation static:data.txt: no tracked path data.txt",
+                                      env=dict(GIT_TEST_ENV, **{name: value}))
+
+    def test_a_tracked_file_deleted_from_disk_is_a_named_error(self):
+        # Sol's round-1 R1: in the index but not on disk, with and without `:line`.
+        self.write("data.txt", "one\n")
+        (self.root / "data.txt").unlink()
+        for token in ("static:data.txt", "static:data.txt:1"):
+            with self.subTest(token=token):
+                self.assert_named(f"- Rests on {token}.",
+                                  f":5: static citation {token}: data.txt is tracked but missing on disk")
+
+    def test_a_tracked_dangling_symlink_is_a_named_error(self):
+        # Sol's round-1 R1: a symlink to an absent file inside the root.
+        os.symlink("absent.txt", str(self.root / "link"))
+        self.git("add", "--", "link")
+        self.assert_named("- Rests on static:link.",
+                          ":5: static citation static:link: link is tracked but missing on disk")
+
+    def test_a_tracked_file_the_disk_holds_a_directory_for_is_a_named_error(self):
+        self.write("data.txt", "one\n")
+        (self.root / "data.txt").unlink()
+        (self.root / "data.txt").mkdir()
+        (self.root / "data.txt" / "inner").write_text("one\n", encoding="utf-8")
+        self.assert_named("- Rests on static:data.txt.",
+                          ":5: static citation static:data.txt: data.txt is not a file on disk")
+
+    def test_a_directory_whose_tracked_files_are_all_gone_is_a_named_error(self):
+        self.write("code/a.txt", "one\n")
+        self.write("code/b.txt", "two\n")
+        (self.root / "code" / "a.txt").unlink()
+        (self.root / "code" / "b.txt").unlink()
+        (self.root / "code" / "untracked.txt").write_text("three\n", encoding="utf-8")
+        for token in ("static:code/", "static:code"):
+            with self.subTest(token=token):
+                self.assert_named(f"- Rests on {token}.",
+                                  f":5: static citation {token}: no tracked file under code is on"
+                                  " disk inside the repository root")
+
+    def test_a_directory_removed_from_disk_is_a_named_error(self):
+        self.write("code/a.txt", "one\n")
+        (self.root / "code" / "a.txt").unlink()
+        (self.root / "code").rmdir()
+        self.assert_named("- Rests on static:code/.",
+                          ":5: static citation static:code/: code is tracked but missing on disk")
+
+    def test_a_directory_whose_only_tracked_file_leaves_the_root_is_a_named_error(self):
+        (self.root / "code").mkdir()
+        os.symlink(str(REPO_ROOT / "README.md"), str(self.root / "code" / "escape"))
+        self.git("add", "--", "code/escape")
+        self.assert_named("- Rests on static:code/.",
+                          ":5: static citation static:code/: no tracked file under code is on disk"
+                          " inside the repository root")
+
+    def test_a_tracked_directory_replaced_by_a_symlink_is_a_named_error(self):
+        # The index tracks code/a.txt; on disk `code` is a symlink to another folder in the root
+        # holding an a.txt that git does not track there.
+        self.write("code/a.txt", "one\n")
+        (self.root / "code" / "a.txt").unlink()
+        (self.root / "code").rmdir()
+        (self.root / "other").mkdir()
+        (self.root / "other" / "a.txt").write_text("one\n", encoding="utf-8")
+        os.symlink("other", str(self.root / "code"))
+        self.assert_named("- Rests on static:code/a.txt.",
+                          ":5: static citation static:code/a.txt: code is a symlink on disk,"
+                          " not a tracked directory")
+
+    def test_a_line_past_python_s_int_conversion_limit_is_a_named_error(self):
+        # Sol's round-1 R3: 4,301 digits and more exceed `int()`'s default limit of 4,300.
+        self.write("data.txt", "one\ntwo\n")
+        for digits in ("1" * 4301, "9" * 20000):
+            with self.subTest(length=len(digits)):
+                self.assert_named(f"- Rests on static:data.txt:{digits}.",
+                                  f":5: static citation static:data.txt:{digits}: line {digits} is"
+                                  " outside data.txt (1..2)")
+
+    def test_a_line_with_as_many_digits_as_the_count_is_compared_by_value(self):
+        # The length comparison only short-cuts longer lines; equal lengths still compare values.
+        self.write("data.txt", "".join(f"{i}\n" for i in range(12)))
+        result = self.check("- Rests on static:data.txt:12.")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assert_named("- Rests on static:data.txt:13.",
+                          ":5: static citation static:data.txt:13: line 13 is outside data.txt (1..12)")
 
     def test_a_token_outside_a_protected_section_is_checked(self):
         result = self.check_text("# F990 Static fixture\n\n## Answer\n\n- Rests on static:data.txt.\n\n"
@@ -726,9 +861,12 @@ class StaticCitationTest(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, str(REPO_ROOT / "tools/check_citations.py"), str(finding),
              "--runs", str(FIXTURES / "runs"), "--root", str(self.root)],
-            cwd=REPO_ROOT, capture_output=True, text=True)
+            cwd=REPO_ROOT, capture_output=True, text=True, env=GIT_TEST_ENV)
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
         self.assertIn("cannot check citations", result.stdout)
+        # Round 2: the named line of the first byte that is not UTF-8.
+        self.assertIn(f"{finding}:5: cannot check citations: not UTF-8 (byte 0xff at offset 37)",
+                      result.stdout)
         self.assertNotIn("Traceback", result.stdout + result.stderr)
 
 

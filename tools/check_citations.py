@@ -10,10 +10,13 @@ its own records (ADR-009).
 
 A static claim cites its evidence as `static:<path>[:<line>]` anywhere in the finding (U26), and
 such a token counts as a citation in `## Answer` and `## Inferences` exactly as a run id does. The
-path must be a tracked file (or a directory with tracked files under it), resolve inside the
-repository root, and, with `:line`, be a file with at least that many lines. `--root <dir>` names
-the repository root, default the working directory, never this script's directory. A root that is
-not a git repository, or a `git` that is missing, is one named error and exit 1.
+path must be a tracked file (or a directory with tracked files under it) that is on disk now: no
+directory above it a symlink, resolved inside the repository root, and existing as a file (for a
+directory, as a directory with a tracked file under it that passes the same checks). With `:line`
+it must be a file with at least that many lines. `--root <dir>` names the repository root, default
+the working directory, never this script's directory. A root that is not a git repository's top
+level, or a `git` that is missing, is one named error and exit 1. A finding that is not UTF-8 is
+one named error at the line of its first bad byte.
 
 The two protected sections hold only these lines (the owner's decision U25, 2026-10-04), so the
 check fails closed instead of parsing ever more Markdown:
@@ -183,16 +186,66 @@ def line_count(content: str) -> int:
     return len(lines)
 
 
+# The variables that make `git` read another repository than the one `-C <root>` names. They are
+# dropped for every `git` call, so the tracked check reads the root's own index whatever the caller's
+# environment holds (a hook, an alias or a reviewer's shell may set them).
+GIT_REDIRECTS = ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
+                 "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_NAMESPACE")
+
+
+def git(root: Path, *args: str) -> subprocess.CompletedProcess:
+    env = {k: v for k, v in os.environ.items() if k not in GIT_REDIRECTS}
+    return subprocess.run(["git", "-C", str(root), *args], capture_output=True, env=env)
+
+
 def load_tracked(root: Path) -> tuple[set[str], str | None]:
-    """The repository's tracked paths, or a named error when `root` is no git repository or `git`
-    is missing. Paths are decoded with `os.fsdecode`, so a name that is not UTF-8 is still one."""
+    """The repository's tracked paths, or a named error when `root` is not the top level of a git
+    repository or `git` is missing. A root inside another repository is not one: `git` would list
+    the enclosing repository's files from there, so its top level must be the root itself. Paths are
+    decoded with `os.fsdecode`, so a name that is not UTF-8 is still one."""
     try:
-        result = subprocess.run(["git", "-C", str(root), "ls-files", "-z"], capture_output=True)
+        top = git(root, "rev-parse", "--show-toplevel")
     except FileNotFoundError:
         return set(), f"{root}: git is not available"
+    if top.returncode != 0:
+        return set(), f"{root}: not a git repository"
+    toplevel = os.fsdecode(top.stdout.rstrip(b"\n"))
+    try:
+        same = Path(toplevel).resolve() == root.resolve()
+    except (OSError, RuntimeError):
+        same = False
+    if not same:
+        return set(), f"{root}: not a git repository (it lies inside {toplevel})"
+    result = git(root, "ls-files", "-z")
     if result.returncode != 0:
         return set(), f"{root}: not a git repository"
     return {os.fsdecode(name) for name in result.stdout.split(b"\0") if name}, None
+
+
+def on_disk(root: Path, root_resolved: Path, rel: str, directory: bool = False) -> str | None:
+    """Why the tracked path `rel` is not evidence on disk now, or `None` when it is: no directory
+    above it is a symlink (git tracks nothing beyond one, so the disk would not be the index), it
+    resolves inside the root, and what it resolves to exists as the kind the index names, a file
+    (a symlink's target included) or a `directory`. A deleted file, a dangling symlink, or a file
+    the disk now holds a directory for, is not evidence."""
+    parts = rel.split("/")
+    for i in range(1, len(parts)):
+        prefix = "/".join(parts[:i])
+        if (root / prefix).is_symlink():
+            return f"{prefix} is a symlink on disk, not a tracked directory"
+    try:
+        resolved = (root / rel).resolve()
+    except (OSError, RuntimeError) as e:  # noqa: BLE001 - no input may traceback
+        return f"cannot resolve {rel}: {e}"
+    if not resolved.is_relative_to(root_resolved):
+        return f"{rel} resolves outside the repository root"
+    if not resolved.exists():
+        return f"{rel} is tracked but missing on disk"
+    if directory and not resolved.is_dir():
+        return f"{rel} is not a directory on disk"
+    if not directory and not resolved.is_file():
+        return f"{rel} is not a file on disk"
+    return None
 
 
 def static_problems(lines: list[str], finding: Path, root: Path,
@@ -220,33 +273,24 @@ def static_problems(lines: list[str], finding: Path, root: Path,
                 problem(number, f"malformed static citation: {raw}")
                 continue
             token = f"static:{argument}"
-            under = any(t.startswith(clean + "/") for t in tracked)
-            if path.endswith("/"):
-                directory, tracked_here = True, under
-            else:
-                directory = clean not in tracked and under
-                tracked_here = clean in tracked or under
-            if not tracked_here:
+            files_under = [t for t in tracked if t.startswith(clean + "/")]
+            directory = path.endswith("/") or clean not in tracked
+            if not (files_under if directory else clean in tracked):
                 problem(number, f"static citation {token}: no tracked path {clean}")
                 continue
-            target = root / clean
-            try:
-                resolved = target.resolve()
-            except (OSError, RuntimeError) as e:  # noqa: BLE001 - no input may traceback
-                problem(number, f"static citation {token}: cannot resolve {clean}: {e}")
-                continue
-            if not resolved.is_relative_to(root_resolved):
-                problem(number, f"static citation {token}: {clean} resolves outside the repository"
-                                 " root")
+            reason = on_disk(root, root_resolved, clean, directory)
+            if reason is None and directory and \
+                    all(on_disk(root, root_resolved, t) is not None for t in files_under):
+                reason = f"no tracked file under {clean} is on disk inside the repository root"
+            if reason is not None:
+                problem(number, f"static citation {token}: {reason}")
                 continue
             line_number = parsed.group("line")
             if line_number is None:
                 continue
+            target = root / clean
             if directory:
                 problem(number, f"static citation {token}: {clean} is a directory")
-                continue
-            if not target.is_file():
-                problem(number, f"static citation {token}: {clean} is not a file")
                 continue
             try:
                 content = target.read_text(encoding="utf-8")
@@ -255,9 +299,10 @@ def static_problems(lines: list[str], finding: Path, root: Path,
                                  f" {type(e).__name__}")
                 continue
             count = line_count(content)
-            wanted = int(line_number)
-            if wanted < 1 or wanted > count:
-                problem(number, f"static citation {token}: line {wanted} is outside {clean}"
+            # Compared by length first, so a line of any number of digits is never converted to an
+            # int past Python's conversion limit: with no leading zero, more digits is larger.
+            if line_number == "0" or len(line_number) > len(str(count)) or int(line_number) > count:
+                problem(number, f"static citation {token}: line {line_number} is outside {clean}"
                                  f" (1..{count})")
     return problems
 
@@ -323,7 +368,13 @@ def check_body(finding: Path, heading: str, body: list[tuple[int, str]]) -> list
 def check(finding: Path, runs: Path, root: Path) -> list[str]:
     if not finding.is_file():
         return [f"{finding}: no such file"]
-    text = finding.read_text(encoding="utf-8")
+    data = finding.read_bytes()
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as e:
+        number = len(re.split(rb"\r\n|\r|\n", data[:e.start]))
+        return [f"{finding}:{number}: cannot check citations: not UTF-8"
+                f" (byte {data[e.start]:#04x} at offset {e.start})"]
     tracked, git_problem = load_tracked(root)
     if git_problem is not None:
         return [git_problem]
