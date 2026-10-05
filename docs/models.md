@@ -208,14 +208,12 @@ watched match. G1 (goal2 T02, merged 2026-10-04, goal2 F001) measured them:
 - **Fixed cost:** about 14 s from the title to the main screen at every setting, set by the settle
   polls, and about 1 s per savestate restore.
 
-## DeepSeek suspended (owner, 2026-10-04, until further notice)
+## Quota decides, not standing limits (owner, 2026-10-05)
 
-No DeepSeek model runs: the OpenCode Go credits are gone. This holds until the owner lifts it.
-- Hard implementer: `--model zai-glm-5.3` (GLM-5.3 on Z.AI); the ladder is GLM-5.3 Flash → GLM-5.3 →
-  Claude Opus.
-- `reviewer.hard` is `zai-glm-5.3`, `luna`; Sol first for guard and complex tasks (`--hard --sol`).
-- While Z.AI's usage limit holds (until 19:20 on 2026-10-04), easy implementers fall to Sonnet, hard
-  implementers to Opus, and `--hard` reviews reach Luna.
+The owner lifted every earlier limit on using models (the DeepSeek suspension of 2026-10-04 and
+"DeepSeek last"): the routing above holds again, and only the quota check skips a model (L50). An
+`exhausted` provider is passed over for the chain's next model, named explicitly and in the report.
+`reviewer.hard` is `zai-glm-5.3`, `deepseek-pro`, `luna` again.
 
 ## How a run is made
 

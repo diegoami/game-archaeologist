@@ -7,7 +7,7 @@ profile full
 copied 2026-10-04 (bumped from c6ef85c016a21935b7fdc0763a4c04dde64965ca: L50, L51)
 adapt CLAUDE.md  (project line; rules 7, 9, 11 from the template; conditional rules 17-20 deleted, none apply; project section added; rule 20 points to the quota check, L50)
 adapt docs/tasks/README.md  (this repository's task index)
-adapt harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the guard and last-round reviewer; + zai-glm-5.3 and deepseek-pro, the hard reviewers and Sol's substitutes; Sol entries at variant low; reviewer fallback sonnet; reviewer.hard = zai-glm-5.3, luna (DeepSeek suspended, 2026-10-04) and reviewer.sol = gpt-6.1-sol; luna = GPT-5.6 Luna and luna-6 = GPT-6 Luna outside the chains (L51); the template's watch-only candidates are not copied, our routing is docs/models.md)
+adapt harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the guard and last-round reviewer; + zai-glm-5.3 and deepseek-pro, the hard reviewers and Sol's substitutes; Sol entries at variant low; reviewer fallback sonnet; reviewer.hard = zai-glm-5.3, deepseek-pro, luna and reviewer.sol = gpt-6.1-sol; luna = GPT-5.6 Luna and luna-6 = GPT-6 Luna outside the chains (L51); the template's watch-only candidates are not copied, our routing is docs/models.md)
 15f1fcb3af4cd07482f39328e2255a71075f4889946901960116f9a3a5b4c16f  .claude/agents/implementer.md
 27d64f4a20a14dd8d0ea0d11376e231511250d2a65662b6f0665086293a92102  .claude/agents/reviewer.md
 6661ffc3140de393a054db11750b1c12245ac229bbc742d92d71624bbaea4ce3  .claude/hooks/session-start.sh
