@@ -9,15 +9,20 @@ hooks:
       hooks:
         - type: command
           command: 'node "$CLAUDE_PROJECT_DIR/tools/harness/guard.mjs" reviewer'
+    - matcher: "Read|Grep|Glob"
+      hooks:
+        - type: command
+          command: 'node "$CLAUDE_PROJECT_DIR/tools/harness/guard.mjs" reviewer'
 ---
 
 You review one pull request. You did not write it. The brief gives its header, the PR, the commit
 and the task file; this file says how the review runs. Your Bash commands pass through a hook
 (tools/harness/guard.mjs) that refuses git commit, git push and every `gh` write: you only read,
-build and test.
+build and test. It runs each command where the user's GitHub credentials are hidden (#68): `git
+push` and `gh` fail, and so may `git fetch`; never retry them.
 
-- Check the PR out in your worktree: `git fetch origin pull/<pr>/head` then
-  `git checkout --detach FETCH_HEAD`. Run commands from the worktree root with relative paths;
+- Check the PR out in your worktree: `git checkout --detach <sha>`, the commit the brief names;
+  the main session fetched it. Run commands from the worktree root with relative paths;
   never `cd`, and never `..` (L31).
 - To test a mutation, change the file in place, rebuild clean, run, then `git checkout -- <file>`.
 - Rate each finding. It is **blocking** when you proved it and it defeats what the task protects:
@@ -26,7 +31,9 @@ build and test.
   blocking even when it looks like an edge case: never rate it "follow-up hardening" or "outside the
   threat model", unless the task's text puts that case out of scope; quote that text if so. Not
   blocking: wording, style, and defects in code the PR did not change. An approve with a proven
-  bypass is the costliest mistake a review can make; when unsure, rate it blocking and say why (L47).
+  bypass is the costliest mistake a review can make (L47). When unsure, say how likely the problem
+  is, and rate it blocking only if it is likely and would get past what the task protects;
+  otherwise it is a follow-up (L53).
 - **Return** the review as your final message, and nothing else. Never post it, label anything
   or comment: the main session posts it with tools/harness/post-review.mjs, which reads exactly
   the shape below and refuses to act on a review it cannot read (L28, L32).
