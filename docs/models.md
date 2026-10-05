@@ -97,7 +97,8 @@ tasks to hard.
 
 The reviewer is never the implementer's family. `review.mjs --exclude <implementer>` enforces it.
 
-**Watch:** L27 records GLM-5.3 Flash stalling and ending long implementer runs early in IC2. Its
+**Watch:** L27 records GLM-5.3 Flash stalling and ending long implementer runs early in IC2. That
+verdict is unconfirmed until those runs' final messages have been read (rule 21). Its
 two trial runs here were clean. Its first runs as the default are watched, and a stall is
 diagnosed before any fallback.
 
@@ -228,6 +229,33 @@ owner turned it off in this repository and those derived from it, until it is th
 `review.mjs` and the guard then print the "jail is off" warning; the guard still refuses a
 reviewer's push or `gh` write. Shells started before the setting existed pass the same variable on
 the command line.
+
+## Reading a run's report (the owner, 2026-10-05)
+
+Before you retry a delegated run, re-route it to another model, or call it a failure, read what it
+returned (CLAUDE.md rule 21). For an OpenCode run (`implement.mjs`, `review.mjs`), exit 1 with an
+empty diff looks the same whether the run ended early or stopped and reported a blocker. The log's
+tail shows only the last tool output, not the model's final message. Read that message from the
+session record, opened read-only (never read `auth.json` in that directory):
+
+```bash
+python3 - <<'PY'
+import sqlite3, json
+db = 'file:/home/diego/.local/share/harness-opencode/data/opencode/opencode.db?mode=ro'
+c = sqlite3.connect(db, uri=True)
+sid = 'ses_...'   # the "session ses_..." line in the run's log
+parts = c.execute("select data from part where session_id=? order by time_created", (sid,)).fetchall()
+texts = [json.loads(d) for (d,) in parts if json.loads(d).get('type') == 'text']
+print(texts[-1]['text'] if texts else 'no text part')
+PY
+```
+
+For a Claude agent, read its hand-back in full. A run that stopped and reported gets an answer:
+amend the task, decide, or escalate. Its report is posted on the task's issue so that it is kept.
+
+Why: in goal2-archaeology, T23's GLM-5.3 run stopped correctly and reported a real blocker in its
+Done-when. The report was only in the session record. The main session misread the run as an early
+end and moved the task to another model, which spent quota on a contract that could not be met.
 
 ## How a run is made
 

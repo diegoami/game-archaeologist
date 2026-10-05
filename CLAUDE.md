@@ -59,3 +59,10 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
     has shown are in `docs/models.md`; the main session keeps it current. After a review with three or more
     blocking findings, or a second round of the same class, the next round goes to a stronger
     implementer (`docs/models.md`, escalating the implementer).
+21. **Read a delegated run's report before acting on it** (the owner, 2026-10-05). Before you retry a
+    delegated run, re-route it to another model, or call it a failure, read what it returned. Never
+    retry blind. An OpenCode run's final message lives in its session record, not in the log's tail
+    (`docs/models.md`, "Reading a run's report"). For a Claude agent, read its hand-back in full. A
+    run that stopped and reported gets an answer: amend the task, decide, or escalate. Its report is
+    posted on the task's issue. An earlier "model X ends runs early" verdict stays unconfirmed until
+    its runs' final messages have been read.
