@@ -390,6 +390,14 @@ end and moved the task to another model, which spent quota on a contract that co
   unbounded number), so the ladder moved it to Opus. Opus fixed each as a class but left three grammar
   rules without a test that fails when they are deleted; a tests-only round with a 97-mutation sweep
   of the grammar converged. For a guard's grammar, ask for the mutation sweep in round 1.
+- **OpenCode implementers never leave the worktree** (isle-wars-archaeology T13 and #87, 2026-10-05;
+  toy T04 here). DeepSeek V4 Pro, as an OpenCode implementer, writes scratch output to `/tmp` and
+  starts commands with `cd /abs &&` despite the agent file; each rejected path ends its run. Toy
+  T04's DeepSeek V4.1 Flash retry ended the same way, at `external_directory (/tmp/*)`. Briefs to
+  OpenCode implementers never ask for anything outside the worktree: no TMPDIR outside the checkout,
+  no `.git/info/exclude` (in a worktree `.git` points into the main checkout). Those lines are for
+  the main session. Tell the implementer to commit and push after each step. Until the harness takes
+  #87's fix, a run that ends between attempts loses its uncommitted work to the reset.
 - **Quota before choice (harness_imperial L50, adopted 2026-10-04):** every model choice starts
   with quota-tracker (`docs/environment.md`); an `exhausted` provider is skipped for the chain's next
   model, passed explicitly and named in the report. At adoption: zai and opencode_go were exhausted.
