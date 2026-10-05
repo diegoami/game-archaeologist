@@ -184,6 +184,23 @@ they serve the repository they are run in.
   `## [An](x)s[wer](y)`, `## An$\mathrm{s}$wer`). Write headings as plain text; `(`, backticks and `*` are fine.
   `--runs DIR` overrides `runs/` under the working directory.
 
+`static:<path>[:<line>]` is the other citation (U26): a static claim names its tracked evidence by
+repository path. A static token counts as a citation wherever a run id does, so a bullet or a table
+data row in `## Answer` or `## Inferences` whose only citation is `static:` is cited; a malformed or
+failing token still fails the file. Every `static:` token anywhere in the finding is checked, as run
+ids are. The token starts at the beginning of a line or after a character that is not a letter, a
+digit or `_`; its argument is the run of non-space characters after the colon, with trailing
+`` ` . , ; : ) ] } ' " * `` removed. What remains must be `<path>[:<line>]` in full, where `<path>`
+is one or more `[A-Za-z0-9_.-]` segments joined by `/`, with an optional trailing `/`, no `.` or `..`
+segment and no leading `/`, and `<line>` is a decimal without a leading zero. The path must be listed
+by `git -C <root> ls-files` (a directory is accepted when it has a tracked file under it); resolved,
+it must stay inside the repository root (a tracked symlink that leaves it fails); and, with `:line`,
+the file must have at least that many lines. A token that is not `<path>[:<line>]` is
+`<file>:<line>: malformed static citation: <token>`; every other failure is
+`<file>:<line>: static citation <token>: <reason>`. `--root DIR` names the repository root, default
+the working directory, never this script's directory; a root that is not a git repository, or a
+missing `git`, is one named error and exit 1.
+
 Only `verify_evidence.py` calls the validator (`validate_records.validate_document`);
 `check_citations.py` reads findings and the presence of run records, and no schema. Neither copies
 or edits it. Their tests run in

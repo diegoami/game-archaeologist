@@ -11,10 +11,11 @@
 
 ## Answer
 
-<A few bullets. Each sentence cites the run ids it rests on. No sentence here that the Observations
+<A few bullets. Each sentence cites the run ids it rests on, or a static claim's evidence as
+`static:<tracked path>[:<line>]` (U26). No sentence here that the Observations
 do not support. `## Answer` and `## Inferences` hold only list items, `###` sub-headings, tables
-whose data rows each cite a run, and blank lines; `check_citations.py` refuses anything else there
-(U25).>
+whose data rows each cite a run or a static path, and blank lines; `check_citations.py` refuses
+anything else there (U25).>
 
 ## Method
 
