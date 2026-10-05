@@ -31,10 +31,13 @@ roster names: this page's `sol` is their `gpt-6-sol`.
 | (Claude) Sonnet | `claudeFallback` | Claude | both fallback implementers; the easy fallback reviewer; toy research as `blind` |
 | (Claude) Opus | the main session; the hard fallback reviewer | Claude | architecture tasks (A1–A6), the toy target (A4), the score (A6) |
 
-Every model runs at effort `high` (`variant` in `harness.json`), never `max`, **except Sol**: the
-owner's decision of 2026-10-03, when OpenAI credit was restored, is that Sol is used sparingly, at
-effort `low`, and at most `medium` (never `high`). Both Sol entries (`gpt-6.1-sol`, `sol`) are at
-`low`; a review that needs more passes `--variant medium` only with the reason in the task file.
+**Effort (the owner, 2026-10-05):** heavy models run at the lightest effort that does the job:
+`low` by default, `medium` only when justified in the task file, never `high` or `max`. GPT-6.1 Sol
+(`gpt-6.1-sol`, `sol`) and GLM-5.3 (`zai-glm-5.3`) are at `low` (GLM-5.3 offers `low`, `high` and
+`max`, so no `medium`; probed at `low` 2026-10-05, PONG). DeepSeek V4 Pro offers only `high` and
+`max`, so it stays at `high`, its lightest. A review that needs more passes `--variant medium` with
+the reason in the task file. Claude Opus agents take no effort setting here. Light models
+(GLM-5.3 Flash, DeepSeek V4.1 Flash, GPT-5.6 Luna) stay at `high`; this rule is for heavy models.
 Probes at `low` and `medium`: PONG in 7 s and 4 s.
 
 **Probed, not entered:**
