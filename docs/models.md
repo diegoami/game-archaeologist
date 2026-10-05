@@ -31,10 +31,13 @@ roster names: this page's `sol` is their `gpt-6-sol`.
 | (Claude) Sonnet | `claudeFallback` | Claude | both fallback implementers; the easy fallback reviewer; toy research as `blind` |
 | (Claude) Opus | the main session; the hard fallback reviewer | Claude | architecture tasks (A1–A6), the toy target (A4), the score (A6) |
 
-Every model runs at effort `high` (`variant` in `harness.json`), never `max`, **except Sol**: the
-owner's decision of 2026-10-03, when OpenAI credit was restored, is that Sol is used sparingly, at
-effort `low`, and at most `medium` (never `high`). Both Sol entries (`gpt-6.1-sol`, `sol`) are at
-`low`; a review that needs more passes `--variant medium` only with the reason in the task file.
+**Effort (the owner, 2026-10-05):** heavy models run at the lightest effort that does the job:
+`low` by default, `medium` only when justified in the task file, never `high` or `max`. GPT-6.1 Sol
+(`gpt-6.1-sol`, `sol`) and GLM-5.3 (`zai-glm-5.3`) are at `low` (GLM-5.3 offers `low`, `high` and
+`max`, so no `medium`; probed at `low` 2026-10-05, PONG). DeepSeek V4 Pro offers only `high` and
+`max`, so it stays at `high`, its lightest. A review that needs more passes `--variant medium` with
+the reason in the task file. Claude Opus agents take no effort setting here. Light models
+(GLM-5.3 Flash, DeepSeek V4.1 Flash, GPT-5.6 Luna) stay at `high`; this rule is for heavy models.
 Probes at `low` and `medium`: PONG in 7 s and 4 s.
 
 **Probed, not entered:**
@@ -208,14 +211,12 @@ watched match. G1 (goal2 T02, merged 2026-10-04, goal2 F001) measured them:
 - **Fixed cost:** about 14 s from the title to the main screen at every setting, set by the settle
   polls, and about 1 s per savestate restore.
 
-## DeepSeek suspended (owner, 2026-10-04, until further notice)
+## Quota decides, not standing limits (owner, 2026-10-05)
 
-No DeepSeek model runs: the OpenCode Go credits are gone. This holds until the owner lifts it.
-- Hard implementer: `--model zai-glm-5.3` (GLM-5.3 on Z.AI); the ladder is GLM-5.3 Flash → GLM-5.3 →
-  Claude Opus.
-- `reviewer.hard` is `zai-glm-5.3`, `luna`; Sol first for guard and complex tasks (`--hard --sol`).
-- While Z.AI's usage limit holds (until 19:20 on 2026-10-04), easy implementers fall to Sonnet, hard
-  implementers to Opus, and `--hard` reviews reach Luna.
+The owner lifted every earlier limit on using models (the DeepSeek suspension of 2026-10-04 and
+"DeepSeek last"): the routing above holds again, and only the quota check skips a model (L50). An
+`exhausted` provider is passed over for the chain's next model, named explicitly and in the report.
+`reviewer.hard` is `zai-glm-5.3`, `deepseek-pro`, `luna` again.
 
 ## How a run is made
 

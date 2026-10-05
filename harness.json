@@ -33,7 +33,7 @@
     },
     "zai-glm-5.3": {
       "id": "zai-coding-plan/glm-5.3",
-      "variant": "high",
+      "variant": "low",
       "family": "glm"
     },
     "deepseek-pro": {
@@ -63,6 +63,7 @@
     "totalTimeoutSec": 3600,
     "hard": [
       "zai-glm-5.3",
+      "deepseek-pro",
       "luna"
     ],
     "sol": "gpt-6.1-sol"

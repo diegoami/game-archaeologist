@@ -46,7 +46,7 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
 20. The model pair follows the task's difficulty (the owner's decision of 2026-10-03, as in
     isle-wars-archaeology). **Easy**, the default: GLM-5.3 Flash implements and GPT-5.6 Luna reviews,
     with Sonnet as both fallbacks. **Hard**: DeepSeek V4.1 Flash implements and GLM-5.3 reviews; GPT-6.1 Sol
-    (effort `low`, `medium` if justified, never `high`) reviews guard tasks and a hard task's last rework round,
+    (effort `low`, `medium` if justified, never `high`; every heavy model runs at its lightest effort, `docs/models.md`) reviews guard tasks and a hard task's last rework round,
     and every complex task: guards, harness or driver changes, measurement integrity, research deliverables,
     plans with many acceptance lines (the owner, 2026-10-04). GPT-5.6 Luna (`luna`, its own weekly pool; harness_imperial L51) reviews only small, simple PRs. A task is hard if it is a **guard task** (its failure
     would leak or corrupt evidence: blindness, the originals guard, sealed rules, record integrity),
