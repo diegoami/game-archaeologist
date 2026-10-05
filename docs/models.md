@@ -346,6 +346,11 @@ The owner lifted every earlier limit on using models (the DeepSeek suspension of
   three rounds, all of the same class (a crash on malformed input). Sol on T09 and T10 named two
   per round, each pair new. Luna on ic2-conquest PR #38 named one per round for eight rounds. From
   2026-10-04, every brief carries "Report every blocking finding in this one review".
+- **T11** (static citations, 2026-10-05, three rounds): DeepSeek V4.1 Flash's round 1 had three
+  blocking findings (index trusted over disk, a test leaking to its enclosing repository, an
+  unbounded number), so the ladder moved it to Opus. Opus fixed each as a class but left three grammar
+  rules without a test that fails when they are deleted; a tests-only round with a 97-mutation sweep
+  of the grammar converged. For a guard's grammar, ask for the mutation sweep in round 1.
 - **Quota before choice (harness_imperial L50, adopted 2026-10-04):** every model choice starts
   with quota-tracker (`docs/environment.md`); an `exhausted` provider is skipped for the chain's next
   model, passed explicitly and named in the report. At adoption: zai and opencode_go were exhausted.
