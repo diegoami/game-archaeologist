@@ -40,6 +40,40 @@
       "id": "opencode-go/deepseek-v4-pro",
       "variant": "high",
       "family": "deepseek"
+    },
+    "mm-m3": {
+      "id": "minimax/MiniMax-M3",
+      "variant": "thinking",
+      "family": "minimax"
+    },
+    "mm-m2.7": {
+      "id": "minimax/MiniMax-M2.7",
+      "family": "minimax"
+    },
+    "ali-deepseek-pro": {
+      "id": "alibaba-token-plan/deepseek-v4-pro-0813",
+      "variant": "high",
+      "family": "deepseek"
+    },
+    "ali-deepseek-flash": {
+      "id": "alibaba-token-plan/deepseek-v4.1-flash",
+      "variant": "high",
+      "family": "deepseek"
+    },
+    "ali-qwen-max": {
+      "id": "alibaba-token-plan/qwen3.8-max",
+      "variant": "low",
+      "family": "qwen"
+    },
+    "ali-qwen-flash": {
+      "id": "alibaba-token-plan/qwen3.8-flash",
+      "variant": "medium",
+      "family": "qwen"
+    },
+    "ali-glm": {
+      "id": "alibaba-token-plan/glm-5.3",
+      "variant": "low",
+      "family": "glm"
     }
   },
   "implementer": {

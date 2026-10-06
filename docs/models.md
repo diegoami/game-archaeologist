@@ -45,6 +45,35 @@ Probes at `low` and `medium`: PONG in 7 s and 4 s.
   below gave neither a role.
 - `glm-5.3-highspeed`: refused by the plan.
 
+**On watch (the owner, 2026-10-06), probed only, in no chain.** MiniMax (minimax.io Token Plan) and
+the Alibaba Token Plan, registered in `harness.json` and probed 2026-10-06 16:19–16:20 UTC; their
+placements are the owner's next decision, and the chains above are unchanged until then.
+`minimax` is a new family, usable as an independent reviewer of work by GLM, DeepSeek, Qwen, OpenAI
+or Claude models. Both keys come only from `~/.config/ai-keys.env` (`MINIMAX_API_KEY`,
+`ALIBABA_TOKEN_PLAN_API_KEY`; never `opencode auth login` — an `auth.json` entry overrides the
+variable); a "Provider not found" error means the shell lacks the variable.
+
+| Name | Model and route | Family | Weight | Variants offered | Probe | Quota |
+| --- | --- | --- | --- | --- | --- | --- |
+| `mm-m3` | MiniMax-M3, `minimax/MiniMax-M3` at `thinking` | MiniMax | heavy | `none`, `thinking` | PONG 2026-10-06, 8 s | `localhost:8765/quota/minimax` (5 h + weekly) |
+| `mm-m2.7` | MiniMax-M2.7, `minimax/MiniMax-M2.7` (no variant field: it offers none) | MiniMax | light | none | PONG 2026-10-06, 6 s | `localhost:8765/quota/minimax` |
+| `ali-deepseek-pro` | DeepSeek V4 Pro 0813, `alibaba-token-plan/deepseek-v4-pro-0813` at `high` | DeepSeek | heavy | `high`, `max` | PONG 2026-10-06, 8 s | `localhost:8765/quota/alibaba` (one monthly pool) |
+| `ali-deepseek-flash` | DeepSeek V4.1 Flash, `alibaba-token-plan/deepseek-v4.1-flash` at `high` | DeepSeek | light | `low`, `high`, `max` | PONG 2026-10-06, 5 s | `localhost:8765/quota/alibaba` |
+| `ali-qwen-max` | Qwen 3.8 Max, `alibaba-token-plan/qwen3.8-max` at `low` | Qwen | heavy | `low`, `medium`, `xhigh` | PONG 2026-10-06, 7 s | `localhost:8765/quota/alibaba` |
+| `ali-qwen-flash` | Qwen 3.8 Flash, `alibaba-token-plan/qwen3.8-flash` at `medium` | Qwen | light | `low`, `medium`, `xhigh` | PONG 2026-10-06, 6 s | `localhost:8765/quota/alibaba` |
+| `ali-glm` | GLM-5.3, `alibaba-token-plan/glm-5.3` at `low` | GLM | heavy | `low`, `high`, `max` | PONG 2026-10-06, 6 s | `localhost:8765/quota/alibaba` |
+
+**Pricing (check before choosing these, as for every provider):**
+- Alibaba's Token Plan is one monthly credit pool for all its models (`month` window); its
+  `pricing` says whether the night discount applies (`discount_now`, `next_change_at`). From
+  22:00 to 08:00 UTC+8, qwen3.8-max/flash use 60% fewer credits and deepseek-v4-pro-0813 and
+  deepseek-v4.1-flash 50% fewer; glm-5.3 has no discount. Prefer long ali-qwen/ali-deepseek runs
+  when `discount_now` is true. Only the dated `deepseek-v4-pro-0813` is discounted — `deepseek-v4-pro`
+  is not. Alibaba's Kimi and MiniMax models are Team-edition only and fail on this plan.
+- MiniMax: a 5-hour and a weekly window (`localhost:8765/quota/minimax`).
+- Z.ai: `glm-5.3` costs 3x quota in weekday peak hours (from 8 Oct 2026;
+  `localhost:8765/quota/zai` → `pricing.peak_now`); prefer other providers for long runs then.
+
 ## Routing: easy or hard
 
 The owner decided on 2026-10-03 that the pair follows the task's difficulty, as in
