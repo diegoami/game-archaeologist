@@ -36,6 +36,14 @@ It watches each background job (start, end, no output for 10 min), never with `p
 Scope, Done when, Hazards, Implementer, Reviewer, Merge after. Rules:
 - **Owns** names directories or files. Go finer only when two tasks run at once in one file: function-level Owns made one project open 27 PRs that only widened a list. (L5)
 - **Done when**: each line is one check a command can run. The main session runs each line before dispatch: it fails on `main` and passes on a mock fix. (L45)
+- **Milestones**: a task likely to outlast one implementer run (about an hour), or whose Done-when
+  is all or nothing (an exact match, a whole model), is split into tasks that each merge on their
+  own: the static reading (a finding's first part), any tool that produces ground truth, then the
+  deliverable piece by piece. A milestone's Done-when measures progress as a number (the first
+  divergent minute, the records matched), committed with each push, so a resumed run starts from
+  it. The boundary sits where the evidence already has a number — a count of matching records, a
+  minute index — not an arbitrary half of the scope: that number is what makes the split resumable
+  and the boundary reviewable. (L100)
 - The main session edits task files directly on `main`, the reason in the commit; the reviewer sees it. (L6)
 
 ## 3. The loop
