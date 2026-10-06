@@ -79,7 +79,9 @@
   "implementer": {
     "agent": "implementer",
     "chain": [
-      "zai-glm-5.3-flash"
+      "zai-glm-5.3-flash",
+      "mm-m2.7",
+      "ali-qwen-flash"
     ],
     "claudeFallback": "sonnet",
     "startupTimeoutSec": 180,
@@ -97,7 +99,10 @@
     "totalTimeoutSec": 3600,
     "hard": [
       "zai-glm-5.3",
+      "ali-glm",
+      "ali-qwen-max",
       "deepseek-pro",
+      "ali-deepseek-pro",
       "luna"
     ],
     "sol": "gpt-6.1-sol"

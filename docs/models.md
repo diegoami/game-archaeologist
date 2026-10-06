@@ -45,11 +45,17 @@ Probes at `low` and `medium`: PONG in 7 s and 4 s.
   below gave neither a role.
 - `glm-5.3-highspeed`: refused by the plan.
 
-**On watch (the owner, 2026-10-06), probed only, in no chain.** MiniMax (minimax.io Token Plan) and
-the Alibaba Token Plan, registered in `harness.json` and probed 2026-10-06 16:19–16:20 UTC; their
-placements are the owner's next decision, and the chains above are unchanged until then.
-`minimax` is a new family, usable as an independent reviewer of work by GLM, DeepSeek, Qwen, OpenAI
-or Claude models. Both keys come only from `~/.config/ai-keys.env` (`MINIMAX_API_KEY`,
+**MiniMax and the Alibaba Token Plan (the owner, 2026-10-06), placed the same day.** Registered in
+`harness.json`, probed 2026-10-06 16:19–16:20 UTC, and placed (the owner, 2026-10-06):
+`ali-qwen-max` is the new-family hard reviewer in `reviewer.hard` after `zai-glm-5.3`; `ali-glm` is
+the same model on the Alibaba pool, the relief seat for `zai-glm-5.3` (zai's 3x weekday peak from
+8 Oct 2026, or exhaustion); `mm-m3` is the L38 heavy escalation rung before Claude Opus and the
+alternate for the Sol seat when openai is exhausted; `mm-m2.7` and `ali-qwen-flash` are the light
+rungs after GLM-5.3 Flash in the implementer chain; `ali-deepseek-pro` is the DeepSeek V4 Pro
+overflow (Alibaba pool) in `reviewer.hard`; `ali-deepseek-flash` is the hard implementer's alternate
+for `deepseek-flash` when opencode_go is out. Their first real runs are watched as any new model's
+are. `minimax` is a new family, usable as an independent reviewer of work by GLM, DeepSeek, Qwen,
+OpenAI or Claude models. Both keys come only from `~/.config/ai-keys.env` (`MINIMAX_API_KEY`,
 `ALIBABA_TOKEN_PLAN_API_KEY`; never `opencode auth login` — an `auth.json` entry overrides the
 variable); a "Provider not found" error means the shell lacks the variable.
 
@@ -81,13 +87,15 @@ isle-wars-archaeology (CLAUDE.md rule 20):
 
 | Difficulty | Implementer | If it is unavailable | Reviewer | If it is unavailable |
 | --- | --- | --- | --- | --- |
-| Easy, the default | GLM-5.3 Flash | Sonnet | GPT-5.6 Luna | Sonnet |
-| Hard | DeepSeek V4.1 Flash | Sonnet | **GLM-5.3**; **GPT-6.1 Sol** (at `low`) for a guard task and for a hard task's last rework round | DeepSeek V4 Pro, then Opus |
+| Easy, the default | GLM-5.3 Flash | mm-m2.7, then ali-qwen-flash, then Sonnet | GPT-5.6 Luna | Sonnet |
+| Hard | DeepSeek V4.1 Flash | ali-deepseek-flash (the same model on the Alibaba pool), then Sonnet | **GLM-5.3**; **GPT-6.1 Sol** (at `low`) for a guard task and for a hard task's last rework round | ali-glm (the same model on the Alibaba pool), then Qwen 3.8 Max (`ali-qwen-max`), then DeepSeek V4 Pro, then Opus |
 
 **Sol is used sparingly** (the owner, 2026-10-04): it reviews only **guard tasks** (blindness, the
 originals guard, sealed rules, record integrity) and the **last rework round of a hard task**, at
-effort `low`. Every other hard review goes to GLM-5.3 (`zai-glm-5.3`), the heavy third-family
-reviewer, or to DeepSeek V4 Pro when GLM implemented. GLM-5.3's first such review (goal2 T04) re-ran
+effort `low`. When openai is exhausted, `mm-m3` (MiniMax-M3, a new family) takes the Sol seat
+(`--reviewer mm-m3`, L50; the owner, 2026-10-06). Every other hard review goes to GLM-5.3
+(`zai-glm-5.3`), the heavy third-family reviewer, or to DeepSeek V4 Pro when GLM implemented.
+GLM-5.3's first such review (goal2 T04) re-ran
 every Done-when line, regenerated the listing, made five mutations and checked the data bytes.
 
 **When a task is hard.** Any of:
@@ -145,7 +153,8 @@ rounds, and the task escalated to the owner.
   example, the same kind of bypass found again in new code): the fix did not converge.
 
 **Ladder.** The implementer moves up one step for the next round, and never steps down within a task:
-- GLM-5.3 Flash (`zai-glm-5.3-flash`) → DeepSeek V4.1 Flash (`deepseek-flash`) → Claude Opus;
+- GLM-5.3 Flash (`zai-glm-5.3-flash`) → DeepSeek V4.1 Flash (`deepseek-flash`) → MiniMax-M3
+  (`mm-m3`, the heavy OpenCode rung; the owner, 2026-10-06) → Claude Opus;
 - Claude Sonnet → Claude Opus.
 
 **Rules that still hold:**
@@ -185,8 +194,8 @@ option while that is under 95% (L51).
 
 | Situation | Hard review | Easy review |
 | --- | --- | --- |
-| Only Sol is unavailable | GLM-5.3 (`zai-glm-5.3`), then DeepSeek V4 Pro (`deepseek-pro`), then Luna, with the reason stated | Luna, as usual |
-| The OpenAI account is out of quota | GLM-5.3, then DeepSeek V4 Pro | GLM-5.3, then DeepSeek V4 Pro |
+| Only Sol is unavailable | mm-m3 (`--reviewer mm-m3`, a new family), then GLM-5.3 (`zai-glm-5.3`), then ali-glm, then DeepSeek V4 Pro (`deepseek-pro`), then Luna, with the reason stated | Luna, as usual |
+| The OpenAI account is out of quota | mm-m3, then GLM-5.3, then ali-glm, then Qwen 3.8 Max (`ali-qwen-max`), then DeepSeek V4 Pro | GLM-5.3, then DeepSeek V4 Pro |
 | The implementer is GLM | DeepSeek V4 Pro | DeepSeek V4 Pro |
 | The implementer is DeepSeek | GLM-5.3 | GLM-5.3 |
 
