@@ -67,8 +67,9 @@ the plan.
 
 Where the machine runs quota-tracker, a local service, it reports how much subscription quota is
 left on each provider: `claude` (the main session and Claude agents), `openai` (Sol and Luna, via
-OpenCode), `zai` (GLM-5.3 and GLM-5.3 Flash), `opencode_go` (DeepSeek) and `openrouter` (prepaid
-credit). Check it before choosing, recommending or delegating to a model (L50). It is read-only, on
+OpenCode), `zai` (GLM-5.3 and GLM-5.3 Flash), `opencode_go` (DeepSeek), `openrouter` (prepaid credit) and
+`alibaba` (Alibaba's Token Plan: DeepSeek, Qwen, GLM, Kimi and MiniMax, one monthly pool).
+Check it before choosing, recommending or delegating to a model (L50). It is read-only, on
 localhost, with no auth; results are cached 60 s, and `?refresh` bypasses the cache:
 - `curl -s localhost:8765/quota`, or `/quota/<provider>` for one;
 - `curl -s localhost:8765/best`: the providers with quota left, most headroom first;
@@ -83,6 +84,23 @@ own window, named after it: today GPT-5.6 Luna (`gpt-5.6-luna:7d`), which can be
 OpenAI's main `7d` window, the one GPT-6 Luna and Sol draw on, is exhausted. Read which pools exist
 from the windows the endpoint returns, not from this page.
 
+Free models on OpenRouter are a supplement, for smaller tasks and additional reviews (a second
+opinion next to a regular model), never the main model for important work (the owner, 2026-10-06):
+
+| Model | Use |
+| --- | --- |
+| `openrouter/nvidia/nemotron-3-ultra-550b-a55b:free` | the stronger one |
+| `openrouter/cohere/north-mini-code:free` | coding-focused, faster |
+| `openrouter/thinkingmachines/inkling:free` | usable, through OpenCode only (not the raw API) |
+| `openrouter/poolside/laguna-s-2.1:free` | usable, often rate-limited |
+
+They share one allowance of 1,000 requests a day and about 20 a minute, and each agent step is one
+request: `free_model_daily_requests` in `/quota/openrouter` gives what remains, and the scripts skip
+a free model when none remain (`lib/quota.mjs`). Free providers may log and train on prompts: never
+send private or client code, secrets, or anything under NDA. They come and go and get rate-limited:
+on a 429, fall back to the next model instead of retrying. Check their output like any unreviewed
+contribution; they have been tried only on small tasks.
+
 The models per provider, heavy and light:
 
 | Provider | Heavy | Light |
@@ -92,6 +110,34 @@ The models per provider, heavy and light:
 | zai | `opencode -m zai-coding-plan/glm-5.3` | `opencode -m zai-coding-plan/glm-5.3-flash` |
 | opencode_go | `opencode -m opencode-go/deepseek-v4-pro` | `opencode -m opencode-go/deepseek-v4.1-flash` |
 | openrouter | `opencode -m openrouter/deepseek/deepseek-v4-pro` | `opencode -m openrouter/deepseek/deepseek-v4.1-flash` |
+| alibaba (DeepSeek) | `opencode -m alibaba-token-plan/deepseek-v4-pro` | `opencode -m alibaba-token-plan/deepseek-v4.1-flash` |
+| alibaba (Qwen) | `opencode -m alibaba-token-plan/qwen3.8-max` | `opencode -m alibaba-token-plan/qwen3.8-flash` |
+| alibaba (GLM) | `opencode -m alibaba-token-plan/glm-5.3` | none on alibaba (zai has `glm-5.3-flash`) |
+
+Alibaba's Token Plan has one credit pool for every model on it, in a single `month` window (no
+5-hour or weekly windows); its entry also has `plan` and `subscription_ends_at`. Its quota comes
+from an Alibaba console login: a `not_configured` or login error goes to the owner, who runs
+`bl auth login --console --console-site international`. OpenCode's key for it comes only from the
+environment variable `ALIBABA_TOKEN_PLAN_API_KEY` (in WSL from `~/.config/ai-keys.env`, which
+`~/.bashrc` and `~/.profile` load, and through WSLENV for commands started from Windows; on Windows
+a user variable), so it works in every OpenCode data directory, the scripts' own included. Never add it
+with `opencode auth login`: an `auth.json` entry overrides the variable, and a bad one breaks the
+provider for that directory. Never print, copy or edit the key or an `auth.json`. If a call fails:
+- "Provider not found: alibaba-token-plan": the variable is not in this environment. Restart the
+  session or shell so it picks it up; if it is still missing, tell the owner. Do not retry.
+- "Invalid API-key": the data directory's `auth.json` may hold a stale Alibaba entry (the scripts
+  copy yours into theirs). Tell the owner which `XDG_DATA_HOME` the run used.
+The owner's plan is the Personal edition: the Kimi and MiniMax models OpenCode lists for this
+provider are Team-only and fail. From 22:00 to 08:00 UTC+8, DeepSeek models use 50% fewer credits
+and Qwen models 60% fewer. A quick check that the key works:
+`opencode run -m alibaba-token-plan/qwen3.8-flash "Reply with just: ok"`.
+
+The tracker also keeps the usage history: `curl -s 'localhost:8765/usage?since=7d'` gives, per
+provider, the models called with their `calls`, `sessions`, `tokens` and `effort` (OpenCode's
+`variant`, Claude Code's effort; `default` when none was set), and
+`curl -s 'localhost:8765/usage/sessions?since=7d&model=glm-5.3&effort=high'` the sessions behind
+them (`title`, `project`, `tool`, `data_dir`, `launched_by`). `since` takes `90m`, `24h`, `7d`, `4w`
+or `all`. Use it to check that heavy models ran at the effort L54 asks for.
 
 GPT-5.6 Luna, the reviewer (L51), has its own weekly limit: for light work OpenAI is usable while
 the `gpt-5.6-luna:7d` window in `/quota/openai` is under 95%, even when OpenAI's main window is
