@@ -201,7 +201,10 @@ OUTPUT RULES (from tools/harness/review.mjs; they override anything above that c
   "DW<k>: not run — <reason>". An approve with one missing, or one not run, is not applied.` : ''} A review that does not end with its verdict, or that has a
   finding after it, is posted flagged and acted on by no one until the main session reads it.
 - Your worktree is ${worktree} at ${headSha}, and it is already your working directory. Run git
-  there without -C, and never type that path: a mistyped path ends the run.
+  there without -C, and never type that path: a mistyped path ends the run. This rule is about
+  your own worktree only (L61): a Done-when line may send git at a pinned repository outside it
+  (git -C <path> show <pin>:<file>); run that exactly as written — OpenCode does not path-check
+  git -C — and read a granted outside path only with the L59 recipe.
 `;
       newTree();
       const watch = watchLine(m, model);
@@ -271,7 +274,7 @@ for (const p of plans) {
   say(`posted: ${p.first} / ${p.kind === 'flagged' ? `flagged (${p.note})` : p.verdict}`);
 }
 // An approval from an earlier round never outlives two reviews that did not both approve (Sol's R3 on PR 41).
-if (a['apply-label'] && outcome.label !== 'status:approved') withdrawApproval({ issue: a.issue, top });
+if (a['apply-label'] && outcome.label !== 'status:approved') withdrawApproval({ issue: a.issue, top, say });
 if (outcome.code) die(outcome.code, `No label applied: ${outcome.why}. Read the reviews on PR ${a.pr} and decide.`);
 if (a['apply-label']) applyLabel({ label: outcome.label, issue: a.issue, top, say });
 say(`second opinion: ${outcome.label ?? 'no label'}${outcome.why ? ` (${outcome.why})` : ''}`);
