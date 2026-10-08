@@ -12,14 +12,14 @@ adapt harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy imp
 585e0f9cfc63fc1643e96a2ee0dc337f23598d1c7f632d0bf0926b7f139a6f6c  .claude/agents/reviewer.md
 6661ffc3140de393a054db11750b1c12245ac229bbc742d92d71624bbaea4ce3  .claude/hooks/session-start.sh
 9d2227215dcf47b9dc7c41d5c9b7f8c5b79dd962c3fb8c3f8f625032fa5eefae  .claude/settings.json
-473231793c2daafb5c9ee13b6e6bc1df5aaf1483e406506a79da3d33c6966a0d  .claude/skills/delegate/SKILL.md
+adapt .claude/skills/delegate/SKILL.md  (quota step: /recommend, not /best (harness_imperial f91210b; the owner, 2026-10-08))
 218462f453d5432db791c7697d7d34970491af106f8e1d1b95b0e0ef6f86747a  .claude/skills/jev/SKILL.md
 f8214dda14e21c82e5eced8db46cfa3b6bb0660cb2c4e8be2892e30698f36e0b  .claude/skills/run-task/SKILL.md
 e99fedef64f7850a76794396088568a4046692abfc6ff14aabadf81bc83fe65c  .claude/skills/switch-model/SKILL.md
 8a63c4093207e8f96230e8e6c92019c06897434ca8b70f287e76821ff09502d6  .github/pull_request_template.md
 612256c7d6a31d83ace0a69a445d11e1edf244e5f6da0cfc34b74a7b03cf7030  .opencode/agents/implementer.md
 bafafb85b338b3ab0ebb6f303ddab7652474236d62217f06e21f92f092e7c44c  .opencode/agents/reviewer.md
-bcd66defcc6ac30398dca82b5c952415f26830c5ed77db2b0b7bfc655e93fc19  docs/environment.md
+adapt docs/environment.md  (quota step: /recommend, not /best (harness_imperial f91210b; the owner, 2026-10-08))
 c6ffaa08eb490d11e8f208b7f8ec7a1e291d55c3cee01e58aa84466fe1983f89  docs/jev/blocks-release.md
 46c4f6e3ca23871e59c25366e8acf9818e43113546f0cd107571ae110f6c10cb  docs/jev/breaks-play.md
 5265aebdecf03fddf333877bd78918d3d5aa67790ebb2f2b3d6ee5f97c23af41  docs/lessons.md
