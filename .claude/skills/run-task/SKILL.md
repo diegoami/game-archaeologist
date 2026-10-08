@@ -154,4 +154,5 @@ Never:
 - weaken a Done-when;
 - let the implementer's model family review its PR;
 - relay part of a review;
+- dispatch a `model-driven` task before its carve-out's table and gate are merged (process.md §10, L63);
 - force-push or rewrite `main`.

@@ -73,3 +73,12 @@ project reviews its UI (a person looks at the screen).
 - Name a model id you have not just seen in a live list.
 - Send private repository content or personal data to a provider the user has not cleared for it.
 - Spend on a batch without saying the cost first.
+
+## A rule's carve-out (process.md §10)
+
+When a project's `CLAUDE.md` loosens a rule by carve-out, three changes merge before the first
+task that uses it: the known-good table in a finding, the gate in `tools/` that checks every
+record against it, and the task file for the first run, which names the carve-out's lettered
+preconditions as Done-when lines. Delegate a `model-driven` task only once the gate accepts the
+implementer's run records; such a run corroborates the owner's runs, never replaces them, and its
+results amend the wording one claim at a time, never in bulk. (L63)
