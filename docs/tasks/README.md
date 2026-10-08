@@ -21,3 +21,4 @@ Each title ends with the task's plan label (A1, A2, …) from
 | T13 | Harness bump 48b788d → 6caba7b (L58, L59, alibaba quota) | #37 | T08 |
 | T14 | A7 milestone 1: the two-machine claim race test | #39 | T13 |
 | T15 | Harness bump 6caba7b → b8c6cde (minimax quota gate, brief by file L60) | #40 | T13 |
+| T16 | Harness bump b8c6cde → ebc5558 (L61, L63, the chooser, readReview #108, --copy folders) | #42 | T15 |
