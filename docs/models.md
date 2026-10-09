@@ -92,7 +92,7 @@ isle-wars-archaeology (CLAUDE.md rule 20):
 | Difficulty | Implementer | If it is unavailable | Reviewer | If it is unavailable |
 | --- | --- | --- | --- | --- |
 | Easy, the default | GLM-5.3 Flash | mm-m2.7, then MiMo V2.6 Flash, then Sonnet | GPT-5.6 Luna | Sonnet |
-| Hard | MiMo V2.6 Flash (L67) | Sonnet | **GLM-5.3**; **GPT-6.1 Sol** (at `low`) for a guard task and for a hard task's last rework round | MiMo V2.6 Pro (`mimo-pro`), then Opus |
+| Hard | MiMo V2.6 Flash (L67) | Sonnet | **GLM-5.3**; **GPT-6.1 Sol** (at `low`) for a guard task and for a hard task's last rework round | MiMo V2.6 Pro (`mimo-pro`), then Luna (`reviewer.hard`); the harness's Claude fallback is Sonnet (`claudeFallback`), and a hard task names Opus instead (below) |
 
 **Sol is used sparingly** (the owner, 2026-10-04): it reviews only **guard tasks** (blindness, the
 originals guard, sealed rules, record integrity) and the **last rework round of a hard task**, at
