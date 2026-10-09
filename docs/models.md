@@ -24,7 +24,7 @@ roster names: this page's `sol` is their `gpt-6-sol`.
 | `zai-glm-5.3-flash` | GLM-5.3 Flash, `zai-coding-plan/glm-5.3-flash` | GLM | **easy implementer**, the `harness.json` default; probed 2026-10-03, PONG in 5 s |
 | `mimo-flash` | MiMo V2.6 Flash, `opencode-go/mimo-v2.6-flash` (no variants offered) | MiMo | **hard implementer** (`--model mimo-flash`), third in `implementer.chain`; on watch: new (L67, 2026-10-09) |
 | `mimo-pro` | MiMo V2.6 Pro, `opencode-go/mimo-v2.6-pro` (no variants offered, heavy) | MiMo | second in `reviewer.hard`; the hard reviewer when GLM implemented; on watch: new (L67) |
-| `luna` | GPT-5.6 Luna, `openai/gpt-5.6-luna` at `high`, the direct OpenAI route, on its own weekly pool (`gpt-5.6-luna:7d`; L51, 2026-10-04) | OpenAI | **easy reviewer**, the `harness.json` default, and the research reviewer |
+| `luna` | GPT-5.6 Luna, `openai/gpt-5.6-luna` at `high`, the direct OpenAI route, on OpenAI's main quota (L65, 2026-10-09; its own `gpt-5.6-luna:7d` pool, L51, is gone) | OpenAI | **easy reviewer**, the `harness.json` default, and the research reviewer |
 | `luna-6` | GPT-6 Luna, `openai/gpt-6-luna`, on OpenAI's main pool with Sol | OpenAI | outside the chains, never the reviewer (L51); `luna` until 2026-10-04 |
 | `gpt-6.1-sol` | GPT-6.1 Sol, `openai/gpt-6.1-sol` | OpenAI | **hard reviewer** (`--reviewer gpt-6.1-sol`); probed 2026-10-03, PONG in 6 s |
 | `sol` | GPT-6 Sol, `openai/gpt-6-sol` | OpenAI | the hard reviewer before 6.1 (T05, T06) |
@@ -190,9 +190,9 @@ run, the review goes to a substitute instead of waiting, unless the owner says t
 
 **First, diagnose.** Read the run's error file (`/tmp/harness-opencode/<session>.err.txt`) and probe
 `node tools/harness/switch-model.mjs --role reviewer --model openai/gpt-6.1-sol --name gpt-6.1-sol --probe --dry-run`.
-Check quota-tracker first (L50): `curl -s localhost:8765/quota/openai`. When the main `7d` window is
-exhausted, Sol is blocked, but GPT-5.6 Luna draws on its own `gpt-5.6-luna:7d` window and is still an
-option while that is under 95% (L51).
+Check quota-tracker first (L50): `curl -s localhost:8765/quota/openai`. Sol and Luna share OpenAI's
+main quota; when it is exhausted, Sol is blocked, but Luna still runs only if `/quota/openai`'s
+`when_exhausted.usable_models` lists `gpt-5.6-luna` (L65).
 
 **Substitutes, in order** (skip the implementer's family):
 
