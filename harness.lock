@@ -2,12 +2,12 @@
 # A bump: move this file and every file it lists aside, run adopt.mjs at the new commit,
 # then carry your changes to the adapted files (and any other) over to the new copies.
 # Verify:  grep -E '^[0-9a-f]{64}  ' harness.lock | sha256sum -c --quiet
-commit 467809b29cf9d769d3ef789f870a045be9bef863
+commit 8b1642c1b91f5c9291ca651d0472778e32f1e303
 profile full
-copied 2026-10-09 (bumped from b05e0d8, the owner's 2026-10-08 go-ahead: 019a71c, the chooser ranks by quota-tracker's /recommend (score = spare calls per day until the pool resets, comparable across providers where headroom percentages are not, the owner 2026-10-08; readPricing is removed and readRecommend replaces it; Alibaba stays unranked, #125); 467809b, L64 (process.md §2: for a guard, each constraint is its own numbered Done-when line, and the main session pushes the guard's tests to the task branch before dispatch, one mutation test per predicted bypass class, failing until the guard lands; lessons.md L64 grounds it on four runs). Out of scope: PR #137 (L66's rejections.mjs and the scratch-folder / agent-file changes) is open upstream; the L66 row arrived at b05e0d8, the implementation is a follow-up bump.)
+copied 2026-10-09 (bumped from 467809b, the owner's 2026-10-09 decision: 8b1642c, L65 — Luna is judged on OpenAI's main quota like Sol; /quota/openai's when_exhausted.usable_models names gpt-5.6-luna as the model that still runs when OpenAI is exhausted; lib/quota.mjs no longer does a per-model-window lookup. readRecommend (T18) stays. Out of scope: PR #137 (L66's rejections.mjs and the agent-file scratch-folder changes) is open upstream; the L66 row arrived at b05e0d8, the implementation is a follow-up bump.)
 adapt CLAUDE.md  (project line; rules 7, 9, 11 from the template; conditional rules 17-20 deleted, none apply; project section added; rule 20 points to the quota check, L50)
 adapt docs/tasks/README.md  (this repository's task index)
-adapt harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the guard and last-round reviewer; + zai-glm-5.3 and deepseek-pro, the hard reviewers and Sol's substitutes; Sol entries and zai-glm-5.3 at variant low (heavy models at the lightest effort, owner 2026-10-05); + the entries mm-m3, mm-m2.7, ali-deepseek-pro, ali-deepseek-flash, ali-qwen-max, ali-qwen-flash, ali-glm (MiniMax and the Alibaba Token Plan, probed 2026-10-06, placed the same day — the owner, 2026-10-06; roster, placements and pricing in docs/models.md); implementer.chain = zai-glm-5.3-flash, mm-m2.7, ali-qwen-flash; reviewer fallback sonnet; reviewer.hard = zai-glm-5.3, ali-glm, ali-qwen-max, deepseek-pro, ali-deepseek-pro, luna and reviewer.sol = gpt-6.1-sol (mm-m3 is Sol's alternate when openai is exhausted and the L38 heavy rung, docs/models.md); luna = GPT-5.6 Luna and luna-6 = GPT-6 Luna outside the chains (L51); the template's own watch entries, upstream since this pin, are not copied — our routing is docs/models.md; at ebc5558 neither is the template's `chooser` block nor #116, mm-m3 in its reviewer.hard: choose.mjs falls back to our chains without the block; at b05e0d8 the template's band-3 chooser fix (#125) is part of the bump, our chains still unchanged; at b05e0d8 the template's band-3 chooser fix (#125) is part of the bump, our chains still unchanged; at 467809b the chooser ranks by /recommend (readRecommend replaces readPricing) and our chains still unchanged)
+adapt harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the guard and last-round reviewer; + zai-glm-5.3 and deepseek-pro, the hard reviewers and Sol's substitutes; Sol entries and zai-glm-5.3 at variant low (heavy models at the lightest effort, owner 2026-10-05); + the entries mm-m3, mm-m2.7, ali-deepseek-pro, ali-deepseek-flash, ali-qwen-max, ali-qwen-flash, ali-glm (MiniMax and the Alibaba Token Plan, probed 2026-10-06, placed the same day — the owner, 2026-10-06; roster, placements and pricing in docs/models.md); implementer.chain = zai-glm-5.3-flash, mm-m2.7, ali-qwen-flash; reviewer fallback sonnet; reviewer.hard = zai-glm-5.3, ali-glm, ali-qwen-max, deepseek-pro, ali-deepseek-pro, luna and reviewer.sol = gpt-6.1-sol (mm-m3 is Sol's alternate when openai is exhausted and the L38 heavy rung, docs/models.md); luna = GPT-5.6 Luna and luna-6 = GPT-6 Luna outside the chains (L51); the template's own watch entries, upstream since this pin, are not copied — our routing is docs/models.md; at ebc5558 neither is the template's `chooser` block nor #116, mm-m3 in its reviewer.hard: choose.mjs falls back to our chains without the block; at b05e0d8 the template's band-3 chooser fix (#125) is part of the bump, our chains still unchanged; at b05e0d8 the template's band-3 chooser fix (#125) is part of the bump, our chains still unchanged; at 467809b the chooser ranks by /recommend (readRecommend replaces readPricing) and our chains still unchanged; at 467809b the /recommend-driven chooser is in, our chains still unchanged; at 8b1642c the L65 quota-gate contract is in, our chains still unchanged)
 15f1fcb3af4cd07482f39328e2255a71075f4889946901960116f9a3a5b4c16f  .claude/agents/implementer.md
 585e0f9cfc63fc1643e96a2ee0dc337f23598d1c7f632d0bf0926b7f139a6f6c  .claude/agents/reviewer.md
 6661ffc3140de393a054db11750b1c12245ac229bbc742d92d71624bbaea4ce3  .claude/hooks/session-start.sh
@@ -19,10 +19,10 @@ e99fedef64f7850a76794396088568a4046692abfc6ff14aabadf81bc83fe65c  .claude/skills
 8a63c4093207e8f96230e8e6c92019c06897434ca8b70f287e76821ff09502d6  .github/pull_request_template.md
 612256c7d6a31d83ace0a69a445d11e1edf244e5f6da0cfc34b74a7b03cf7030  .opencode/agents/implementer.md
 bafafb85b338b3ab0ebb6f303ddab7652474236d62217f06e21f92f092e7c44c  .opencode/agents/reviewer.md
-869da3f6e4e5a31ff6aae90c541450e177022a9c7e568d05364ca6711214b532  docs/environment.md
+829b5d22260b338f869dd2575a70372000b59a51b6108738e9aa0c59c6c782d5  docs/environment.md
 c6ffaa08eb490d11e8f208b7f8ec7a1e291d55c3cee01e58aa84466fe1983f89  docs/jev/blocks-release.md
 46c4f6e3ca23871e59c25366e8acf9818e43113546f0cd107571ae110f6c10cb  docs/jev/breaks-play.md
-b4c4e49ab978520a8cbf9075c9cafe5273334b3315d34a524a1c1d0f06828b3e  docs/lessons.md
+7a2948444b3ad9ad4b1cc38b17d022e266812079953e4523caa65ae840a20c28  docs/lessons.md
 cd05b6f54547def01d3a04e0b9a929fd2e8b7a851fe3318471a6159206107e0c  docs/process.md
 325385ce86485b764e18a17dbee408d014b968f78a2e727c5116a8f9becf3511  docs/review-brief.md
 9c7ca9c3de1bb23afc291db83f140d45054d6537815ad37335dd97551a7d087a  docs/tasks/TEMPLATE.md
@@ -41,7 +41,7 @@ b65cc055307ca29a94c1f882262395737af1ae776b3561bd32d187740622b9af  tools/harness/
 a6bf727222667a4c1744a8d01206e3fd36208203d80df117ff1216e08339ecf7  tools/harness/lib/models.mjs
 44cc792f4867614f7995940862256ee719b5db50a335f6ae432e932d6af0eacf  tools/harness/lib/opencode.mjs
 5005d641b97629f37b2e0e4874ca0e46358d101828169bd7b7d74eff3ee10e4c  tools/harness/lib/post.mjs
-f67f77bb3fb0e95769b58706f15676b4d49d45a025f30447f528330747c33d53  tools/harness/lib/quota.mjs
+00e299515d581b12747f4159a97dc8c645eeaaa7b784023ef78f96572241a8fc  tools/harness/lib/quota.mjs
 66379ce8b5620f13ac48634a9f54e1eabfd6f451c06161219f6883b541bd3452  tools/harness/lib/review-selftest.mjs
 7ff1c2e4d238bb3e5e6210ac170d0579a5c3eeada083ea78bb31f4ab4d12c43d  tools/harness/lib/switch.mjs
 4177a849a38ffae17dd460d9c210860d92ef0766dd4d79ca170ee07119c9eae8  tools/harness/lib/unsaved.mjs
