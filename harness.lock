@@ -2,36 +2,38 @@
 # A bump: move this file and every file it lists aside, run adopt.mjs at the new commit,
 # then carry your changes to the adapted files (and any other) over to the new copies.
 # Verify:  grep -E '^[0-9a-f]{64}  ' harness.lock | sha256sum -c --quiet
-commit ebc5558ad6256344d502d1c07ba8f5949cdc6ef4
+commit b05e0d86b2d0865065997050c42ccbc5f3df8199
 profile full
-copied 2026-10-08 (bumped from b8c6cde, the owner's green light of 2026-10-08: L61, the reviewer's git-without -C rule scoped to its own worktree; #108/#121, readReview reads a `#<issue>` header and a label failure after a posted review exits 0 with a warning (upstream lessons.md has no L62 entry); #91, implement.mjs --copy creates the copied file's folders and refuses symlink and path escapes; #119, Alibaba unmonitored; #117, the chooser (choose.mjs, lib/choose.mjs, readPricing); L63, the rule carve-out (process.md §10, §11) and the model-driven Kind)
+copied 2026-10-09 (bumped from ebc5558, the owner's green light of 2026-10-08 in harness_imperial#120, b05e0d8 PR #131: claim.mjs and lib/claim.mjs (H4, multi-machine task claims by compare-and-set ref, the owner's deviation from ADR-005 §2 on 2026-10-08 — the claim ref points at a claim commit, not at main's SHA itself, because GitHub records no ref creation time); the band-3 chooser fix (#125) puts an unknown-headroom provider (Alibaba, unmonitored) in its own last band; the L62 row arrives in lessons.md. Out of scope: 019a71c (#134, the recommend-driven chooser) and 467809b (#135, L64's guard-test ordering plus L66's scratch folder and rejections.mjs); both are a follow-up bump)
 adapt CLAUDE.md  (project line; rules 7, 9, 11 from the template; conditional rules 17-20 deleted, none apply; project section added; rule 20 points to the quota check, L50)
 adapt docs/tasks/README.md  (this repository's task index)
-adapt harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the guard and last-round reviewer; + zai-glm-5.3 and deepseek-pro, the hard reviewers and Sol's substitutes; Sol entries and zai-glm-5.3 at variant low (heavy models at the lightest effort, owner 2026-10-05); + the entries mm-m3, mm-m2.7, ali-deepseek-pro, ali-deepseek-flash, ali-qwen-max, ali-qwen-flash, ali-glm (MiniMax and the Alibaba Token Plan, probed 2026-10-06, placed the same day — the owner, 2026-10-06; roster, placements and pricing in docs/models.md); implementer.chain = zai-glm-5.3-flash, mm-m2.7, ali-qwen-flash; reviewer fallback sonnet; reviewer.hard = zai-glm-5.3, ali-glm, ali-qwen-max, deepseek-pro, ali-deepseek-pro, luna and reviewer.sol = gpt-6.1-sol (mm-m3 is Sol's alternate when openai is exhausted and the L38 heavy rung, docs/models.md); luna = GPT-5.6 Luna and luna-6 = GPT-6 Luna outside the chains (L51); the template's own watch entries, upstream since this pin, are not copied — our routing is docs/models.md; at ebc5558 neither is the template's `chooser` block nor #116, mm-m3 in its reviewer.hard: choose.mjs falls back to our chains without the block)
+adapt harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the guard and last-round reviewer; + zai-glm-5.3 and deepseek-pro, the hard reviewers and Sol's substitutes; Sol entries and zai-glm-5.3 at variant low (heavy models at the lightest effort, owner 2026-10-05); + the entries mm-m3, mm-m2.7, ali-deepseek-pro, ali-deepseek-flash, ali-qwen-max, ali-qwen-flash, ali-glm (MiniMax and the Alibaba Token Plan, probed 2026-10-06, placed the same day — the owner, 2026-10-06; roster, placements and pricing in docs/models.md); implementer.chain = zai-glm-5.3-flash, mm-m2.7, ali-qwen-flash; reviewer fallback sonnet; reviewer.hard = zai-glm-5.3, ali-glm, ali-qwen-max, deepseek-pro, ali-deepseek-pro, luna and reviewer.sol = gpt-6.1-sol (mm-m3 is Sol's alternate when openai is exhausted and the L38 heavy rung, docs/models.md); luna = GPT-5.6 Luna and luna-6 = GPT-6 Luna outside the chains (L51); the template's own watch entries, upstream since this pin, are not copied — our routing is docs/models.md; at ebc5558 neither is the template's `chooser` block nor #116, mm-m3 in its reviewer.hard: choose.mjs falls back to our chains without the block; at b05e0d8 the template's band-3 chooser fix (#125) is part of the bump, our chains still unchanged)
 15f1fcb3af4cd07482f39328e2255a71075f4889946901960116f9a3a5b4c16f  .claude/agents/implementer.md
 585e0f9cfc63fc1643e96a2ee0dc337f23598d1c7f632d0bf0926b7f139a6f6c  .claude/agents/reviewer.md
 6661ffc3140de393a054db11750b1c12245ac229bbc742d92d71624bbaea4ce3  .claude/hooks/session-start.sh
 9d2227215dcf47b9dc7c41d5c9b7f8c5b79dd962c3fb8c3f8f625032fa5eefae  .claude/settings.json
-adapt .claude/skills/delegate/SKILL.md  (quota step: /recommend, not /best (harness_imperial f91210b; the owner, 2026-10-08))
+80669f43d940b42eeadabe50f851b3a9570784ca4ae67536e91f907dc5e789bb  .claude/skills/delegate/SKILL.md
 218462f453d5432db791c7697d7d34970491af106f8e1d1b95b0e0ef6f86747a  .claude/skills/jev/SKILL.md
 f8214dda14e21c82e5eced8db46cfa3b6bb0660cb2c4e8be2892e30698f36e0b  .claude/skills/run-task/SKILL.md
 e99fedef64f7850a76794396088568a4046692abfc6ff14aabadf81bc83fe65c  .claude/skills/switch-model/SKILL.md
 8a63c4093207e8f96230e8e6c92019c06897434ca8b70f287e76821ff09502d6  .github/pull_request_template.md
 612256c7d6a31d83ace0a69a445d11e1edf244e5f6da0cfc34b74a7b03cf7030  .opencode/agents/implementer.md
 bafafb85b338b3ab0ebb6f303ddab7652474236d62217f06e21f92f092e7c44c  .opencode/agents/reviewer.md
-adapt docs/environment.md  (quota step: /recommend, not /best (harness_imperial f91210b; the owner, 2026-10-08))
+49ca813c34d80b04cbc2b97608922bdbb69b3574494500ed29d5996b5d5729dd  docs/environment.md
 c6ffaa08eb490d11e8f208b7f8ec7a1e291d55c3cee01e58aa84466fe1983f89  docs/jev/blocks-release.md
 46c4f6e3ca23871e59c25366e8acf9818e43113546f0cd107571ae110f6c10cb  docs/jev/breaks-play.md
-5265aebdecf03fddf333877bd78918d3d5aa67790ebb2f2b3d6ee5f97c23af41  docs/lessons.md
+2fffc43414c1592e4a54487e4eb60cfedeaca84d0d04d7895a88b6a63e438716  docs/lessons.md
 5657979356bd8667df11cae58f22b0d3b69f61e1aa87502c19f5ab583c844b97  docs/process.md
 325385ce86485b764e18a17dbee408d014b968f78a2e727c5116a8f9becf3511  docs/review-brief.md
 9c7ca9c3de1bb23afc291db83f140d45054d6537815ad37335dd97551a7d087a  docs/tasks/TEMPLATE.md
-50b4444e78446ec3c0c1bb957e0e6596b6b547cdec15baa819dfca6cd99e8a24  tools/harness/choose.mjs
+c5f22db90b58920542eca6b5a8d95ef2492fb2541356b487cf150c6dc0679ad6  tools/harness/choose.mjs
+0628080fdc67ee48bff5ececd479ddb13755edd7db2fa5905838a323d9f041c4  tools/harness/claim.mjs
 518ad06ab39fdd22407b864ba878acf404ffe9dac5a8e9b19b4d44b574fe6342  tools/harness/guard.mjs
 fb0c7cabde9d9555fe722ecf9d30b5e7f45142f854acc67f08a57aaef9aeea51  tools/harness/implement.mjs
 9befbffd7ca14116d581da6fefefbe5d43514f8c3d4a7419467f4a7810e8f96b  tools/harness/jev.mjs
 076fd078b9efac40b9ae72644f672f76fcc016a049556f61579f07fef06d9c55  tools/harness/lib/chain.mjs
-0e85912c01040321967a962dcbfd999f4ca4d4556ccb968425b1494f4ab8454d  tools/harness/lib/choose.mjs
+dcfaeb10652e0ed76a58b7f425e2f479b97a413e504e85050ae62055d1f20799  tools/harness/lib/choose.mjs
+b82b7d62e2b543b565cb900684a9fbf611da1737b127e59cd2577c0add6a23d1  tools/harness/lib/claim.mjs
 0545b589015389325ea5807b00204a3d268110c6f25aebb6d9d759d25d4fcc55  tools/harness/lib/common.mjs
 411151214b90b3847a643139417aad0b4863971c6d6ab4c271f249aa09e9ebc1  tools/harness/lib/guard.mjs
 2020f3a9dc6295089dde3481f2c08bce6d924fa031dffee1e68b6e0ce884e34a  tools/harness/lib/jail.mjs
