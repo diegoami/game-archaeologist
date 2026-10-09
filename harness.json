@@ -1,10 +1,10 @@
 {
   "worktreeRoot": "../{repo}-work",
   "models": {
-    "deepseek-flash": {
-      "id": "opencode-go/deepseek-v4.1-flash",
-      "variant": "high",
-      "family": "deepseek"
+    "mimo-flash": {
+      "id": "opencode-go/mimo-v2.6-flash",
+      "family": "mimo",
+      "watch": "New (the owner, 2026-10-09): takes the place of a model blacklisted on every route (L67). The owner tested it on implement, fix and review tasks, all passed; not yet run here. It offers no variants, so no variant field. A family of its own (mimo) for the reviewer-family rule."
     },
     "luna": {
       "id": "openai/gpt-5.6-luna",
@@ -36,10 +36,10 @@
       "variant": "low",
       "family": "glm"
     },
-    "deepseek-pro": {
-      "id": "opencode-go/deepseek-v4-pro",
-      "variant": "high",
-      "family": "deepseek"
+    "mimo-pro": {
+      "id": "opencode-go/mimo-v2.6-pro",
+      "family": "mimo",
+      "watch": "New (the owner, 2026-10-09): takes the place of a model blacklisted on every route (L67). The owner tested it (the heavy model on OpenCode Go) on implement, fix and review tasks, all passed; not yet run here. It offers no variants, so no variant field. A family of its own (mimo) for the reviewer-family rule."
     },
     "mm-m3": {
       "id": "minimax/MiniMax-M3",
@@ -49,16 +49,6 @@
     "mm-m2.7": {
       "id": "minimax/MiniMax-M2.7",
       "family": "minimax"
-    },
-    "ali-deepseek-pro": {
-      "id": "alibaba-token-plan/deepseek-v4-pro-0813",
-      "variant": "high",
-      "family": "deepseek"
-    },
-    "ali-deepseek-flash": {
-      "id": "alibaba-token-plan/deepseek-v4.1-flash",
-      "variant": "high",
-      "family": "deepseek"
     },
     "ali-qwen-max": {
       "id": "alibaba-token-plan/qwen3.8-max",
@@ -81,7 +71,7 @@
     "chain": [
       "zai-glm-5.3-flash",
       "mm-m2.7",
-      "ali-qwen-flash"
+      "mimo-flash"
     ],
     "claudeFallback": "sonnet",
     "startupTimeoutSec": 180,
@@ -99,10 +89,7 @@
     "totalTimeoutSec": 3600,
     "hard": [
       "zai-glm-5.3",
-      "ali-glm",
-      "ali-qwen-max",
-      "deepseek-pro",
-      "ali-deepseek-pro",
+      "mimo-pro",
       "luna"
     ],
     "sol": "gpt-6.1-sol"

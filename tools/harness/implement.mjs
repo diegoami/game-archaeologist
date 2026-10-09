@@ -12,7 +12,7 @@
 // the handover: a PR exists, the worktree is clean, pushed and detached.
 //
 // The model is harness.json's implementer.chain (one model, by the user's decision of 2026-10-02:
-// DeepSeek V4.1 Flash, then Claude Sonnet); --model runs another alone. Runs use the scripts' own
+// GLM-5.3 Flash, then MiMo V2.6 Flash, then Claude Sonnet); --model runs another alone. Runs use the scripts' own
 // OpenCode data directory, and a model OpenCode does not list there exits 3 before anything is
 // billed. With a longer chain, the next model runs
 // only on an infrastructure failure, and only when the failed run left nothing behind (no new
@@ -144,11 +144,11 @@ RUN RULES (from tools/harness/implement.mjs; they override the brief where they 
   git worktree. Pass git -C "${worktree}" explicitly.
 - Everything else in the brief is binding: Owns, Done when, the PR body, the detach, the report.
 - The PR body's "Closes #${issue}" is the only place a closing keyword may precede #<n>.
-- Never read, write or redirect to any path outside your worktree: no /tmp, no home directory, no
-  git internals (in a worktree, .git points into the main checkout). Scratch files and any TMPDIR go
-  in a folder inside the worktree, which you never commit (add files by name, never git add -A), and
-  which you delete before your last commit. A test that needs a TMPDIR outside every checkout is
-  run by the main session, not by you. (L57)
+- Never read, write or redirect to any path outside your worktree but your scratch folder: no other
+  /tmp path, no home directory, no git internals (in a worktree, .git points into the main
+  checkout). Scratch files go in your scratch folder ($TMPDIR, named at the top of this brief),
+  which is outside every checkout, so a test that needs a TMPDIR outside git uses it too. Add files
+  to commits by name, never git add -A. (L57, L66)
 - Commit and push after each step, so a run that ends early keeps its work. (L57)
 `;
 const openPr = () => sh('gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number', '--jq', '.[0].number'], { cwd: top, allowFail: true });
