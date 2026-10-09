@@ -22,3 +22,4 @@ Each title ends with the task's plan label (A1, A2, …) from
 | T14 | A7 milestone 1: the two-machine claim race test | #39 | T13 |
 | T15 | Harness bump 6caba7b → b8c6cde (minimax quota gate, brief by file L60) | #40 | T13 |
 | T16 | Harness bump b8c6cde → ebc5558 (L61, L63, the chooser, readReview #108, --copy folders) | #42 | T15 |
+| T17 | Harness bump ebc5558 → b05e0d8 (claim.mjs H4; ADR-005 amendment; T14 reopen) | #44 | T16 |
