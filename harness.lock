@@ -2,9 +2,9 @@
 # A bump: move this file and every file it lists aside, run adopt.mjs at the new commit,
 # then carry your changes to the adapted files (and any other) over to the new copies.
 # Verify:  grep -E '^[0-9a-f]{64}  ' harness.lock | sha256sum -c --quiet
-commit 8b1642c1b91f5c9291ca651d0472778e32f1e303
+commit c8d62a7fcc5a87788e91c44b2d6298311f2840c7
 profile full
-copied 2026-10-09 (bumped from 467809b, the owner's 2026-10-09 decision: 8b1642c, L65 — Luna is judged on OpenAI's main quota like Sol; /quota/openai's when_exhausted.usable_models names gpt-5.6-luna as the model that still runs when OpenAI is exhausted; lib/quota.mjs no longer does a per-model-window lookup. readRecommend (T18) stays. Out of scope: PR #137 (L66's rejections.mjs and the agent-file scratch-folder changes) is open upstream; the L66 row arrived at b05e0d8, the implementation is a follow-up bump.)
+copied 2026-10-09 (bumped from 8b1642c, the owner's 2026-10-09 quota-tracker update at c8d62a7 (PR #142, L66-quota): /recommend now returns a `pair` field (pair.implementer and pair.reviewer, the reviewer from another model family), and L51's evidence cell in lessons.md gets a 2026-10-09 correction note (Luna has no own pool any more, /quota/openai no longer carries gpt-5.6-luna:7d, see L65; the rule L51 is unchanged). At c8d62a7 .claude/skills/delegate/SKILL.md is no longer adapted: the upstream file now includes the pair paragraph and matches what we want. The chooser in our harness.json stays advisory; our routing in docs/models.md is unchanged. Out of scope: PR #137 (L66's rejections.mjs and the agent-file scratch-folder changes) is still open upstream; the L66 row arrived at b05e0d8, the implementation is a follow-up bump.)
 adapt CLAUDE.md  (project line; rules 7, 9, 11 from the template; conditional rules 17-20 deleted, none apply; project section added; rule 20 points to the quota check, L50)
 adapt docs/tasks/README.md  (this repository's task index)
 adapt harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy implementer and the default; + gpt-6.1-sol, the guard and last-round reviewer; + zai-glm-5.3 and deepseek-pro, the hard reviewers and Sol's substitutes; Sol entries and zai-glm-5.3 at variant low (heavy models at the lightest effort, owner 2026-10-05); + the entries mm-m3, mm-m2.7, ali-deepseek-pro, ali-deepseek-flash, ali-qwen-max, ali-qwen-flash, ali-glm (MiniMax and the Alibaba Token Plan, probed 2026-10-06, placed the same day — the owner, 2026-10-06; roster, placements and pricing in docs/models.md); implementer.chain = zai-glm-5.3-flash, mm-m2.7, ali-qwen-flash; reviewer fallback sonnet; reviewer.hard = zai-glm-5.3, ali-glm, ali-qwen-max, deepseek-pro, ali-deepseek-pro, luna and reviewer.sol = gpt-6.1-sol (mm-m3 is Sol's alternate when openai is exhausted and the L38 heavy rung, docs/models.md); luna = GPT-5.6 Luna and luna-6 = GPT-6 Luna outside the chains (L51); the template's own watch entries, upstream since this pin, are not copied — our routing is docs/models.md; at ebc5558 neither is the template's `chooser` block nor #116, mm-m3 in its reviewer.hard: choose.mjs falls back to our chains without the block; at b05e0d8 the template's band-3 chooser fix (#125) is part of the bump, our chains still unchanged; at b05e0d8 the template's band-3 chooser fix (#125) is part of the bump, our chains still unchanged; at 467809b the chooser ranks by /recommend (readRecommend replaces readPricing) and our chains still unchanged; at 467809b the /recommend-driven chooser is in, our chains still unchanged; at 8b1642c the L65 quota-gate contract is in, our chains still unchanged)
@@ -12,7 +12,7 @@ adapt harness.json  (models: + sol, GPT-6 Sol; + zai-glm-5.3-flash, the easy imp
 585e0f9cfc63fc1643e96a2ee0dc337f23598d1c7f632d0bf0926b7f139a6f6c  .claude/agents/reviewer.md
 6661ffc3140de393a054db11750b1c12245ac229bbc742d92d71624bbaea4ce3  .claude/hooks/session-start.sh
 9d2227215dcf47b9dc7c41d5c9b7f8c5b79dd962c3fb8c3f8f625032fa5eefae  .claude/settings.json
-80669f43d940b42eeadabe50f851b3a9570784ca4ae67536e91f907dc5e789bb  .claude/skills/delegate/SKILL.md
+db7328e490f1a1e05d075989cbd3bd8daabfb7327168b8d6ba0b16d54fce6b88  .claude/skills/delegate/SKILL.md
 218462f453d5432db791c7697d7d34970491af106f8e1d1b95b0e0ef6f86747a  .claude/skills/jev/SKILL.md
 f8214dda14e21c82e5eced8db46cfa3b6bb0660cb2c4e8be2892e30698f36e0b  .claude/skills/run-task/SKILL.md
 e99fedef64f7850a76794396088568a4046692abfc6ff14aabadf81bc83fe65c  .claude/skills/switch-model/SKILL.md
@@ -22,7 +22,7 @@ bafafb85b338b3ab0ebb6f303ddab7652474236d62217f06e21f92f092e7c44c  .opencode/agen
 829b5d22260b338f869dd2575a70372000b59a51b6108738e9aa0c59c6c782d5  docs/environment.md
 c6ffaa08eb490d11e8f208b7f8ec7a1e291d55c3cee01e58aa84466fe1983f89  docs/jev/blocks-release.md
 46c4f6e3ca23871e59c25366e8acf9818e43113546f0cd107571ae110f6c10cb  docs/jev/breaks-play.md
-7a2948444b3ad9ad4b1cc38b17d022e266812079953e4523caa65ae840a20c28  docs/lessons.md
+6162d18aee70cbb68c5d5fce7e43f052956a5e268d0ecbf90f0270871ba16e1a  docs/lessons.md
 cd05b6f54547def01d3a04e0b9a929fd2e8b7a851fe3318471a6159206107e0c  docs/process.md
 325385ce86485b764e18a17dbee408d014b968f78a2e727c5116a8f9becf3511  docs/review-brief.md
 9c7ca9c3de1bb23afc291db83f140d45054d6537815ad37335dd97551a7d087a  docs/tasks/TEMPLATE.md
