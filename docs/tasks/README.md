@@ -25,3 +25,4 @@ Each title ends with the task's plan label (A1, A2, …) from
 | T17 | Harness bump ebc5558 → b05e0d8 (claim.mjs H4; ADR-005 amendment; T14 reopen) | #44 | T16 |
 | T18 | Harness bump b05e0d8 → 467809b (L64, /recommend-driven chooser) | #46 | T17 |
 | T19 | Harness bump 467809b → 8b1642c (L65: Luna on OpenAI's main quota) | #48 | T18 |
+| T20 | Harness bump 8b1642c → c8d62a7 (/recommend pair field; L51 correction note) | #50 | T19 |
