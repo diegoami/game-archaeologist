@@ -48,7 +48,7 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
     with Sonnet as both fallbacks. **Hard**: MiMo V2.6 Flash implements and GLM-5.3 reviews (L67, the owner's decision of 2026-10-09); GPT-6.1 Sol
     (effort `low`, `medium` if justified, never `high`; every heavy model runs at its lightest effort, `docs/models.md`) reviews guard tasks and a hard task's last rework round,
     and every complex task: guards, harness or driver changes, measurement integrity, research deliverables,
-    plans with many acceptance lines (the owner, 2026-10-04). GPT-5.6 Luna (`luna`, its own weekly pool; harness_imperial L51) reviews only small, simple PRs. A task is hard if it is a **guard task** (its failure
+    plans with many acceptance lines (the owner, 2026-10-04). GPT-5.6 Luna (`luna`, on OpenAI's main quota; L65) reviews only small, simple PRs. A task is hard if it is a **guard task** (its failure
     would leak or corrupt evidence: blindness, the originals guard, sealed rules, record integrity),
     if it adds a new mechanism across several files or a new external dependency, if it implements
     game rules, formulas or constants from evidence (the owner's decision of 2026-10-03), or if an earlier
