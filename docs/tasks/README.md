@@ -28,3 +28,4 @@ Each title ends with the task's plan label (A1, A2, …) from
 | T20 | Harness bump 8b1642c → c8d62a7 (/recommend pair field; L51 correction note) | #50 | T19 |
 | T21 | Harness bump c8d62a7 → d7ddd48 (L66a per-run scratch, L67 DeepSeek → MiMo, #147, #149) | #52 | T20 |
 | T22 | Harness bump d7ddd48 → 552f6ec (L68 denied calls past a threshold, L66b scratch kept on failure) | #56 | T21 |
+| T23 | Model choice follows /recommend: rules in CLAUDE.md and AGENTS.md, models.md rewritten (#60 part 1) | #61 | T22 |
