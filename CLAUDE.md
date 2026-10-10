@@ -33,6 +33,26 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
 16. Keep every file an agent must read under ~20k tokens. Scope searches to the source and test
     directories; keep terminal output quiet; show diffs, not files.
 
+## Choosing models
+
+1. Ask the quota service with the tier the work needs:
+   - `tier=heavy`: implementation work, and hard reviews
+   - `tier=light`: small tasks, and simple reviews
+   e.g. `curl -s "http://localhost:8765/recommend?tier=heavy"`
+2. A task that needs an implementer and a reviewer: one call. The implementer is
+   `pair.implementer` and the reviewer is `pair.reviewer` (same tier as the call; for a simple
+   review of heavy work, add `&review_tier=light`). Run each one's `command`.
+3. A review on its own (the implementation was done earlier): add
+   `&exclude_family=<the implementer's family>` and use `pick`.
+4. Any other single model: use `pick`.
+5. If a chosen model can't run, use the next row of `ranking` (in `rank` order). For a
+   reviewer chosen in rule 2, skip rows with the same `family` as the implementer.
+6. Nothing else decides which model to use: no lists, chains, exclusions, score thresholds
+   or percentages of your own. Every row in `ranking` is usable; rows in `skipped` are not.
+7. Record the rows you used and their `reasons` with the run.
+8. If the service doesn't answer: run `systemctl --user restart quota-tracker` in WSL and
+   retry. If it still doesn't answer, tell the owner; don't choose a model yourself.
+
 ## This project
 17. The architecture is `docs/adr/` (ADR-001..009, accepted 2026-10-02). `docs/phase0/` is the record
     they cite, including the reviews and the user's decisions U1–U12. Change it only by a recorded
@@ -43,22 +63,19 @@ vocabularies), built from the Phase 0 analysis of the Imperial Conquest 2 projec
 19. Generic only with two concrete uses (ADR-009). Original game files never enter any repository,
     and Isle Wars originals never leave the user's own machines (ADR-006, U2). The one exception is
     GOAL2, treated as abandonware: its files and extracts may sit in private `goal2-archaeology` (U17).
-20. The model pair follows the task's difficulty (the owner's decision of 2026-10-03, as in
-    isle-wars-archaeology). **Easy**, the default: GLM-5.3 Flash implements and GPT-5.6 Luna reviews,
-    with Sonnet as both fallbacks. **Hard**: MiMo V2.6 Flash implements and GLM-5.3 reviews (L67, the owner's decision of 2026-10-09); GPT-6.1 Sol
-    (effort `low`, `medium` if justified, never `high`; every heavy model runs at its lightest effort, `docs/models.md`) reviews guard tasks and a hard task's last rework round,
-    and every complex task: guards, harness or driver changes, measurement integrity, research deliverables,
-    plans with many acceptance lines (the owner, 2026-10-04). GPT-5.6 Luna (`luna`, on OpenAI's main quota; L65) reviews only small, simple PRs. A task is hard if it is a **guard task** (its failure
-    would leak or corrupt evidence: blindness, the originals guard, sealed rules, record integrity),
-    if it adds a new mechanism across several files or a new external dependency, if it implements
-    game rules, formulas or constants from evidence (the owner's decision of 2026-10-03), or if an earlier
-    round found blocking bypasses. The main session decides; the task file's Implementer and
-    Reviewer lines say `easy` or `hard` with the reason. Before choosing or delegating to any model, check its provider's quota
-    with quota-tracker (`docs/environment.md`); an `exhausted` provider is skipped for the chain's next
-    model, passed explicitly and named in the report (harness_imperial L50). The roster, the routing and what each model
-    has shown are in `docs/models.md`; the main session keeps it current. After a review with three or more
-    blocking findings, or a second round of the same class, the next round goes to a stronger
-    implementer (`docs/models.md`, escalating the implementer).
+20. Model choice follows "Choosing models" above (#60). Difficulty decides the tier: **hard**
+    uses `tier=heavy`, **easy** uses `tier=light`; a simple review of heavy work adds
+    `&review_tier=light`. A task is hard if it is a **guard task** (its failure would leak or
+    corrupt evidence: blindness, the originals guard, sealed rules, record integrity), adds a new
+    mechanism across several files or a new external dependency, implements game rules, formulas
+    or constants from evidence, or an earlier round found blocking bypasses. The main session
+    decides; the task file's Implementer and Reviewer lines say `easy` or `hard` with the reason.
+    Heavy models run at their lightest effort (`docs/models.md`); Sol at `low`, never `high`.
+    After a review with three or more blocking findings, or a second round of the same class,
+    "one step up" (rule 7, L38) means asking `tier=heavy` if the preceding round used `tier=light`.
+    A round already at `tier=heavy` keeps the ranking's choice and fixes the class.
+    Until part 2 of #60 lands, pass the chosen models explicitly: `implement.mjs --model <alias>`
+    and `review.mjs --reviewer <alias>` (`harness.json`'s `models` keys); never use `--hard` or `--sol`.
 21. **Read a delegated run's report before acting on it** (the owner, 2026-10-05). Before you retry a
     delegated run, re-route it to another model, or call it a failure, read what it returned. Never
     retry blind. An OpenCode run's final message lives in its session record, not in the log's tail
