@@ -10,62 +10,50 @@ roster names: this page's `sol` is their `gpt-6-sol`.
 
 - **No status.** What is running lives in the labels; what each run did is in its PR's measurement
   comment (process.md §9).
-- **The binding rules** are CLAUDE.md rules 1, 6 and 20. Where this page and those rules differ,
+- **The binding rules** are CLAUDE.md's "Choosing models" section and rules 1, 6 and 20. Where this page and those rules differ,
   the rules win, and this page gets fixed.
-- **Who decides.** The owner chooses the models. The main session keeps a switch cheap:
+- **Who decides.** The owner's canonical rules make `/recommend` the only model-choice source. The main session keeps a switch cheap:
   - every candidate stays probed, with a `harness.json` entry in each repository that uses it;
-  - each task file names its implementer and its reviewer, and says why when it is not the default;
+  - each task file records its difficulty and reason, and the chosen rows and their `reasons`;
   - a switch is applied to tasks not yet started, with the owner's reason in the commit message.
 
 ## The roster
 
 | Name in `harness.json` | Model and route | Family | Used for |
 | --- | --- | --- | --- |
-| `zai-glm-5.3-flash` | GLM-5.3 Flash, `zai-coding-plan/glm-5.3-flash` | GLM | **easy implementer**, the `harness.json` default; probed 2026-10-03, PONG in 5 s |
-| `mimo-flash` | MiMo V2.6 Flash, `opencode-go/mimo-v2.6-flash` (no variants offered) | MiMo | **hard implementer** (`--model mimo-flash`), third in `implementer.chain`; on watch: new (L67, 2026-10-09) |
-| `mimo-pro` | MiMo V2.6 Pro, `opencode-go/mimo-v2.6-pro` (no variants offered, heavy) | MiMo | second in `reviewer.hard`; the hard reviewer when GLM implemented; on watch: new (L67) |
-| `luna` | GPT-5.6 Luna, `openai/gpt-5.6-luna` at `high`, the direct OpenAI route, on OpenAI's main quota (L65, 2026-10-09; its own `gpt-5.6-luna:7d` pool, L51, is gone) | OpenAI | **easy reviewer**, the `harness.json` default, and the research reviewer |
-| `luna-6` | GPT-6 Luna, `openai/gpt-6-luna`, on OpenAI's main pool with Sol | OpenAI | outside the chains, never the reviewer (L51); `luna` until 2026-10-04 |
-| `gpt-6.1-sol` | GPT-6.1 Sol, `openai/gpt-6.1-sol` | OpenAI | **hard reviewer** (`--reviewer gpt-6.1-sol`); probed 2026-10-03, PONG in 6 s |
+| `zai-glm-5.3-flash` | GLM-5.3 Flash, `zai-coding-plan/glm-5.3-flash` | GLM | probed 2026-10-03, PONG in 5 s |
+| `mimo-flash` | MiMo V2.6 Flash, `opencode-go/mimo-v2.6-flash` (no variants offered) | MiMo | on watch: new (L67, 2026-10-09) |
+| `mimo-pro` | MiMo V2.6 Pro, `opencode-go/mimo-v2.6-pro` (no variants offered, heavy) | MiMo | on watch: new (L67) |
+| `luna` | GPT-5.6 Luna, `openai/gpt-5.6-luna` at `high`, the direct OpenAI route, on OpenAI's main quota (L65, 2026-10-09) | OpenAI | registered alias |
+| `luna-6` | GPT-6 Luna, `openai/gpt-6-luna`, on OpenAI's main pool with Sol | OpenAI | `luna` until 2026-10-04 |
+| `gpt-6.1-sol` | GPT-6.1 Sol, `openai/gpt-6.1-sol` | OpenAI | probed 2026-10-03, PONG in 6 s |
 | `sol` | GPT-6 Sol, `openai/gpt-6-sol` | OpenAI | the hard reviewer before 6.1 (T05, T06) |
 | `glm-flash-zai` | GLM-5.3 Flash (toy-archaeology only; the same model as `zai-glm-5.3-flash`) | GLM | the implementer trial (toy-archaeology #8, #9) |
-| (Claude) Sonnet | `claudeFallback` | Claude | both fallback implementers; the easy fallback reviewer; toy research as `blind` |
-| (Claude) Opus | the main session; the hard fallback reviewer | Claude | architecture tasks (A1–A6), the toy target (A4), the score (A6) |
+| (Claude) Sonnet | `claudeFallback` | Claude | registered harness route |
+| (Claude) Opus | Claude | Claude | architecture tasks (A1–A6), the toy target (A4), the score (A6), historically |
 
 **Effort (the owner, 2026-10-05):** heavy models run at the lightest effort that does the job:
-`low` by default, `medium` only when justified in the task file, never `high` or `max`. GPT-6.1 Sol
+`low` by default, `medium` only when justified in the task file, never `high` or `max`. Sol stays at `low`. GPT-6.1 Sol
 (`gpt-6.1-sol`, `sol`) and GLM-5.3 (`zai-glm-5.3`) are at `low` (GLM-5.3 offers `low`, `high` and
 `max`, so no `medium`; probed at `low` 2026-10-05, PONG). MiMo V2.6 Pro offers no variants, so it
-runs at its default. A review that needs more passes `--variant medium` with
+runs at its default. A review by a model offering `medium` (not Sol) that needs more passes `--variant medium` with
 the reason in the task file. Claude Opus agents take no effort setting here. Light models
 (GLM-5.3 Flash, GPT-5.6 Luna) stay at `high` (MiMo V2.6 Flash has no variants); this rule is for heavy models.
 Probes at `low` and `medium`: PONG in 7 s and 4 s.
 
 **Probed, not entered:**
-- GLM-5.3 on the Z.AI Coding Plan: it answers, but the reviewer replay below gave it no role.
+- GLM-5.3 on the Z.AI Coding Plan: it answers; the reviewer replay is recorded below.
 - `glm-5.3-highspeed`: refused by the plan.
 
-**MiniMax and the Alibaba Token Plan (the owner, 2026-10-06), placed the same day.** Registered in
-`harness.json`, probed 2026-10-06 16:19–16:20 UTC, and placed (the owner, 2026-10-06):
-`ali-qwen-max` is the new-family hard reviewer in `reviewer.hard` after `zai-glm-5.3`; `ali-glm` is
-the same model on the Alibaba pool, the relief seat for `zai-glm-5.3` (zai's 3x weekday peak from
-8 Oct 2026, or exhaustion); `mm-m3` is the L38 heavy escalation rung before Claude Opus and the
-alternate for the Sol seat when openai is exhausted; `mm-m2.7` and `ali-qwen-flash` are the light
-rungs after GLM-5.3 Flash in the implementer chain. Their first real runs are watched as any new
+**MiniMax and the Alibaba Token Plan (the owner, 2026-10-06).** Registered in
+`harness.json`, probed 2026-10-06 16:19–16:20 UTC. Their first real runs are watched as any new
 model's are. `minimax` is a new family, usable as an independent reviewer of work by GLM, MiMo, Qwen,
 OpenAI or Claude models. Both keys come only from `~/.config/ai-keys.env` (`MINIMAX_API_KEY`,
 `ALIBABA_TOKEN_PLAN_API_KEY`; never `opencode auth login` — an `auth.json` entry overrides the
 variable); a "Provider not found" error means the shell lacks the variable.
 
-**Alibaba leaves the chains (the owner's global rule, 2026-10-09):** the Alibaba Token Plan is not
-used unless the owner asks for it explicitly. `ali-glm`, `ali-qwen-max` and `ali-qwen-flash` stay
-defined and probed, but no chain names them; the placements above are history. The
-`ali-deepseek-*` entries are gone (L67).
-
-**DeepSeek is blacklisted on every route (L67, the owner, 2026-10-09):** OpenCode Go, OpenRouter and
-Alibaba alike. MiMo V2.6 on OpenCode Go takes its places: `mimo-flash` the hard implementer and the
-third implementer rung, `mimo-pro` in `reviewer.hard`. MiMo is a family of its own for the reviewer
-rule. Neither has run here yet. What DeepSeek showed before L67 stays below, as history.
+Availability and exclusions come from `/recommend`, not this roster. MiMo is a family of its
+own for the reviewer rule. What DeepSeek showed before L67 stays below, as history.
 
 | Name | Model and route | Family | Weight | Variants offered | Probe | Quota |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -75,32 +63,22 @@ rule. Neither has run here yet. What DeepSeek showed before L67 stays below, as 
 | `ali-qwen-flash` | Qwen 3.8 Flash, `alibaba-token-plan/qwen3.8-flash` at `medium` | Qwen | light | `low`, `medium`, `xhigh` | PONG 2026-10-06, 6 s | `localhost:8765/quota/alibaba` |
 | `ali-glm` | GLM-5.3, `alibaba-token-plan/glm-5.3` at `low` | GLM | heavy | `low`, `high`, `max` | PONG 2026-10-06, 6 s | `localhost:8765/quota/alibaba` |
 
-**Pricing (check before choosing these, as for every provider):**
+**Pricing (context, not model-choice rules):**
 - Alibaba's Token Plan is one monthly credit pool for all its models (`month` window); its
   `pricing` says whether the night discount applies (`discount_now`, `next_change_at`). From
   22:00 to 08:00 UTC+8, qwen3.8-max/flash use 60% fewer credits; glm-5.3 has no discount. When the
-  owner asks for an Alibaba run, prefer a time when `discount_now` is true. Alibaba's Kimi and MiniMax models are Team-edition only and fail on this plan.
+  owner asks for an Alibaba run, its price depends on `discount_now`. Alibaba's Kimi and MiniMax models are Team-edition only and fail on this plan.
 - MiniMax: a 5-hour and a weekly window (`localhost:8765/quota/minimax`).
 - Z.ai: `glm-5.3` costs 3x quota in weekday peak hours (from 8 Oct 2026;
-  `localhost:8765/quota/zai` → `pricing.peak_now`); prefer other providers for long runs then.
+  `localhost:8765/quota/zai` → `pricing.peak_now`). `/recommend` accounts for pricing.
 
 ## Routing: easy or hard
 
-The owner decided on 2026-10-03 that the pair follows the task's difficulty, as in
-isle-wars-archaeology (CLAUDE.md rule 20):
-
-| Difficulty | Implementer | If it is unavailable | Reviewer | If it is unavailable |
-| --- | --- | --- | --- | --- |
-| Easy, the default | GLM-5.3 Flash | mm-m2.7, then MiMo V2.6 Flash, then Sonnet | GPT-5.6 Luna | Sonnet |
-| Hard | MiMo V2.6 Flash (L67) | Sonnet | **GLM-5.3**; **GPT-6.1 Sol** (at `low`) for a guard task and for a hard task's last rework round | MiMo V2.6 Pro (`mimo-pro`), then Luna (`reviewer.hard`); the harness's Claude fallback is Sonnet (`claudeFallback`), and a hard task names Opus instead (below) |
-
-**Sol is used sparingly** (the owner, 2026-10-04): it reviews only **guard tasks** (blindness, the
-originals guard, sealed rules, record integrity) and the **last rework round of a hard task**, at
-effort `low`. When openai is exhausted, `mm-m3` (MiniMax-M3, a new family) takes the Sol seat
-(`--reviewer mm-m3`, L50; the owner, 2026-10-06). Every other hard review goes to GLM-5.3
-(`zai-glm-5.3`), the heavy third-family reviewer, or to MiMo V2.6 Pro (`mimo-pro`) when GLM implemented.
-GLM-5.3's first such review (goal2 T04) re-ran
-every Done-when line, regenerated the listing, made five mutations and checked the data bytes.
+Follow CLAUDE.md's "Choosing models" (#60): difficulty determines the tier, not a fixed pair.
+Ask `/recommend?tier=heavy` for hard work and `/recommend?tier=light` for easy work.
+For implementation and review together, use `pair.implementer` and `pair.reviewer` from one
+call; add `&review_tier=light` for a simple review of heavy work. A standalone review adds
+`&exclude_family=<the implementer's family>` and uses `pick`; any other single model uses `pick`.
 
 **When a task is hard.** Any of:
 - a **guard task**: blindness, the originals guard, sealed rules, record integrity (the formats and
@@ -113,9 +91,10 @@ every Done-when line, regenerated the listing, made five mutations and checked t
 
 Everything else is easy: doc and config fixes, exact-line contracts, single-mechanism code with
 clear tests. The main session decides, until Jev is calibrated for it (below); the task file's
-Implementer and Reviewer lines say `easy` or `hard` with the reason. A hard task passes
-`--model mimo-flash` and `--reviewer gpt-6.1-sol`, and names Opus as its Claude fallback
-reviewer.
+Implementer and Reviewer lines say `easy` or `hard` with the reason. Until part 2 of #60 lands,
+pass the selected aliases explicitly with `implement.mjs --model <alias>` and
+`review.mjs --reviewer <alias>`; aliases are `harness.json`'s `models` keys. Never use `--hard`
+or `--sol`: today's chains are not a source of model choice.
 
 **Jev decides the clear hard cases** (decision `task-hard`, [docs/jev/task-hard.md](jev/task-hard.md)).
 Route a new task file through `jev.mjs route --decision task-hard` (run with `bash -ic`, where the
@@ -131,23 +110,23 @@ tasks to hard.
 
 | Work | Implementer | Reviewer | Why |
 | --- | --- | --- | --- |
-| Architecture: ADRs, the method, the retrospective | the main session (Opus) | by difficulty | the decisions are recorded ones; the reviewer checks citations and scope |
-| Research, spikes and static reading (judgment, not code) | Claude, with worktree isolation: **Opus when the task is hard**, Sonnet when it is easy | by difficulty | the owner's preference of 2026-10-03: hard judgment work goes to Opus (goal2 T02 and T04 started on Sonnet before it was stated) |
-| Toy research | a Claude session **as the local user `blind`** (method §6) | `luna`, also as `blind` | the researcher and its reviewer must not reach `toy-target` |
-| A toy research contract, after A6 | a Claude session that never read `toy-target` | — | the main session has read the sealed rules and could lead the researcher (method §6) |
+| Architecture: ADRs, the method, the retrospective | the main session records decisions; delegated work uses the tier's `/recommend` pick | the recommended reviewer | the reviewer checks citations and scope |
+| Research, spikes and static reading (judgment, not code) | the tier's `/recommend` pick, with worktree isolation | the recommended reviewer | difficulty decides the tier, not a preference for a model |
+| Toy research | the recommended researcher **as the local user `blind`** (method §6) | the recommended reviewer, also as `blind` | the researcher and its reviewer must not reach `toy-target` |
+| A toy research contract, after A6 | the recommended session that never read `toy-target` | — | the main session has read the sealed rules and could lead the researcher (method §6) |
 
 The reviewer is never the implementer's family. `review.mjs --exclude <implementer>` enforces it.
 
 **Watch:** L27 records GLM-5.3 Flash stalling and ending long implementer runs early in IC2. That
 verdict is unconfirmed until those runs' final messages have been read (rule 21). Its
-two trial runs here were clean. Its first runs as the default are watched, and a stall is
+two trial runs here were clean. Its first runs are watched, and a stall is
 diagnosed before any fallback.
 
 ## Escalating the implementer after a heavy review
 
 Adopted on 2026-10-03 from isle-wars-archaeology's proposal, which the owner passed on ("adopt if
 appropriate"). When a reviewer shows that the implementer is out of its depth, the next round goes
-to a stronger implementer. A task does not spend its last rework round on the same model. T05 is
+to the heavy tier if it was light, and otherwise keeps the ranking's choice and fixes the class. T05 is
 the case that would have triggered it: Sol found a new blocking code-span defect in each of three
 rounds, and the task escalated to the owner.
 
@@ -156,10 +135,9 @@ rounds, and the task escalated to the owner.
 - a rework round brings new blocking findings of the same class as the previous round's (for
   example, the same kind of bypass found again in new code): the fix did not converge.
 
-**Ladder.** The implementer moves up one step for the next round, and never steps down within a task:
-- GLM-5.3 Flash (`zai-glm-5.3-flash`) → MiMo V2.6 Flash (`mimo-flash`, L67) → MiniMax-M3
-  (`mm-m3`, the heavy OpenCode rung; the owner, 2026-10-06) → Claude Opus;
-- Claude Sonnet → Claude Opus.
+**Step up.** A round at `tier=light` asks `/recommend?tier=heavy` for the next round.
+A round already at `tier=heavy` keeps the ranking's choice and fixes the class, not each instance.
+There is no model ladder and no step down within a task.
 
 **Rules that still hold:**
 - The rework-round limit (rule 7) does not reset. After the last round, a remaining blocking finding
@@ -182,44 +160,33 @@ rounds, and the task escalated to the owner.
 finding counts before and after, and whether the stronger model converged; "What each model has
 shown" below gains a line. After several escalations, compare them before tuning the trigger.
 
-## When GPT-6.1 Sol cannot review
+## When a chosen model cannot run
 
-Adopted on 2026-10-03 from isle-wars-archaeology (the owner passed it on), after Sol's round-2 review
-of goal2 T03 stopped with "The usage limit has been reached". Sol is the hard reviewer; when it cannot
-run, the review goes to a substitute instead of waiting, unless the owner says to wait.
+Sol's round-2 review of goal2 T03 stopped with "The usage limit has been reached". Diagnose a
+chosen model's failure before trying the next `ranking` row, rather than waiting or inventing
+a substitute order.
 
-**First, diagnose.** Read the run's error file (`/tmp/harness-opencode/<session>.err.txt`) and probe
-`node tools/harness/switch-model.mjs --role reviewer --model openai/gpt-6.1-sol --name gpt-6.1-sol --probe --dry-run`.
-Check quota-tracker first (L50): `curl -s localhost:8765/quota/openai`. Sol and Luna share OpenAI's
+**First, diagnose.** Read the run's error file in its scratch folder and probe the chosen model:
+`node tools/harness/switch-model.mjs --role reviewer --model <model-id> --name <alias> --probe --dry-run`.
+Check quota-tracker first (L50): `curl -s localhost:8765/quota/<provider>`. For example, Sol and Luna share OpenAI's
 main quota; when it is exhausted, Sol is blocked, but Luna still runs only if `/quota/openai`'s
 `when_exhausted.usable_models` lists `gpt-5.6-luna` (L65).
 
-**Substitutes, in order** (skip the implementer's family):
+**Next row.** Follow the next row of `/recommend`'s `ranking` in `rank` order. For a reviewer
+chosen as part of a pair, skip the implementer's family. Every ranking row is usable; rows in
+`skipped` are not. Never allow a same-family fallback; if no independent reviewer can run,
+tell the owner. If the service does not answer, follow the restart-and-report rule in
+"Choosing models", not a local list.
 
-| Situation | Hard review | Easy review |
-| --- | --- | --- |
-| Only Sol is unavailable | mm-m3 (`--reviewer mm-m3`, a new family), then GLM-5.3 (`zai-glm-5.3`), then MiMo V2.6 Pro (`mimo-pro`), then Luna, with the reason stated | Luna, as usual |
-| The OpenAI account is out of quota | mm-m3, then GLM-5.3, then MiMo V2.6 Pro | GLM-5.3, then MiMo V2.6 Pro |
-| The implementer is GLM | MiMo V2.6 Pro | MiMo V2.6 Pro |
-| The implementer is MiMo | GLM-5.3 | GLM-5.3 |
+**How to run the replacement.** Probe it first (`--force` only when the refusal concerns the
+default implementer's family, not this task's). Reuse the review brief, with the header naming
+the replacement, the reason, and earlier reviews linked so it re-takes their attacks. Run
+`review.mjs --reviewer <alias>`. Record the change on the task file's Reviewer line with the
+date and reason, on `main`, and note in the PR's measurement comment the error, probes, selected
+row and its `reasons`, and what it caught or missed against earlier rounds.
 
-- Luna is a light reviewer: in Sol's place on a hard task only when no heavy third-family reviewer
-  can run, and the review's header says so.
-- Never a Claude reviewer when Claude implemented the task: escalate to the owner instead. (When
-  OpenCode implemented, the harness's Claude fallback remains allowed; goal2 T03's round 2 went to
-  Opus that way before this rule was adopted.)
-
-**How to run the substitute.** Probe it first (`--force` only when the refusal concerns the default
-implementer's family, not this task's). Reuse Sol's brief, with the header naming the substitute, one
-sentence saying it reviews in Sol's place and why, and Sol's earlier reviews linked so it re-takes
-their attacks. Run `review.mjs --reviewer zai-glm-5.3`; on exit 3, the same with `--reviewer
-mimo-pro`. Record the change on the task file's Reviewer line with the date and reason, on
-`main`, and note in the PR's measurement comment the error, the probes, the substitute, and what it
-caught or missed against Sol's earlier rounds.
-
-**Prevention.** `zai-glm-5.3` and `mimo-pro` stay entered in every repository's `harness.json`
-(GLM-5.3 answered PONG in 6 s on 2026-10-03; MiMo V2.6 Pro is new, L67), so one provider's quota
-never blocks a hard task's last review.
+**Prevention.** Keep candidate aliases entered and probed so the recommended model can run;
+registration does not assign a model a seat.
 
 ## Faster game cycles
 
@@ -256,11 +223,10 @@ watched match. G1 (goal2 T02, merged 2026-10-04, goal2 F001) measured them:
 
 ## Quota decides, not standing limits (owner, 2026-10-05)
 
-The owner lifted every earlier limit on using models on 2026-10-05: the routing above holds, and
-only the quota check skips a model (L50). An `exhausted` provider is passed over for the chain's
-next model, named explicitly and in the report. Two later owner rules do exclude models (both
-2026-10-09): the L67 DeepSeek blacklist on every route, and Alibaba only when the owner asks.
-`reviewer.hard` is `zai-glm-5.3`, `mimo-pro`, `luna`.
+The owner's #60 rules supersede local routing limits: `/recommend` decides the model, with no
+local lists, chains, exclusions, score thresholds or percentage cutoffs. Record the selected
+rows and their `reasons` with the run. Difficulty and the family rule still apply as described
+in "Choosing models"; quota and pricing inform the service, not a second selection policy here.
 
 ## The reviewer's credential jail is off (owner, 2026-10-05)
 
@@ -302,15 +268,11 @@ end and moved the task to another model, which spent quota on a contract that co
 
 ## How a run is made
 
-- **Implementer:** `node tools/harness/implement.mjs --task T<nn> --slug <slug> --issue <n> --brief <file> [--model <name>]`,
+- **Implementer:** `node tools/harness/implement.mjs --task T<nn> --slug <slug> --issue <n> --brief <file> --model <alias>`,
   with `run_in_background`, never a shell `&`. On rework the same command resumes the branch.
-- **Reviewer:** `node tools/harness/review.mjs --pr <n> --brief <file> --exclude <implementer> --issue <n> --apply-label`, plus:
-  - an easy task: nothing more (the chain, Luna);
-  - a hard task: `--hard` (`reviewer.hard`: GLM-5.3, then MiMo V2.6 Pro and Luna if one cannot run);
-  - a guard task, or a hard task's last rework round: `--hard --sol` (GPT-6.1 Sol at low effort first).
-
-  `--reviewer <name>` still runs one named model alone. A hard task passes `--model mimo-flash`
-  to the implementer. A review by a Claude agent is posted with
+- **Reviewer:** `node tools/harness/review.mjs --pr <n> --brief <file> --exclude <implementer> --issue <n> --apply-label --reviewer <alias>`.
+  Until part 2 lands, always pass the recommended implementer's `--model <alias>` and reviewer's
+  `--reviewer <alias>` explicitly; never use `--hard` or `--sol`. A review by a Claude agent is posted with
   `node tools/harness/post-review.mjs --pr <n> --brief <file> --review <file> --by "claude (opus)" --issue <n> --apply-label`.
 - **Every implementer that measures** (a research task, a runtime spike, a static reading): its brief
   says that every measured output goes under a tracked path the task owns, is committed and pushed
