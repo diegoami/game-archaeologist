@@ -29,3 +29,25 @@ Each title ends with the task's plan label (A1, A2, …) from
 | T21 | Harness bump c8d62a7 → d7ddd48 (L66a per-run scratch, L67 DeepSeek → MiMo, #147, #149) | #52 | T20 |
 | T22 | Harness bump d7ddd48 → 552f6ec (L68 denied calls past a threshold, L66b scratch kept on failure) | #56 | T21 |
 | T23 | Model choice follows /recommend: rules in CLAUDE.md and AGENTS.md, models.md rewritten (#60 part 1) | #61 | T22 |
+
+## Harness bumps
+
+A bump copies harness_imperial at a newer commit; it builds nothing (rule 18). Each one is a task
+file (T13, T15–T22 are the pattern), **hard** (a harness change), implemented by the main session
+and reviewed by the `/recommend` pick for a review on its own. The steps, after harness_imperial's
+README ("A bump"):
+1. Check `grep -E '^[0-9a-f]{64}  ' harness.lock | sha256sum -c --quiet` passes on `main`.
+2. Make a clone or worktree of harness_imperial pinned at the new commit, under the scratchpad.
+   Never run `adopt.mjs` from the harness checkout's working tree: another session works there.
+3. In the task branch's worktree, move `harness.lock`, every file it lists and the adapted files
+   aside, run `node <pinned>/adopt.mjs --profile full --target <worktree>`, and put the adapted
+   files back (`CLAUDE.md`, `harness.json`, `docs/tasks/README.md`; three-way merge one whose
+   template changed between the pins).
+4. Rewrite `harness.lock`: drop the hash lines of the adapted files, keep their `adapt` lines,
+   and write a `copied` line naming each upstream commit in `template/` and what it brings.
+5. Done-when, as in T22: the lock verifies and names the new commit; every copied file equals the
+   template at the pin (`git show <pin>:template/<path> | cmp - <path>`); every template file is
+   copied or adapted; `review.mjs --self-test` and `implement.mjs --self-test` pass; harness_imperial's
+   `npm test` passes at the pin (under the memory cap); the adapted files are unchanged unless the
+   task says otherwise; `check_links.py` and `check_examples.py` pass; CI is green.
+6. Commit only what the bump changed (`git status` before `git add`).

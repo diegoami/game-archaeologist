@@ -63,8 +63,15 @@ own for the reviewer rule. What DeepSeek showed before L67 stays below, as histo
 | `ali-qwen-flash` | Qwen 3.8 Flash, `alibaba-token-plan/qwen3.8-flash` at `medium` | Qwen | light | `low`, `medium`, `xhigh` | PONG 2026-10-06, 6 s | `localhost:8765/quota/alibaba` |
 | `ali-glm` | GLM-5.3, `alibaba-token-plan/glm-5.3` at `low` | GLM | heavy | `low`, `high`, `max` | PONG 2026-10-06, 6 s | `localhost:8765/quota/alibaba` |
 
+**Alibaba is unmonitored and off by default** (the owner, 2026-10-07 and 2026-10-09). Alibaba's
+console flagged quota-tracker's checks as unusual activity, so `/quota/alibaba` returns
+`status: not_monitored` (pricing only), and Alibaba is absent from `/quota`, `/best`, `/avoid` and
+`/recommend`. Run an `ali-*` model only when the owner asks; query `/quota/alibaba` at most once a
+session; on a quota or rate error, stop and tell the owner, never retry. DeepSeek is blacklisted on
+every route, Alibaba's included (L67).
+
 **Pricing (context, not model-choice rules):**
-- Alibaba's Token Plan is one monthly credit pool for all its models (`month` window); its
+- Alibaba's Token Plan is one monthly credit pool for all its models (not monitored); its
   `pricing` says whether the night discount applies (`discount_now`, `next_change_at`). From
   22:00 to 08:00 UTC+8, qwen3.8-max/flash use 60% fewer credits; glm-5.3 has no discount. When the
   owner asks for an Alibaba run, its price depends on `discount_now`. Alibaba's Kimi and MiniMax models are Team-edition only and fail on this plan.
@@ -282,7 +289,9 @@ end and moved the task to another model, which spent quota on a contract that co
   (`sudo -iu blind bash -lc 'cat > ~/brief.md' < brief.md`).
 - **Briefs:** the implementer brief is the task file pasted in full, then process.md §4's block, then
   on rework the review's URL. The review brief is §5's block (research: method §3's) filled in,
-  then the task file. Until harness_imperial#19 and #24 land, a review brief also asks for one
+  then the task file. The review brief's first line is exactly `T<nn> review (<model>)` (a fix:
+  `fix #<n> review (<model>)`): `review.mjs` refuses anything else with exit 2 and posts nothing,
+  so round or substitute notes go on a later line. Until harness_imperial#19 and #24 land, a review brief also asks for one
   `DW<k>:` evidence line per Done-when line.
 - **"Blocking means"** (the owner, 2026-10-04, ahead of harness_imperial L47; the harness's PR 29
   replay saw GLM-5.3 prove three guard bypasses live, rate them "not blocking" and approve). Until
